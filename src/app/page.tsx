@@ -85,10 +85,23 @@ function HomeContent() {
 
   // Loading overlay demo state
   const [loading, setLoading] = useState(true);
+  const [spinLoadingLogo, setSpinLoadingLogo] = useState(false);
+  const [showLoadingLogo, setShowLoadingLogo] = useState(true);
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
+    const timer = setTimeout(() => setLoading(false), 2000); // back to normal
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setSpinLoadingLogo(true);
+    }
+  }, [loading]);
+
+  const handleLoadingLogoFinish = () => {
+    setShowLoadingLogo(false);
+  };
 
   // Initialize MIDI player to ensure shared state
   useMidiPlayer();
@@ -147,7 +160,9 @@ function HomeContent() {
 
   return (
     <div className="h-screen flex flex-col" style={{ height: '100vh', position: 'relative' }}>
-      {loading && <LoadingLogo />}
+      {showLoadingLogo && (
+        <LoadingLogo spin={spinLoadingLogo} onFinish={handleLoadingLogoFinish} />
+      )}
       <div style={{
         filter: loading ? 'blur(6px) brightness(0.7)' : 'none',
         transition: 'filter 0.3s',

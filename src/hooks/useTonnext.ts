@@ -344,29 +344,7 @@ export function useTonnext(options: UseTonnextOptions) {
     }
   }, [drawNow]);
 
-  // 6. rebuild
-  const rebuild = useCallback(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    // Use parent container size
-    const parent = canvas.parentElement;
-    const width = parent ? parent.clientWidth : window.innerWidth;
-    const height = parent ? parent.clientHeight : window.innerHeight;
-    const unit = (width + height) / density;
-
-    canvas.width = width;
-    canvas.height = height;
-    
-    setDimensions({ width, height, unit });
-
-    // Build tone grid based on layout
-    buildToneGrid(width, height, unit);
-    
-    draw(true);
-  }, [density, layout, buildToneGrid, draw]);
-
-  // 7. initTonnext
+  // 6. initTonnext
   const initTonnext = useCallback((canvas: HTMLCanvasElement) => {
     canvasRef.current = canvas;
     ctxRef.current = canvas.getContext('2d');

@@ -286,7 +286,7 @@ export function useMidiPlayer() {
     // Start the update loop immediately
     console.log('Starting time update loop');
     updateTime();
-  }, [midiData, isPlaying, duration, currentTime]);
+  }, [midiData, duration]);
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false);

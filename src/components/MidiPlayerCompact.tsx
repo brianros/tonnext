@@ -61,7 +61,7 @@ export default function MidiPlayerCompact({
     updateState();
 
     // Set up polling to get updates - more frequent for smoother progress bar
-    const interval = setInterval(updateState, 50); // 20fps instead of 10fps
+    const interval = setInterval(updateState, 100); // Reduced frequency to prevent excessive updates
     return () => clearInterval(interval);
   }, [getMidiPlayerState]);
 
@@ -77,8 +77,8 @@ export default function MidiPlayerCompact({
     // Update immediately
     updateFunctions();
 
-    // Set up polling to get function updates
-    const interval = setInterval(updateFunctions, 100);
+    // Set up polling to get function updates - less frequent since functions don't change often
+    const interval = setInterval(updateFunctions, 500);
     return () => clearInterval(interval);
   }, [getMidiPlayerFunctions]);
 

@@ -100,15 +100,18 @@ export function useTonnext(options: UseTonnextOptions) {
 
   // 1. addNode
   const addNode = useCallback((tone: number, x: number, y: number, unit: number) => {
-    if (x < -unit || y < -unit || x > dimensions.width + unit || y > dimensions.height + unit) {
+    if (x < -unit || y < -unit || x > window.innerWidth + unit || y > window.innerHeight + unit) {
       return;
     }
     const node = { x, y, tone };
     toneGridRef.current[tone].push(node);
-  }, [dimensions]);
+  }, []);
 
   // 7. buildToneGrid
   const buildToneGrid = useCallback((width: number, height: number, unit: number) => {
+    // Clear existing tone grid
+    toneGridRef.current = Array.from({ length: 12 }, () => []);
+    
     const SQRT_3 = Math.sqrt(3);
     
     if (layout === LAYOUT_RIEMANN) {
@@ -409,8 +412,13 @@ export function useTonnext(options: UseTonnextOptions) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     setIsInitialized(true);
-    rebuild();
-  }, [rebuild]);
+    // Call rebuild directly instead of through the callback to avoid circular dependency
+    const unit = (width + height) / density;
+    
+    setDimensions({ width, height, unit });
+    buildToneGrid(width, height, unit);
+    draw(true);
+  }, [density, layout, buildToneGrid, draw]);
 
   const handleCanvasClick = useCallback(async (x: number, y: number) => {
     // Resume Tone.js audio context on first interaction
@@ -642,22 +650,34 @@ export function useTonnext(options: UseTonnextOptions) {
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        canvasRef.current.width = window.innerWidth;
-        canvasRef.current.height = window.innerHeight;
+        const canvas = canvasRef.current;
+        const parent = canvas.parentElement;
+        const width = parent ? parent.clientWidth : window.innerWidth;
+        const height = parent ? parent.clientHeight : window.innerHeight;
+        const unit = (width + height) / density;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
         if (ctxRef.current) {
           const ctx = ctxRef.current;
           ctx.fillStyle = '#1a1a1a';
-          ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
+        
         // Update density based on new screen size
         setDensity(getResponsiveDensity());
-        rebuild();
+        
+        // Update dimensions and rebuild grid directly
+        setDimensions({ width, height, unit });
+        buildToneGrid(width, height, unit);
+        draw(true);
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [rebuild]);
+  }, [density, buildToneGrid, draw]);
 
   // Handle mouse wheel for zoom
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
@@ -674,18 +694,43 @@ export function useTonnext(options: UseTonnextOptions) {
 
   // Rebuild grid when density changes (for zoom)
   useEffect(() => {
-    rebuild();
-  }, [density, rebuild]);
+    if (!canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const parent = canvas.parentElement;
+    const width = parent ? parent.clientWidth : window.innerWidth;
+    const height = parent ? parent.clientHeight : window.innerHeight;
+    const unit = (width + height) / density;
+    
+    setDimensions(prev => {
+      if (
+        prev.width === width &&
+        prev.height === height &&
+        prev.unit === unit
+      ) {
+        return prev;
+      }
+      return { width, height, unit };
+    });
+    buildToneGrid(width, height, unit);
+    draw(true);
+  }, [density, buildToneGrid, draw]);
+
+  // Ref for drawGrid to use in MutationObserver
+  const drawGridRef = useRef(drawGrid);
+  useEffect(() => {
+    drawGridRef.current = drawGrid;
+  }, [drawGrid]);
 
   // Redraw canvas when palette CSS variables change
   useEffect(() => {
     // Listen for palette changes
     const observer = new MutationObserver(() => {
-      drawGrid();
+      drawGridRef.current();
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
     return () => observer.disconnect();
-  }, [drawGrid]);
+  }, []); // No dependency on drawGrid!
 
   return {
     isInitialized,

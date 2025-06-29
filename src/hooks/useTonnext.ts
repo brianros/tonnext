@@ -6,7 +6,6 @@ import * as Tone from 'tone';
 // Constants
 const TONE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const STATE_OFF = 0;
-const STATE_GHOST = 1;
 const LAYOUT_RIEMANN = 'riemann';
 const LAYOUT_SONOME = 'sonome';
 
@@ -48,14 +47,12 @@ export function useTonnext(options: UseTonnextOptions) {
   
   // State
   const [density, setDensity] = useState(32);
-  const [ghostDuration, setGhostDuration] = useState(500);
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
   
   // Data structures
   const tonesRef = useRef<Tone[]>([]);
   const channelsRef = useRef<Channel[]>([]);
   const toneGridRef = useRef<TonnextNode[][]>([]);
-  const ghostsIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const drawTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nodesRef = useRef<{x:number,y:number,tone:number}[]>([]);
   const activeRef = useRef<boolean[]>(Array(12).fill(false));
@@ -263,45 +260,13 @@ export function useTonnext(options: UseTonnextOptions) {
       }
     }
 
-    // draw nodes & labels
+    // draw nodes (without labels first)
     nodes.forEach(({x,y,tone})=>{
       const active=activeRef.current[tone];
       ctx.fillStyle=active?nodeHighlight:nodeNormal;
       ctx.beginPath();
       ctx.arc(x,y,radius,0,Math.PI*2);
       ctx.fill();
-
-      // Draw note labels
-      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      const noteName = noteNames[tone % 12];
-      const fontSize = Math.max(12, Math.min(20, radius * 0.8));
-      ctx.font = `bold ${fontSize}px Arial`;
-      
-      // Determine text color based on node fill color
-      let textColor = '#fff';
-      // Helper to compare hex colors (ignoring case)
-      function hexEquals(a: string, b: string) {
-        return a.replace('#','').toLowerCase() === b.replace('#','').toLowerCase();
-      }
-      // If node fill color is Cinnabar accent, use white
-      if (hexEquals(ctx.fillStyle as string, '#D7A798') || hexEquals(ctx.fillStyle as string, '#d7a798')) {
-        textColor = '#fff';
-      } else {
-        const mainLum = getLuminance(colorMain);
-        const highlightLum = getLuminance(colorHighlight);
-        if (mainLum < 0.5 && highlightLum > 0.5) textColor = colorHighlight;
-        else if (mainLum > 0.5 && highlightLum < 0.5) textColor = colorMain;
-        else if (mainLum > 0.7) textColor = '#222';
-        else if (mainLum < 0.3) textColor = '#fff';
-      }
-      
-      ctx.fillStyle = textColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = "#222";
-      ctx.shadowBlur = 2;
-      ctx.fillText(noteName, x, y);
-      ctx.shadowBlur = 0;
     });
 
     // Highlight lines and triangles between active notes
@@ -310,7 +275,7 @@ export function useTonnext(options: UseTonnextOptions) {
       // Draw lines only between adjacent active nodes (using edge threshold)
       ctx.save();
       ctx.strokeStyle = nodeHighlight;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
       const threshold = unit * 1.05;
       for (let i = 0; i < activeNodes.length; i++) {
         for (let j = i + 1; j < activeNodes.length; j++) {
@@ -330,7 +295,7 @@ export function useTonnext(options: UseTonnextOptions) {
     if (activeNodes.length >= 3) {
       // Draw filled triangles only for mutually adjacent active nodes
       ctx.save();
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.15;
       ctx.fillStyle = nodeHighlight;
       const threshold = unit * 1.05;
       // Check all combinations of 3 active nodes
@@ -360,6 +325,51 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.globalAlpha = 1.0;
       ctx.restore();
     }
+
+    // Draw labels last to ensure they're always on top
+    nodes.forEach(({x,y,tone})=>{
+      const active=activeRef.current[tone];
+      
+      // Draw note labels
+      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const noteName = noteNames[tone % 12];
+      const fontSize = Math.max(12, Math.min(20, radius * 0.8));
+      ctx.font = `bold ${fontSize}px Arial`;
+      
+      // Determine text color based on node fill color
+      let textColor = '#fff';
+      // Helper to compare hex colors (ignoring case)
+      function hexEquals(a: string, b: string) {
+        return a.replace('#','').toLowerCase() === b.replace('#','').toLowerCase();
+      }
+      // If node fill color is Cinnabar accent, use white
+      if (hexEquals(active ? nodeHighlight : nodeNormal, '#D7A798') || hexEquals(active ? nodeHighlight : nodeNormal, '#d7a798')) {
+        textColor = '#fff';
+      } else {
+        const mainLum = getLuminance(colorMain);
+        const highlightLum = getLuminance(colorHighlight);
+        if (mainLum < 0.5 && highlightLum > 0.5) textColor = colorHighlight;
+        else if (mainLum > 0.5 && highlightLum < 0.5) textColor = colorMain;
+        else if (mainLum > 0.7) textColor = '#222';
+        else if (mainLum < 0.3) textColor = '#fff';
+      }
+      
+      // Draw a larger, more opaque background circle behind the text for better readability
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.beginPath();
+      ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = "#222";
+      ctx.shadowBlur = 2;
+      ctx.fillText(noteName, x, y);
+      ctx.shadowBlur = 0;
+    });
   },[dimensions,layout]);
 
   const drawNow = useCallback(() => {
@@ -388,7 +398,6 @@ export function useTonnext(options: UseTonnextOptions) {
     }
   }, [drawNow]);
 
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   const handleCanvasClick = useCallback(async (x: number, y: number) => {
     // Resume Tone.js audio context on first interaction
     if (!audioStartedRef.current) {
@@ -609,38 +618,6 @@ export function useTonnext(options: UseTonnextOptions) {
     updateHighlights();
   }, [updateHighlights]);
 
-  const startGhosts = useCallback(() => {
-    if (ghostsIntervalRef.current === null) {
-      ghostsIntervalRef.current = setInterval(() => {
-        let numAlive = 0;
-        let numDead = 0;
-        const now = new Date();
-
-        for (let i = 0; i < 12; i++) {
-          if (tonesRef.current[i].state === STATE_GHOST) {
-            if (now.getTime() - tonesRef.current[i].released!.getTime() >= ghostDuration) {
-              tonesRef.current[i].state = STATE_OFF;
-              numDead++;
-            } else {
-              numAlive++;
-            }
-          }
-        }
-
-        if (numAlive === 0) {
-          if (ghostsIntervalRef.current) {
-            clearInterval(ghostsIntervalRef.current);
-            ghostsIntervalRef.current = null;
-          }
-        }
-
-        if (numDead > 0) {
-          draw();
-        }
-      }, Math.min(ghostDuration, 30));
-    }
-  }, [ghostDuration, draw]);
-
   useEffect(()=>{
     if(isInitialized){
       drawGrid();
@@ -697,7 +674,6 @@ export function useTonnext(options: UseTonnextOptions) {
     noteOn,
     noteOff,
     setDensity,
-    setGhostDuration,
     setLayout,
     // MIDI Integration
     handleMidiNoteStart,

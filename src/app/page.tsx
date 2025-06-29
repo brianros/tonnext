@@ -165,7 +165,6 @@ function HomeContent() {
                 className="blend-btn"
                 aria-haspopup="true"
                 aria-expanded={appearanceDropdown}
-                style={{ fontSize: '2rem', padding: '0.5em 1.5em' }}
               >
                 Appearance
               </button>
@@ -208,8 +207,6 @@ function HomeContent() {
                         style={{
                           background: pal.main,
                           border: 'none',
-                          fontSize: '2rem',
-                          padding: '0.5em 1.5em',
                           color: textColor,
                           textAlign: 'left',
                           fontWeight: 'bold',
@@ -227,8 +224,6 @@ function HomeContent() {
                     style={{
                       background: 'linear-gradient(90deg, #6C1CD1 0%, #4361EE 33%, #00FF99 66%, #FF1B1B 100%)',
                       border: 'none',
-                      fontSize: '2rem',
-                      padding: '0.5em 1.5em',
                       color: '#fff',
                       textAlign: 'left',
                     }}
@@ -273,7 +268,6 @@ function HomeContent() {
                 justifyContent: 'flex-start',
                 verticalAlign: 'middle',
                 lineHeight: 1,
-                padding: '0.5em 1.5em'
               }}
               onClick={() => setChordDropdownOpen((open) => !open)}
               type="button"

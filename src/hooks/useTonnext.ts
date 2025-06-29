@@ -285,14 +285,6 @@ export function useTonnext(options: UseTonnextOptions) {
         else if (mainLum < 0.3) textColor = '#fff';
       }
       
-      // Draw a larger, more opaque background circle behind the text for better readability
-      ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.beginPath();
-      ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      
       ctx.fillStyle = textColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

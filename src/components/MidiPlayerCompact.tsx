@@ -129,6 +129,7 @@ export default function MidiPlayerCompact({
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.type === 'audio/midi' || file.name.endsWith('.mid')) && playerFunctions) {
+      playerFunctions.stopPlayback();
       await playerFunctions.parseMidiFile(file);
     }
   }, [playerFunctions]);
@@ -139,6 +140,7 @@ export default function MidiPlayerCompact({
 
   const handleLoadBeethoven = useCallback(async () => {
     if (playerFunctions) {
+      playerFunctions.stopPlayback();
       await playerFunctions.loadMidiFromUrl('/Beethoven-Moonlight-Sonata.mid', 'Beethoven - Moonlight Sonata');
       setTestMidiLoaded(true);
     }

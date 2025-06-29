@@ -79,9 +79,10 @@ export default function MidiPlayer({
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.type === 'audio/midi' || file.name.endsWith('.mid'))) {
+      stopPlayback();
       await parseMidiFile(file);
     }
-  }, [parseMidiFile]);
+  }, [parseMidiFile, stopPlayback]);
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();

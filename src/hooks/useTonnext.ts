@@ -46,7 +46,26 @@ export function useTonnext(options: UseTonnextOptions) {
   const polySynthRef = useRef<Tone.PolySynth | null>(null);
   
   // State
-  const [density, setDensity] = useState(32);
+  // Initialize density with a safe default for SSR
+  const [density, setDensity] = useState(20);
+  
+  // Responsive density function (uses window, so only call on client)
+  const getResponsiveDensity = () => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (isMobile) {
+      // Slightly higher density (smaller nodes) for mobile
+      return Math.max(14, Math.min(24, Math.floor(window.innerWidth / 24)));
+    } else {
+      // Higher density (smaller nodes) for desktop
+      return Math.max(16, Math.min(28, Math.floor(window.innerWidth / 28)));
+    }
+  };
+
+  // On mount, update density responsively (client only)
+  useEffect(() => {
+    setDensity(getResponsiveDensity());
+  }, []);
+
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
   
   // Data structures
@@ -630,6 +649,8 @@ export function useTonnext(options: UseTonnextOptions) {
           ctx.fillStyle = '#1a1a1a';
           ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
+        // Update density based on new screen size
+        setDensity(getResponsiveDensity());
         rebuild();
       }
     };
@@ -641,7 +662,14 @@ export function useTonnext(options: UseTonnextOptions) {
   // Handle mouse wheel for zoom
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
     event.preventDefault();
-    setDensity(prev => Math.max(10, Math.min(40, prev + event.deltaY * 0.01)));
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      // Higher zoom limits for mobile (more zoomed in)
+      setDensity(prev => Math.max(15, Math.min(60, prev + event.deltaY * 0.01)));
+    } else {
+      // Standard zoom limits for desktop
+      setDensity(prev => Math.max(10, Math.min(40, prev + event.deltaY * 0.01)));
+    }
   };
 
   // Rebuild grid when density changes (for zoom)

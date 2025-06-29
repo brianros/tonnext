@@ -7,6 +7,7 @@ import MidiPlayerCompact from '@/components/MidiPlayerCompact';
 import { MidiProvider } from '@/contexts/MidiContext';
 import { useMidiPlayer } from '@/hooks/useMidiPlayer';
 import CustomPaletteModal, { Palette } from '@/components/CustomPaletteModal';
+import LoadingLogo from '@/components/LoadingLogo';
 // import Controls from '@/components/Controls'; // No longer used
 
 const CHORD_TYPES = [
@@ -82,6 +83,13 @@ function HomeContent() {
     hover2: '#DB4A2F',
   });
 
+  // Loading overlay demo state
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Initialize MIDI player to ensure shared state
   useMidiPlayer();
 
@@ -138,241 +146,252 @@ function HomeContent() {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ height: '100vh' }}>
-      {/* Sleek Header */}
-      <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
-        <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
-          <div className="flex items-center space-x-4 flex-shrink-0">
-            <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
-            {/* Triangle logo for mobile */}
-            <span className="tonnext-logo" style={{height: 'clamp(28px, 8vw, 40px)', width: 'clamp(28px, 8vw, 40px)'}}>
-              <svg viewBox="0 0 100 100" width="100%" height="100%" fill="white" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="50,10 90,90 10,90" />
-              </svg>
-            </span>
-            <div className="flex-shrink-0">
-              <MidiPlayerCompact />
-            </div>
-          </div>
-          <div className="flex space-x-2 items-center flex-shrink-0">
-            <div
-              className="relative"
-              onMouseEnter={() => {
-                if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
-                setAppearanceDropdown(true);
-              }}
-              onMouseLeave={() => {
-                if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
-                dropdownTimeout.current = setTimeout(() => setAppearanceDropdown(false), 200);
-              }}
-            >
-              <button
-                ref={appearanceBtnRef}
-                className="blend-btn"
-                aria-haspopup="true"
-                aria-expanded={appearanceDropdown}
-              >
-                Appearance
-              </button>
-              {appearanceDropdown && (
-                <div
-                  className="absolute left-0 rounded shadow-lg z-50 border border-white"
-                  style={{
-                    minWidth: 200,
-                    background: 'var(--color-main)',
-                    color: '#fff',
-                    fontSize: '1.6rem',
-                    padding: 0,
-                    top: '100%',
-                    left: 0,
-                  }}
-                >
-                  {PALETTE_PRESETS.map(preset => {
-                    const pal = PALETTE_PREVIEW[preset.name as keyof typeof PALETTE_PREVIEW];
-                    // Contrast: if main is dark, use highlight for text; if highlight is dark, use main for text; else fallback to white/black
-                    const getLuminance = (hex: string) => {
-                      const c = hex.replace('#', '');
-                      if (c.length !== 6) return 1;
-                      const r = parseInt(c.slice(0, 2), 16) / 255;
-                      const g = parseInt(c.slice(2, 4), 16) / 255;
-                      const b = parseInt(c.slice(4, 6), 16) / 255;
-                      return 0.299 * r + 0.587 * g + 0.114 * b;
-                    };
-                    const mainLum = getLuminance(pal.main);
-                    const highlightLum = getLuminance(pal.highlight);
-                    let textColor = '#fff';
-                    if (preset.name === 'Cinnabar') textColor = '#fff';
-                    else if (mainLum < 0.5 && highlightLum > 0.5) textColor = pal.highlight;
-                    else if (mainLum > 0.5 && highlightLum < 0.5) textColor = pal.main;
-                    else if (mainLum > 0.7) textColor = '#222';
-                    else if (mainLum < 0.3) textColor = '#fff';
-                    return (
-                      <button
-                        key={preset.name}
-                        className="blend-btn w-full text-left whitespace-nowrap"
-                        style={{
-                          background: pal.main,
-                          border: 'none',
-                          color: textColor,
-                          textAlign: 'left',
-                          fontWeight: 'bold',
-                          textTransform: 'uppercase',
-                          overflow: 'hidden',
-                        }}
-                        onClick={() => handleApplyPreset(preset.name)}
-                      >
-                        {preset.name}
-                      </button>
-                    );
-                  })}
-                  <button
-                    className="blend-btn w-full text-left border-t border-white"
-                    style={{
-                      background: 'linear-gradient(90deg, #6C1CD1 0%, #4361EE 33%, #00FF99 66%, #FF1B1B 100%)',
-                      border: 'none',
-                      color: '#fff',
-                      textAlign: 'left',
-                    }}
-                    onClick={() => { setCustomPaletteOpen(true); setAppearanceDropdown(false); }}
-                  >
-                    Custom…
-                  </button>
-                </div>
-              )}
-            </div>
-            <button onClick={() => setIsSettingsOpen(true)} className="blend-btn">Help</button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Canvas - fill all available space */}
-      <div
-        className="flex-1 relative min-h-0"
-        style={{ height: 'calc(100vh - 56px - 64px)' }}
-      >
-        <TonnextCanvas 
-          mode={mode} 
-          chordType={chordType}
-        />
-      </div>
-
-      {/* Sleek Footer with Controls */}
-      <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
-        <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full">
-          <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('note')}>Note</button>
-          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('chord')}>Chord</button>
-          <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-          <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }}>
-            <button
-              className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
-              style={{
-                minWidth: 120,
-                maxWidth: 400,
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                verticalAlign: 'middle',
-                lineHeight: 1,
-                height: '64px',
-              }}
-              onClick={() => setChordDropdownOpen((open) => !open)}
-              type="button"
-            >
-              <span
-                style={{
-                  flex: '1 1 auto',
-                  minWidth: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                  lineHeight: 1,
-                  textAlign: 'left'
-                }}
-              >
-                {CHORD_TYPES.find(opt => opt.value === chordType)?.label || 'Select Chord'}
+    <div className="h-screen flex flex-col" style={{ height: '100vh', position: 'relative' }}>
+      {loading && <LoadingLogo />}
+      <div style={{
+        filter: loading ? 'blur(6px) brightness(0.7)' : 'none',
+        transition: 'filter 0.3s',
+        pointerEvents: loading ? 'none' : 'auto',
+        height: '100%',
+      }}>
+        {/* Sleek Header */}
+        <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
+          <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
+            <div className="flex items-center space-x-4 flex-shrink-0">
+              <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
+              {/* Triangle logo for mobile */}
+              <span className="tonnext-logo" style={{height: 'clamp(28px, 8vw, 40px)', width: 'clamp(28px, 8vw, 40px)'}}>
+                <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="62,22 106,102 18,102" fill="white" />
+                  <circle cx="62" cy="22" r="12" fill="var(--color-accent)" />
+                  <circle cx="106" cy="102" r="12" fill="var(--color-accent)" />
+                  <circle cx="18" cy="102" r="12" fill="var(--color-accent)" />
+                </svg>
               </span>
-              <span
-                style={{
-                  flex: '0 0 auto',
-                  marginLeft: 8,
-                  fontSize: '1.2rem',
-                  lineHeight: 1,
-                  alignSelf: 'center'
-                }}
-              >
-                ▲
-              </span>
-            </button>
-            {chordDropdownOpen && (
+              <div className="flex-shrink-0">
+                <MidiPlayerCompact />
+              </div>
+            </div>
+            <div className="flex space-x-2 items-center flex-shrink-0">
               <div
-                ref={chordDropdownRef}
+                className="relative"
+                onMouseEnter={() => {
+                  if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+                  setAppearanceDropdown(true);
+                }}
+                onMouseLeave={() => {
+                  if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+                  dropdownTimeout.current = setTimeout(() => setAppearanceDropdown(false), 200);
+                }}
+              >
+                <button
+                  ref={appearanceBtnRef}
+                  className="blend-btn"
+                  aria-haspopup="true"
+                  aria-expanded={appearanceDropdown}
+                >
+                  Appearance
+                </button>
+                {appearanceDropdown && (
+                  <div
+                    className="absolute left-0 rounded shadow-lg z-50 border border-white"
+                    style={{
+                      minWidth: 200,
+                      background: 'var(--color-main)',
+                      color: '#fff',
+                      fontSize: '1.6rem',
+                      padding: 0,
+                      top: '100%',
+                      left: 0,
+                    }}
+                  >
+                    {PALETTE_PRESETS.map(preset => {
+                      const pal = PALETTE_PREVIEW[preset.name as keyof typeof PALETTE_PREVIEW];
+                      // Contrast: if main is dark, use highlight for text; if highlight is dark, use main for text; else fallback to white/black
+                      const getLuminance = (hex: string) => {
+                        const c = hex.replace('#', '');
+                        if (c.length !== 6) return 1;
+                        const r = parseInt(c.slice(0, 2), 16) / 255;
+                        const g = parseInt(c.slice(2, 4), 16) / 255;
+                        const b = parseInt(c.slice(4, 6), 16) / 255;
+                        return 0.299 * r + 0.587 * g + 0.114 * b;
+                      };
+                      const mainLum = getLuminance(pal.main);
+                      const highlightLum = getLuminance(pal.highlight);
+                      let textColor = '#fff';
+                      if (preset.name === 'Cinnabar') textColor = '#fff';
+                      else if (mainLum < 0.5 && highlightLum > 0.5) textColor = pal.highlight;
+                      else if (mainLum > 0.5 && highlightLum < 0.5) textColor = pal.main;
+                      else if (mainLum > 0.7) textColor = '#222';
+                      else if (mainLum < 0.3) textColor = '#fff';
+                      return (
+                        <button
+                          key={preset.name}
+                          className="blend-btn w-full text-left whitespace-nowrap"
+                          style={{
+                            background: pal.main,
+                            border: 'none',
+                            color: textColor,
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            overflow: 'hidden',
+                          }}
+                          onClick={() => handleApplyPreset(preset.name)}
+                        >
+                          {preset.name}
+                        </button>
+                      );
+                    })}
+                    <button
+                      className="blend-btn w-full text-left border-t border-white"
+                      style={{
+                        background: 'linear-gradient(90deg, #6C1CD1 0%, #4361EE 33%, #00FF99 66%, #FF1B1B 100%)',
+                        border: 'none',
+                        color: '#fff',
+                        textAlign: 'left',
+                      }}
+                      onClick={() => { setCustomPaletteOpen(true); setAppearanceDropdown(false); }}
+                    >
+                      Custom…
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setIsSettingsOpen(true)} className="blend-btn">Help</button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Canvas - fill all available space */}
+        <div
+          className="flex-1 relative min-h-0"
+          style={{ height: 'calc(100vh - 56px - 64px)' }}
+        >
+          <TonnextCanvas 
+            mode={mode} 
+            chordType={chordType}
+          />
+        </div>
+
+        {/* Sleek Footer with Controls */}
+        <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
+          <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full">
+            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('note')}>Note</button>
+            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('chord')}>Chord</button>
+            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
+            <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }}>
+              <button
+                className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
                 style={{
-                  position: 'absolute',
-                  left: 0,
-                  bottom: '100%',
-                  top: 'auto',
-                  zIndex: 100,
-                  background: 'var(--color-main)',
-                  color: '#fff',
                   minWidth: 120,
                   maxWidth: 400,
                   width: '100%',
-                  border: '1px solid var(--color-highlight)',
-                  borderRadius: 6,
-                  marginBottom: 4,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase',
-                  maxHeight: 330,
-                  overflowY: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  verticalAlign: 'middle',
+                  lineHeight: 1,
+                  height: '64px',
                 }}
+                onClick={() => setChordDropdownOpen((open) => !open)}
+                type="button"
               >
-                {CHORD_TYPES.map(opt => (
-                  <div
-                    key={opt.value}
-                    onClick={() => { setChordType(opt.value); setChordDropdownOpen(false); }}
-                    style={{
-                      padding: '0.4em 1em',
-                      cursor: 'pointer',
-                      background: chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
-                      color: chordType === opt.value ? 'var(--color-main)' : '#fff',
-                      borderBottom: '1px solid var(--color-highlight)',
-                      transition: 'background 0.2s, color 0.2s',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-highlight)', e.currentTarget.style.color = 'var(--color-main)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)', e.currentTarget.style.color = chordType === opt.value ? 'var(--color-main)' : '#fff')}
-                  >
-                    {opt.label}
-                  </div>
-                ))}
-              </div>
-            )}
+                <span
+                  style={{
+                    flex: '1 1 auto',
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'block',
+                    lineHeight: 1,
+                    textAlign: 'left'
+                  }}
+                >
+                  {CHORD_TYPES.find(opt => opt.value === chordType)?.label || 'Select Chord'}
+                </span>
+                <span
+                  style={{
+                    flex: '0 0 auto',
+                    marginLeft: 8,
+                    fontSize: '1.2rem',
+                    lineHeight: 1,
+                    alignSelf: 'center'
+                  }}
+                >
+                  ▲
+                </span>
+              </button>
+              {chordDropdownOpen && (
+                <div
+                  ref={chordDropdownRef}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    bottom: '100%',
+                    top: 'auto',
+                    zIndex: 100,
+                    background: 'var(--color-main)',
+                    color: '#fff',
+                    minWidth: 120,
+                    maxWidth: 400,
+                    width: '100%',
+                    border: '1px solid var(--color-highlight)',
+                    borderRadius: 6,
+                    marginBottom: 4,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    maxHeight: 330,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {CHORD_TYPES.map(opt => (
+                    <div
+                      key={opt.value}
+                      onClick={() => { setChordType(opt.value); setChordDropdownOpen(false); }}
+                      style={{
+                        padding: '0.4em 1em',
+                        cursor: 'pointer',
+                        background: chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
+                        color: chordType === opt.value ? 'var(--color-main)' : '#fff',
+                        borderBottom: '1px solid var(--color-highlight)',
+                        transition: 'background 0.2s, color 0.2s',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-highlight)', e.currentTarget.style.color = 'var(--color-main)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)', e.currentTarget.style.color = chordType === opt.value ? 'var(--color-main)' : '#fff')}
+                    >
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
 
-      {/* Settings Panel */}
-      {isSettingsOpen && (
-        <div className="bg-gray-800 border-b border-gray-700 p-4">
-          <Settings onClose={() => setIsSettingsOpen(false)} />
-        </div>
-      )}
+        {/* Settings Panel */}
+        {isSettingsOpen && (
+          <div className="bg-gray-800 border-b border-gray-700 p-4">
+            <Settings onClose={() => setIsSettingsOpen(false)} />
+          </div>
+        )}
 
-      {customPaletteOpen && (
-        <CustomPaletteModal
-          initialPalette={customPalette}
-          onApply={handleApplyCustomPalette}
-          onCancel={() => setCustomPaletteOpen(false)}
-        />
-      )}
+        {customPaletteOpen && (
+          <CustomPaletteModal
+            initialPalette={customPalette}
+            onApply={handleApplyCustomPalette}
+            onCancel={() => setCustomPaletteOpen(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

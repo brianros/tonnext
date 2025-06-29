@@ -15,15 +15,17 @@ const nodes = [
 ];
 
 export default function LoadingLogo() {
-  // 0: top, 1: bottom right, 2: bottom left
-  const [active, setActive] = useState(0);
+  // Track current and previous active nodes
+  const [current, setCurrent] = useState(0);
+  const [previous, setPrevious] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setActive((prev) => (prev + 1) % 3);
-    }, 600);
+      setPrevious(current);
+      setCurrent((prev) => (prev + 1) % 3);
+    }, 900); // slower animation
     return () => clearInterval(interval);
-  }, []);
+  }, [current]);
 
   return (
     <div style={{
@@ -47,8 +49,8 @@ export default function LoadingLogo() {
             cx={node.cx}
             cy={node.cy}
             r={28}
-            fill={active === i ? ACCENT_DARK : ACCENT}
-            style={{ transition: 'fill 0.2s' }}
+            fill={current === i ? ACCENT_DARK : previous === i ? ACCENT : '#e7cfc2'}
+            style={{ transition: 'fill 0.35s' }}
           />
         ))}
       </svg>

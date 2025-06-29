@@ -12,7 +12,6 @@ const STATE_OFF = 0;
 const STATE_GHOST = 1;
 const STATE_SUSTAIN = 2;
 const STATE_ON = 3;
-const STATE_NAMES = ['OFF', 'GHOST', 'SUSTAIN', 'ON'];
 const LAYOUT_RIEMANN = 'riemann';
 const LAYOUT_SONOME = 'sonome';
 
@@ -24,7 +23,7 @@ interface Tone {
   byChannel: Record<number, number>;
   channelsSust: Record<number, number>;
   released: Date | null;
-  cache: Record<string, any>;
+  cache: Record<string, unknown>;
 }
 
 interface Channel {
@@ -56,7 +55,6 @@ export function useTonnext(options: UseTonnextOptions) {
   const [density, setDensity] = useState(22);
   const [ghostDuration, setGhostDuration] = useState(500);
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
-  const [unitCellVisible, setUnitCellVisible] = useState(false);
   const [sustainEnabled, setSustainEnabled] = useState(true);
   
   // Data structures
@@ -181,31 +179,9 @@ export function useTonnext(options: UseTonnextOptions) {
     toneGridRef.current[tone].push(node);
   }, [layout, dimensions]);
 
-  const createLabel = useCallback((text: string, x: number, y: number): HTMLElement => {
-    const label = document.createElement('div');
-    const inner = document.createElement('div');
-    inner.appendChild(document.createTextNode(text));
-    label.appendChild(inner);
-    label.style.left = `${x}px`;
-    label.style.top = `${y}px`;
-    return label;
-  }, []);
-
   // Utility to get CSS variable
   function getCssVar(name: string, fallback: string) {
     return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
-      }
-
-  // Utility to check if a color is 'warm' (simple check: red/orange hue)
-  function isWarmColor(hex: string) {
-    // Remove # and parse
-    const c = hex.replace('#', '');
-    if (c.length !== 6) return false;
-    const r = parseInt(c.slice(0, 2), 16);
-    const g = parseInt(c.slice(2, 4), 16);
-    const b = parseInt(c.slice(4, 6), 16);
-    // Heuristic: warm if red is dominant and green < 180
-    return r > 180 && g < 180 && b < 150;
   }
 
   // Utility to check luminance (for contrast)
@@ -217,7 +193,7 @@ export function useTonnext(options: UseTonnextOptions) {
     const b = parseInt(c.slice(4, 6), 16) / 255;
     // Perceived luminance
     return 0.299 * r + 0.587 * g + 0.114 * b;
-    }
+  }
 
   const drawGrid = useCallback(()=>{
     if(!ctxRef.current) return;
@@ -397,7 +373,7 @@ export function useTonnext(options: UseTonnextOptions) {
     if (!ctxRef.current) return;
 
     const ctx = ctxRef.current;
-    const { width, height, unit } = dimensions;
+    const { width, height } = dimensions;
 
     ctx.clearRect(0, 0, width, height);
 
@@ -455,9 +431,8 @@ export function useTonnext(options: UseTonnextOptions) {
       activeRef.current[clickedTone] = true;
       drawGrid();
       if (synthRef.current) {
-      const note = TONE_NAMES[clickedTone] + '4';
-      synthRef.current.triggerAttackRelease(note, 0.3);
-    }
+        synthRef.current.triggerAttackRelease(TONE_NAMES[clickedTone] + '4', 0.3);
+      }
       setTimeout(() => {
         activeRef.current[clickedTone] = false;
         drawGrid();
@@ -482,29 +457,28 @@ export function useTonnext(options: UseTonnextOptions) {
       const intervals = getChordIntervals(options.chordType);
       const notesIdx = intervals.map(i => (root + i) % 12);
       const notes = notesIdx.map(i => TONE_NAMES[i] + '4');
-      let arpeggioTimeouts: NodeJS.Timeout[] = [];
       // Clear all highlights first
       for (let i = 0; i < 12; i++) activeRef.current[i] = false;
       drawGrid();
       // Play arpeggio
       const arpeggioStep = 160; // ms
       notesIdx.forEach((idx, step) => {
-        arpeggioTimeouts.push(setTimeout(() => {
+        setTimeout(() => {
           activeRef.current[idx] = true;
           drawGrid();
           polySynthRef.current!.triggerAttackRelease(TONE_NAMES[idx] + '4', arpeggioStep / 1000); // duration in seconds
-        }, step * arpeggioStep));
+        }, step * arpeggioStep);
       });
       // After arpeggio, add a pause (same as step), then play full chord and keep all highlighted
       const arpeggioPause = arpeggioStep; // ms
-      arpeggioTimeouts.push(setTimeout(() => {
+      setTimeout(() => {
         polySynthRef.current!.triggerAttackRelease(notes, (arpeggioStep * 3) / 1000); // chord duration = step * 3
-      }, notesIdx.length * arpeggioStep + arpeggioPause));
+      }, notesIdx.length * arpeggioStep + arpeggioPause);
       // After full chord, clear highlights
-      arpeggioTimeouts.push(setTimeout(() => {
+      setTimeout(() => {
         notesIdx.forEach(i => { activeRef.current[i] = false; });
-    drawGrid();
-      }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3));
+        drawGrid();
+      }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3);
     }
   }, [drawGrid,dimensions,options]);
 
@@ -531,21 +505,6 @@ export function useTonnext(options: UseTonnextOptions) {
     if (canvasRef.current) {
       canvasRef.current.style.cursor = 'default';
     }
-  }, []);
-
-  const getToneAtPosition = useCallback((x: number, y: number): number | null => {
-    if (x < 0 || y < 0 || x > dimensions.width || y > dimensions.height) {
-      return null;
-    }
-
-    // Simplified - you'll want to port the full logic
-    const toneIndex = Math.floor((x / dimensions.width) * 12);
-    return toneIndex >= 0 && toneIndex < 12 ? toneIndex : null;
-  }, [dimensions]);
-
-  const isToneActive = useCallback((tone: number): boolean => {
-    if (tone < 0 || tone >= 12) return false;
-    return tonesRef.current[tone]?.state !== STATE_OFF;
   }, []);
 
   const noteOn = useCallback((channel: number, pitch: number) => {
@@ -575,7 +534,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
   const noteOff = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
-      const note = TONE_NAMES[pitch % 12];
+      
       synthRef.current.triggerRelease();
     }
 
@@ -701,7 +660,6 @@ export function useTonnext(options: UseTonnextOptions) {
     setDensity,
     setGhostDuration,
     setLayout,
-    setUnitCellVisible,
     setSustainEnabled,
   };
 } 

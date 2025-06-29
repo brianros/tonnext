@@ -59,11 +59,11 @@ packages:
     engines: {node: '>=10'}
 
   '@ampproject/remapping@2.3.0':
-    resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
+    resolution: {integrity: sha512-30iZtAPgdFKfMnS91kRMHJUjNB3on87m+abYgvt1n60NoD/E94Ue37hF6vfD7NmhWQdQRca93E3fyjyhRYVuPI==}
     engines: {node: '>=6.0.0'}
 
   '@babel/runtime@7.27.6':
-    resolution: {integrity: sha512-vbavdySgbTTrmFE+EsiqUTzlOr5bzlnJtUv9PynGCAKvfQqjIXbvFdumPM/GxMDfyuGMJaJAU6TO4zc1Jf1i8Q==}
+    resolution: {integrity: sha512-vbavdySgbTTrmFE+EsiqUBrXqn8Q/VtDb04gAl06NmbVH6m3jCN7hZgZr+vdS6QB3w7OtfW+DQQ7bP0NmbDe5Q==}
     engines: {node: '>=6.9.0'}
 
   '@emnapi/core@1.4.3':

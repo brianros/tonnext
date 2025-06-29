@@ -65,7 +65,6 @@ const PALETTE_PREVIEW = {
 };
 
 function HomeContent() {
-  const [activeTab, setActiveTab] = useState<'controls' | 'appearance' | 'sound' | 'help'>('controls');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [mode, setMode] = useState<'note' | 'chord' | 'arpeggio'>('note');
   const [chordType, setChordType] = useState<string>('major');
@@ -240,7 +239,7 @@ function HomeContent() {
                 </div>
               )}
             </div>
-            <button onClick={() => setActiveTab('help')} className="blend-btn">Help</button>
+            <button onClick={() => setIsSettingsOpen(true)} className="blend-btn">Help</button>
           </div>
         </div>
       </header>

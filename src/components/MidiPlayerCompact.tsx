@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useRef, useCallback, useState, useEffect } from 'react';
-import { MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
+import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
-import * as Tone from 'tone';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -29,19 +28,24 @@ export default function MidiPlayerCompact({
     isPlaying: boolean;
     currentTime: number;
     duration: number;
-    midiData: any;
+    midiData: MidiData | null;
     fileName: string;
   } | null>(null);
 
   // Get shared functions from context
   const [playerFunctions, setPlayerFunctions] = useState<{
-    parseMidiFile: (file: File) => Promise<any>;
-    loadMidiFromUrl: (url: string, fileName: string) => Promise<any>;
+    parseMidiFile: (file: File) => Promise<MidiData | null>;
+    loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;
     pausePlayback: () => void;
     seekTo: (time: number) => void;
-    setNoteCallbacks: (callbacks: any) => void;
+    setNoteCallbacks: (callbacks: {
+      onNoteStart?: (note: MidiNote) => void;
+      onNoteEnd?: (note: MidiNote) => void;
+      onChordStart?: (chord: MidiChord) => void;
+      onChordEnd?: (chord: MidiChord) => void;
+    }) => void;
   } | null>(null);
 
   // Update local state when context state changes

@@ -1,8 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable no-use-before-define */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
 
@@ -10,9 +7,6 @@ import * as Tone from 'tone';
 const TONE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const STATE_OFF = 0;
 const STATE_GHOST = 1;
-const STATE_SUSTAIN = 2;
-const STATE_ON = 3;
-const STATE_NAMES = ['OFF', 'GHOST', 'SUSTAIN', 'ON'];
 const LAYOUT_RIEMANN = 'riemann';
 const LAYOUT_SONOME = 'sonome';
 
@@ -24,7 +18,7 @@ interface Tone {
   byChannel: Record<number, number>;
   channelsSust: Record<number, number>;
   released: Date | null;
-  cache: Record<string, any>;
+  cache: Record<string, unknown>;
 }
 
 interface Channel {
@@ -56,8 +50,6 @@ export function useTonnext(options: UseTonnextOptions) {
   const [density, setDensity] = useState(32);
   const [ghostDuration, setGhostDuration] = useState(500);
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
-  const [unitCellVisible, setUnitCellVisible] = useState(false);
-  const [sustainEnabled, setSustainEnabled] = useState(true);
   
   // Data structures
   const tonesRef = useRef<Tone[]>([]);
@@ -182,31 +174,9 @@ export function useTonnext(options: UseTonnextOptions) {
     toneGridRef.current[tone].push(node);
   }, [layout, dimensions]);
 
-  const createLabel = useCallback((text: string, x: number, y: number): HTMLElement => {
-    const label = document.createElement('div');
-    const inner = document.createElement('div');
-    inner.appendChild(document.createTextNode(text));
-    label.appendChild(inner);
-    label.style.left = `${x}px`;
-    label.style.top = `${y}px`;
-    return label;
-  }, []);
-
   // Utility to get CSS variable
   function getCssVar(name: string, fallback: string) {
     return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
-      }
-
-  // Utility to check if a color is 'warm' (simple check: red/orange hue)
-  function isWarmColor(hex: string) {
-    // Remove # and parse
-    const c = hex.replace('#', '');
-    if (c.length !== 6) return false;
-    const r = parseInt(c.slice(0, 2), 16);
-    const g = parseInt(c.slice(2, 4), 16);
-    const b = parseInt(c.slice(4, 6), 16);
-    // Heuristic: warm if red is dominant and green < 180
-    return r > 180 && g < 180 && b < 150;
   }
 
   // Utility to check luminance (for contrast)
@@ -218,7 +188,7 @@ export function useTonnext(options: UseTonnextOptions) {
     const b = parseInt(c.slice(4, 6), 16) / 255;
     // Perceived luminance
     return 0.299 * r + 0.587 * g + 0.114 * b;
-    }
+  }
 
   const drawGrid = useCallback(()=>{
     if(!ctxRef.current) return;
@@ -398,7 +368,7 @@ export function useTonnext(options: UseTonnextOptions) {
     if (!ctxRef.current) return;
 
     const ctx = ctxRef.current;
-    const { width, height, unit } = dimensions;
+    const { width, height } = dimensions;
 
     ctx.clearRect(0, 0, width, height);
 
@@ -579,21 +549,6 @@ export function useTonnext(options: UseTonnextOptions) {
     }
   }, []);
 
-  const getToneAtPosition = useCallback((x: number, y: number): number | null => {
-    if (x < 0 || y < 0 || x > dimensions.width || y > dimensions.height) {
-      return null;
-    }
-
-    // Simplified - you'll want to port the full logic
-    const toneIndex = Math.floor((x / dimensions.width) * 12);
-    return toneIndex >= 0 && toneIndex < 12 ? toneIndex : null;
-  }, [dimensions]);
-
-  const isToneActive = useCallback((tone: number): boolean => {
-    if (tone < 0 || tone >= 12) return false;
-    return tonesRef.current[tone]?.state !== STATE_OFF;
-  }, []);
-
   const noteOn = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
       const note = TONE_NAMES[pitch % 12];
@@ -754,8 +709,8 @@ export function useTonnext(options: UseTonnextOptions) {
     setDensity,
     setGhostDuration,
     setLayout,
-    setUnitCellVisible,
-    setSustainEnabled,
+    // setUnitCellVisible,
+    // setSustainEnabled,
     // MIDI Integration
     handleMidiNoteStart,
     handleMidiNoteEnd,

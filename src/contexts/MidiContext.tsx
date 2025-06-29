@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useRef } from 'react';
-import { MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
+import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 
 interface MidiContextType {
   setCanvasCallbacks: (callbacks: {
@@ -21,34 +21,44 @@ interface MidiContextType {
     isPlaying: boolean;
     currentTime: number;
     duration: number;
-    midiData: any;
+    midiData: MidiData | null;
     fileName: string;
   }) => void;
   getMidiPlayerState: () => {
     isPlaying: boolean;
     currentTime: number;
     duration: number;
-    midiData: any;
+    midiData: MidiData | null;
     fileName: string;
   } | null;
   // MIDI Player functions
   setMidiPlayerFunctions: (functions: {
-    parseMidiFile: (file: File) => Promise<any>;
-    loadMidiFromUrl: (url: string, fileName: string) => Promise<any>;
+    parseMidiFile: (file: File) => Promise<MidiData | null>;
+    loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;
     pausePlayback: () => void;
     seekTo: (time: number) => void;
-    setNoteCallbacks: (callbacks: any) => void;
+    setNoteCallbacks: (callbacks: {
+      onNoteStart?: (note: MidiNote) => void;
+      onNoteEnd?: (note: MidiNote) => void;
+      onChordStart?: (chord: MidiChord) => void;
+      onChordEnd?: (chord: MidiChord) => void;
+    }) => void;
   }) => void;
   getMidiPlayerFunctions: () => {
-    parseMidiFile: (file: File) => Promise<any>;
-    loadMidiFromUrl: (url: string, fileName: string) => Promise<any>;
+    parseMidiFile: (file: File) => Promise<MidiData | null>;
+    loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;
     pausePlayback: () => void;
     seekTo: (time: number) => void;
-    setNoteCallbacks: (callbacks: any) => void;
+    setNoteCallbacks: (callbacks: {
+      onNoteStart?: (note: MidiNote) => void;
+      onNoteEnd?: (note: MidiNote) => void;
+      onChordStart?: (chord: MidiChord) => void;
+      onChordEnd?: (chord: MidiChord) => void;
+    }) => void;
   } | null;
 }
 
@@ -66,18 +76,23 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
     isPlaying: boolean;
     currentTime: number;
     duration: number;
-    midiData: any;
+    midiData: MidiData | null;
     fileName: string;
   } | null>(null);
 
   const midiPlayerFunctionsRef = useRef<{
-    parseMidiFile: (file: File) => Promise<any>;
-    loadMidiFromUrl: (url: string, fileName: string) => Promise<any>;
+    parseMidiFile: (file: File) => Promise<MidiData | null>;
+    loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;
     pausePlayback: () => void;
     seekTo: (time: number) => void;
-    setNoteCallbacks: (callbacks: any) => void;
+    setNoteCallbacks: (callbacks: {
+      onNoteStart?: (note: MidiNote) => void;
+      onNoteEnd?: (note: MidiNote) => void;
+      onChordStart?: (chord: MidiChord) => void;
+      onChordEnd?: (chord: MidiChord) => void;
+    }) => void;
   } | null>(null);
 
   const setCanvasCallbacks = (callbacks: typeof canvasCallbacksRef.current) => {

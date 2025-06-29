@@ -3,7 +3,6 @@
 import React, { useRef, useCallback } from 'react';
 import { useMidiPlayer, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
-import * as Tone from 'tone';
 
 interface MidiPlayerProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -28,7 +27,6 @@ export default function MidiPlayer({
     midiData,
     fileName,
     parseMidiFile,
-    loadMidiFromUrl,
     startPlayback,
     stopPlayback,
     pausePlayback,

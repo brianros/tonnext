@@ -112,7 +112,7 @@ export default function Settings({ onClose }: SettingsProps) {
             Palette Presets
           </label>
           <div className="space-y-2">
-            {PALETTE_PRESETS.map((preset, i) => (
+            {PALETTE_PRESETS.map((preset) => (
               <button
                 key={preset.name}
                 className="flex items-center space-x-2 w-full rounded border border-gray-500 hover:border-white p-1 mb-1"

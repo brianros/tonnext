@@ -42,11 +42,8 @@ export function useMidiPlayer() {
   
   const { setMidiPlayerState, setMidiPlayerFunctions } = useMidiContext();
   
-  const playerRef = useRef<Tone.Player | null>(null);
   const synthRef = useRef<Tone.PolySynth | null>(null);
-  const scheduledNotesRef = useRef<Map<number, MidiNote[]>>(new Map());
   const currentNotesRef = useRef<Set<number>>(new Set());
-  const playbackStartTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number | null>(null);
   const isPlayingRef = useRef<boolean>(false);
   const scheduleIdsRef = useRef<Set<string>>(new Set());
@@ -224,14 +221,14 @@ export function useMidiPlayer() {
           const endId = `note-end-${trackIndex}-${noteIndex}`;
           
           // Schedule note start
-          const startSchedule = Tone.Transport.schedule((time) => {
+          Tone.Transport.schedule((time) => {
             currentNotesRef.current.add(note.midi);
             synthRef.current?.triggerAttack(note.note, time, note.velocity);
             onNoteStartRef.current(note);
           }, note.time);
 
           // Schedule note end
-          const endSchedule = Tone.Transport.schedule((time) => {
+          Tone.Transport.schedule((time) => {
             currentNotesRef.current.delete(note.midi);
             synthRef.current?.triggerRelease(note.note, time);
             onNoteEndRef.current(note);
@@ -381,14 +378,14 @@ export function useMidiPlayer() {
             const endId = `note-end-seek-${trackIndex}-${noteIndex}`;
             
             // Schedule note start
-            const startSchedule = Tone.Transport.schedule((time) => {
+            Tone.Transport.schedule((time) => {
               currentNotesRef.current.add(note.midi);
               synthRef.current?.triggerAttack(note.note, time, note.velocity);
               onNoteStartRef.current(note);
             }, note.time);
 
             // Schedule note end
-            const endSchedule = Tone.Transport.schedule((time) => {
+            Tone.Transport.schedule((time) => {
               currentNotesRef.current.delete(note.midi);
               synthRef.current?.triggerRelease(note.note, time);
               onNoteEndRef.current(note);

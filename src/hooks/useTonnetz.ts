@@ -59,7 +59,8 @@ export function useTonnext(options: UseTonnextOptions) {
   const polySynthRef = useRef<Tone.PolySynth | null>(null);
   
   // State
-  const [density, setDensity] = useState(32);
+  const getResponsiveDensity = () => Math.max(16, Math.min(40, Math.floor(window.innerWidth / 32)));
+  const [density, setDensity] = useState(getResponsiveDensity());
   const [ghostDuration, setGhostDuration] = useState(500);
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
   const [sustainEnabled, setSustainEnabled] = useState(false);
@@ -527,6 +528,7 @@ export function useTonnext(options: UseTonnextOptions) {
           ctx.fillStyle = '#1a1a1a';
           ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
+        setDensity(getResponsiveDensity());
         rebuild();
       }
     };

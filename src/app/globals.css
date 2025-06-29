@@ -103,7 +103,7 @@ html, body {
   box-shadow: none;
   transition: background 0.2s, color 0.2s;
   padding: 0.5em 1.5em;
-  font-size: 1.6rem;
+  font-size: clamp(1rem, 2vw, 1.6rem);
   letter-spacing: 0.01em;
   height: 64px;
   display: flex;
@@ -139,7 +139,7 @@ html, body {
   box-shadow: none;
   transition: background 0.2s, color 0.2s;
   padding: 0.5em 1.5em;
-  font-size: 1.6rem;
+  font-size: clamp(1rem, 2vw, 1.6rem);
   letter-spacing: 0.01em;
   height: 56px;
   min-width: 120px;
@@ -157,7 +157,7 @@ html, body {
 .chord-option {
   color: #fff;
   background: var(--color-main);
-  font-size: 1.6rem;
+  font-size: clamp(1rem, 2vw, 1.6rem);
   font-weight: bold;
   text-transform: uppercase;
   padding: 0.5em 1.5em;
@@ -177,4 +177,21 @@ html, body {
 .midi-theme-btn:hover, .midi-theme-btn:focus {
   background: var(--color-hover) !important;
   color: var(--color-main) !important;
+}
+
+.tonnext-title {
+  display: flex;
+}
+.tonnext-logo {
+  display: none;
+}
+@media (max-width: 639px) {
+  .tonnext-title {
+    display: none !important;
+  }
+  .tonnext-logo {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
 }

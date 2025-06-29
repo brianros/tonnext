@@ -143,7 +143,13 @@ function HomeContent() {
       <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
         <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
           <div className="flex items-center space-x-4 flex-shrink-0">
-            <h1 className="blend-btn" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none'}} >Tonnext</h1>
+            <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
+            {/* Triangle logo for mobile */}
+            <span className="tonnext-logo" style={{height: 'clamp(28px, 8vw, 40px)', width: 'clamp(28px, 8vw, 40px)'}}>
+              <svg viewBox="0 0 100 100" width="100%" height="100%" fill="white" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,10 90,90 10,90" />
+              </svg>
+            </span>
             <div className="flex-shrink-0">
               <MidiPlayerCompact />
             </div>
@@ -252,17 +258,17 @@ function HomeContent() {
 
       {/* Sleek Footer with Controls */}
       <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
-        <div className="max-w-7xl mx-auto flex flex-row items-center justify-center gap-6 h-full">
-          <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
-          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
-          <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-          <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full">
+          <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('note')}>Note</button>
+          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('chord')}>Chord</button>
+          <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
+          <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }}>
             <button
               className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
               style={{
-                minWidth: 196,
-                maxWidth: 306,
-                width: 306,
+                minWidth: 120,
+                maxWidth: 400,
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
@@ -310,9 +316,9 @@ function HomeContent() {
                   zIndex: 100,
                   background: 'var(--color-main)',
                   color: '#fff',
-                  minWidth: 196,
-                  maxWidth: 306,
-                  width: 306,
+                  minWidth: 120,
+                  maxWidth: 400,
+                  width: '100%',
                   border: '1px solid var(--color-highlight)',
                   borderRadius: 6,
                   marginBottom: 4,

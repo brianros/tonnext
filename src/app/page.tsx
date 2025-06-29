@@ -260,16 +260,14 @@ function HomeContent() {
             <button
               className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
               style={{
-                minWidth: 336,
-                maxWidth: 399,
-                width: 437,
+                minWidth: 196,
+                maxWidth: 306,
+                width: 306,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
                 verticalAlign: 'middle',
                 lineHeight: 1,
-                background: 'var(--color-highlight)',
-                color: 'var(--color-main)',
                 height: '64px',
               }}
               onClick={() => setChordDropdownOpen((open) => !open)}
@@ -312,9 +310,9 @@ function HomeContent() {
                   zIndex: 100,
                   background: 'var(--color-main)',
                   color: '#fff',
-                  minWidth: 280,
-                  maxWidth: 333,
-                  width: 364,
+                  minWidth: 196,
+                  maxWidth: 306,
+                  width: 306,
                   border: '1px solid var(--color-highlight)',
                   borderRadius: 6,
                   marginBottom: 4,
@@ -340,7 +338,8 @@ function HomeContent() {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      maxWidth: 294,
+                      width: '100%',
+                      boxSizing: 'border-box',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-highlight)', e.currentTarget.style.color = 'var(--color-main)')}
                     onMouseLeave={e => (e.currentTarget.style.background = chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)', e.currentTarget.style.color = chordType === opt.value ? 'var(--color-main)' : '#fff')}

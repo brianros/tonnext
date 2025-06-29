@@ -120,8 +120,8 @@ export default function Settings({ onClose }: SettingsProps) {
                 onClick={() => handlePreset(preset.colors)}
               >
                 <span className="w-20 text-left text-white text-xs font-bold">{preset.name}</span>
-                {Object.values(preset.colors).map((color, j) => (
-                  <span key={j} className="inline-block w-6 h-6 rounded" style={{ background: color, border: '1px solid #333' }} />
+                {Object.values(preset.colors).map((color, _) => (
+                  <span key={_} className="inline-block w-6 h-6 rounded" style={{ background: color, border: '1px solid #333' }} />
                 ))}
               </button>
             ))}

@@ -1,8 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable no-use-before-define */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
 
@@ -177,7 +174,7 @@ export function useTonnext(options: UseTonnextOptions) {
     const node = { x, y, tone };
     // Add to grid
     toneGridRef.current[tone].push(node);
-  }, [layout, dimensions]);
+  }, [dimensions]);
 
   // Utility to get CSS variable
   function getCssVar(name: string, fallback: string) {
@@ -509,8 +506,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
   const noteOn = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
-      const note = TONE_NAMES[pitch % 12];
-      synthRef.current.triggerAttack(note);
+      synthRef.current.triggerAttack(TONE_NAMES[pitch % 12]);
     }
 
     if (!(pitch in channelsRef.current[channel].pitches)) {

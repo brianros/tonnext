@@ -172,7 +172,7 @@ export function useTonnext(options: UseTonnextOptions) {
     const node = { x, y, tone };
     // Add to grid
     toneGridRef.current[tone].push(node);
-  }, [layout, dimensions]);
+  }, [dimensions]);
 
   // Utility to get CSS variable
   function getCssVar(name: string, fallback: string) {
@@ -609,16 +609,6 @@ export function useTonnext(options: UseTonnextOptions) {
     updateHighlights();
   }, [updateHighlights]);
 
-  const releaseTone = useCallback((tone: Tone) => {
-    tone.released = new Date();
-    if (ghostDuration > 0) {
-      tone.state = STATE_GHOST;
-      startGhosts();
-    } else {
-      tone.state = STATE_OFF;
-    }
-  }, [ghostDuration]);
-
   const startGhosts = useCallback(() => {
     if (ghostsIntervalRef.current === null) {
       ghostsIntervalRef.current = setInterval(() => {
@@ -709,8 +699,6 @@ export function useTonnext(options: UseTonnextOptions) {
     setDensity,
     setGhostDuration,
     setLayout,
-    // setUnitCellVisible,
-    // setSustainEnabled,
     // MIDI Integration
     handleMidiNoteStart,
     handleMidiNoteEnd,

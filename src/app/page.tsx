@@ -66,7 +66,7 @@ const PALETTE_PREVIEW = {
 
 function HomeContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [mode, setMode] = useState<'note' | 'chord' | 'arpeggio'>('note');
+  const [mode, setMode] = useState<'note' | 'chord' | 'arpeggio'>('arpeggio');
   const [chordType, setChordType] = useState<string>('major');
   const [appearanceDropdown, setAppearanceDropdown] = useState(false);
   const appearanceBtnRef = useRef<HTMLButtonElement>(null);
@@ -253,9 +253,9 @@ function HomeContent() {
       {/* Sleek Footer with Controls */}
       <footer style={{ background: 'var(--color-main)', height: '64px', minHeight: '64px' }}>
         <div className="max-w-7xl mx-auto flex flex-row items-center justify-center gap-6 h-full">
-          <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
-          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
           <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
+          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
+          <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <button
               className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
@@ -268,6 +268,8 @@ function HomeContent() {
                 justifyContent: 'flex-start',
                 verticalAlign: 'middle',
                 lineHeight: 1,
+                background: 'var(--color-highlight)',
+                color: 'var(--color-main)',
               }}
               onClick={() => setChordDropdownOpen((open) => !open)}
               type="button"
@@ -319,7 +321,7 @@ function HomeContent() {
                   fontSize: '1.1rem',
                   fontWeight: 'bold',
                   textTransform: 'uppercase',
-                  maxHeight: 220,
+                  maxHeight: 330,
                   overflowY: 'auto',
                 }}
               >

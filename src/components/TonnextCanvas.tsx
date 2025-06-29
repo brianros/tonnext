@@ -14,7 +14,7 @@ export default function TonnextCanvas({
   chordType
 }: TonnextCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { setCanvasCallbacks } = useMidiContext();
+  const { setCanvasCallbacks, getMidiPlayerState } = useMidiContext();
   const { 
     initTonnext, 
     handleCanvasClick, 
@@ -55,6 +55,12 @@ export default function TonnextCanvas({
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
+    
+    // Check if MIDI is playing and disable clicks if it is
+    const midiState = getMidiPlayerState();
+    if (midiState?.isPlaying) {
+      return; // Disable clicks while MIDI is playing
+    }
     
     const rect = canvasRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;

@@ -63,75 +63,32 @@ export function useTonnext(options: UseTonnextOptions) {
 
   const audioStartedRef = useRef(false);
 
-  const initTonnext = useCallback((canvas: HTMLCanvasElement) => {
-    canvasRef.current = canvas;
-    ctxRef.current = canvas.getContext('2d');
-    
-    if (!ctxRef.current) return;
+  // Utility to get CSS variable
+  function getCssVar(name: string, fallback: string) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
+  }
 
-    // Initialize audio
-    synthRef.current = new Tone.Synth().toDestination();
-    polySynthRef.current = new Tone.PolySynth().toDestination();
-    
-    // Initialize tones
-    tonesRef.current = Array.from({ length: 12 }, (_, i) => ({
-      pitch: i,
-      name: TONE_NAMES[i],
-      state: STATE_OFF,
-      byChannel: {},
-      channelsSust: {},
-      released: null,
-      cache: {}
-    }));
+  // Utility to check luminance (for contrast)
+  function getLuminance(hex: string) {
+    const c = hex.replace('#', '');
+    if (c.length !== 6) return 1;
+    const r = parseInt(c.slice(0, 2), 16) / 255;
+    const g = parseInt(c.slice(2, 4), 16) / 255;
+    const b = parseInt(c.slice(4, 6), 16) / 255;
+    // Perceived luminance
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
 
-    // Initialize channels
-    channelsRef.current = Array.from({ length: 17 }, (_, i) => ({
-      number: i,
-      pitches: {},
-      sustTones: {},
-      sustain: false
-    }));
+  // 1. addNode
+  const addNode = useCallback((tone: number, x: number, y: number, unit: number) => {
+    if (x < -unit || y < -unit || x > dimensions.width + unit || y > dimensions.height + unit) {
+      return;
+    }
+    const node = { x, y, tone };
+    toneGridRef.current[tone].push(node);
+  }, [dimensions]);
 
-    // Initialize tone grid
-    toneGridRef.current = Array.from({ length: 12 }, () => []);
-
-    // Set canvas size to parent container size
-    const parent = canvas.parentElement;
-    const width = parent ? parent.clientWidth : window.innerWidth;
-    const height = parent ? parent.clientHeight : window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    
-    // Draw initial background
-    const ctx = ctxRef.current;
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    setIsInitialized(true);
-    rebuild();
-  }, []);
-
-  const rebuild = useCallback(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    // Use parent container size
-    const parent = canvas.parentElement;
-    const width = parent ? parent.clientWidth : window.innerWidth;
-    const height = parent ? parent.clientHeight : window.innerHeight;
-    const unit = (width + height) / density;
-
-    canvas.width = width;
-    canvas.height = height;
-    
-    setDimensions({ width, height, unit });
-
-    // Build tone grid based on layout
-    buildToneGrid(width, height, unit);
-    
-    draw(true);
-  }, [density, layout]);
-
+  // 7. buildToneGrid
   const buildToneGrid = useCallback((width: number, height: number, unit: number) => {
     const SQRT_3 = Math.sqrt(3);
     
@@ -158,35 +115,9 @@ export function useTonnext(options: UseTonnextOptions) {
         }
       }
     }
-  }, [layout]);
+  }, [layout, addNode]);
 
-  const addNode = useCallback((tone: number, x: number, y: number, unit: number) => {
-    if (x < -unit || y < -unit || x > dimensions.width + unit || y > dimensions.height + unit) {
-      return;
-    }
-
-    // Only store node position and tone, no DOM label
-    const node = { x, y, tone };
-    // Add to grid
-    toneGridRef.current[tone].push(node);
-  }, [dimensions]);
-
-  // Utility to get CSS variable
-  function getCssVar(name: string, fallback: string) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
-  }
-
-  // Utility to check luminance (for contrast)
-  function getLuminance(hex: string) {
-    const c = hex.replace('#', '');
-    if (c.length !== 6) return 1;
-    const r = parseInt(c.slice(0, 2), 16) / 255;
-    const g = parseInt(c.slice(2, 4), 16) / 255;
-    const b = parseInt(c.slice(4, 6), 16) / 255;
-    // Perceived luminance
-    return 0.299 * r + 0.587 * g + 0.114 * b;
-  }
-
+  // 3. drawGrid
   const drawGrid = useCallback(()=>{
     if(!ctxRef.current) return;
     const ctx = ctxRef.current;
@@ -370,8 +301,9 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.fillText(noteName, x, y);
       ctx.shadowBlur = 0;
     });
-  },[dimensions,layout]);
+  },[dimensions,layout,activeRef]);
 
+  // 4. drawNow
   const drawNow = useCallback(() => {
     drawTimeoutRef.current = null;
     
@@ -386,7 +318,7 @@ export function useTonnext(options: UseTonnextOptions) {
     drawGrid();
   }, [dimensions, drawGrid]);
 
-  // Add draw function after drawNow
+  // 5. draw
   const draw = useCallback((immediately = false) => {
     if (immediately) {
       if (drawTimeoutRef.current) {
@@ -397,6 +329,77 @@ export function useTonnext(options: UseTonnextOptions) {
       drawTimeoutRef.current = setTimeout(drawNow, 30);
     }
   }, [drawNow]);
+
+  // 6. rebuild
+  const rebuild = useCallback(() => {
+    if (!canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    // Use parent container size
+    const parent = canvas.parentElement;
+    const width = parent ? parent.clientWidth : window.innerWidth;
+    const height = parent ? parent.clientHeight : window.innerHeight;
+    const unit = (width + height) / density;
+
+    canvas.width = width;
+    canvas.height = height;
+    
+    setDimensions({ width, height, unit });
+
+    // Build tone grid based on layout
+    buildToneGrid(width, height, unit);
+    
+    draw(true);
+  }, [density, layout, buildToneGrid, draw]);
+
+  // 7. initTonnext
+  const initTonnext = useCallback((canvas: HTMLCanvasElement) => {
+    canvasRef.current = canvas;
+    ctxRef.current = canvas.getContext('2d');
+    
+    if (!ctxRef.current) return;
+
+    // Initialize audio
+    synthRef.current = new Tone.Synth().toDestination();
+    polySynthRef.current = new Tone.PolySynth().toDestination();
+    
+    // Initialize tones
+    tonesRef.current = Array.from({ length: 12 }, (_, i) => ({
+      pitch: i,
+      name: TONE_NAMES[i],
+      state: STATE_OFF,
+      byChannel: {},
+      channelsSust: {},
+      released: null,
+      cache: {}
+    }));
+
+    // Initialize channels
+    channelsRef.current = Array.from({ length: 17 }, (_, i) => ({
+      number: i,
+      pitches: {},
+      sustTones: {},
+      sustain: false
+    }));
+
+    // Initialize tone grid
+    toneGridRef.current = Array.from({ length: 12 }, () => []);
+
+    // Set canvas size to parent container size
+    const parent = canvas.parentElement;
+    const width = parent ? parent.clientWidth : window.innerWidth;
+    const height = parent ? parent.clientHeight : window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Draw initial background
+    const ctx = ctxRef.current;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    setIsInitialized(true);
+    rebuild();
+  }, [rebuild]);
 
   const handleCanvasClick = useCallback(async (x: number, y: number) => {
     // Resume Tone.js audio context on first interaction
@@ -531,7 +534,7 @@ export function useTonnext(options: UseTonnextOptions) {
         drawGrid();
       }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3));
     }
-  }, [drawGrid,dimensions,options]);
+  }, [drawGrid,dimensions,options,synthRef,polySynthRef,activeRef,arpeggioTimeoutsRef]);
 
   const handleMouseMove = useCallback((x: number, y: number) => {
     if (canvasRef.current) {
@@ -550,13 +553,13 @@ export function useTonnext(options: UseTonnextOptions) {
       }
       canvasRef.current.style.cursor = overNode ? 'pointer' : 'default';
     }
-  }, [dimensions]);
+  }, [dimensions, nodesRef]);
 
   const handleMouseLeave = useCallback(() => {
     if (canvasRef.current) {
       canvasRef.current.style.cursor = 'default';
     }
-  }, []);
+  }, [canvasRef]);
 
   const noteOn = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
@@ -564,7 +567,7 @@ export function useTonnext(options: UseTonnextOptions) {
       const octave = Math.floor(pitch / 12) + 4;
       synthRef.current.triggerAttack(note + octave);
     }
-  }, []);
+  }, [synthRef]);
 
   const noteOff = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
@@ -572,7 +575,7 @@ export function useTonnext(options: UseTonnextOptions) {
       const octave = Math.floor(pitch / 12) + 4;
       synthRef.current.triggerRelease(note + octave);
     }
-  }, []);
+  }, [synthRef]);
 
   // Function to update highlights without rebuilding the grid
   const updateHighlights = useCallback(() => {
@@ -618,11 +621,11 @@ export function useTonnext(options: UseTonnextOptions) {
     updateHighlights();
   }, [updateHighlights]);
 
-  useEffect(()=>{
-    if(isInitialized){
+  useEffect(() => {
+    if (isInitialized) {
       drawGrid();
     }
-  },[drawGrid,isInitialized]);
+  }, [drawGrid, isInitialized]);
 
   // Handle window resize
   useEffect(() => {
@@ -641,7 +644,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [rebuild]);
 
   // Handle mouse wheel for zoom
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
@@ -652,7 +655,7 @@ export function useTonnext(options: UseTonnextOptions) {
   // Rebuild grid when density changes (for zoom)
   useEffect(() => {
     rebuild();
-  }, [density]);
+  }, [density, rebuild]);
 
   // Redraw canvas when palette CSS variables change
   useEffect(() => {

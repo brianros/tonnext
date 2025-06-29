@@ -41,7 +41,7 @@ export default function TonnextCanvas({
       canvas.addEventListener('wheel', wheelHandler, { passive: false });
       return () => canvas.removeEventListener('wheel', wheelHandler);
     }
-  }, [initTonnext, isInitialized]);
+  }, [initTonnext, isInitialized, handleWheel]);
 
   // Register canvas callbacks with the context
   useEffect(() => {

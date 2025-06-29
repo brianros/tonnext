@@ -30,152 +30,12 @@ interface Channel {
   sustain: boolean;
 }
 
-interface TonnextNode {
-  x: number;
-  y: number;
-  tone: number;
-}
-
 interface UseTonnextOptions {
   mode: 'note' | 'chord' | 'arpeggio';
   chordType: string;
 }
 
 export function useTonnext(options: UseTonnextOptions) {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
-  const synthRef = useRef<Tone.Synth | null>(null);
-  const polySynthRef = useRef<Tone.PolySynth | null>(null);
-  
-  // State
-  const [density, setDensity] = useState(22);
-  const [ghostDuration, setGhostDuration] = useState(500);
-  const [layout, setLayout] = useState(LAYOUT_RIEMANN);
-  const [sustainEnabled, setSustainEnabled] = useState(true);
-  
-  // Data structures
-  const tonesRef = useRef<Tone[]>([]);
-  const channelsRef = useRef<Channel[]>([]);
-  const toneGridRef = useRef<TonnextNode[][]>([]);
-  const ghostsIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const drawTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const nodesRef = useRef<{x:number,y:number,tone:number}[]>([]);
-  const activeRef = useRef<boolean[]>(Array(12).fill(false));
-  
-  // Dimensions
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0, unit: 0 });
-
-  const audioStartedRef = useRef(false);
-
-  const initTonnext = useCallback((canvas: HTMLCanvasElement) => {
-    canvasRef.current = canvas;
-    ctxRef.current = canvas.getContext('2d');
-    
-    if (!ctxRef.current) return;
-
-    // Initialize audio
-    synthRef.current = new Tone.Synth().toDestination();
-    polySynthRef.current = new Tone.PolySynth().toDestination();
-    
-    // Initialize tones
-    tonesRef.current = Array.from({ length: 12 }, (_, i) => ({
-      pitch: i,
-      name: TONE_NAMES[i],
-      state: STATE_OFF,
-      byChannel: {},
-      channelsSust: {},
-      released: null,
-      cache: {}
-    }));
-
-    // Initialize channels
-    channelsRef.current = Array.from({ length: 17 }, (_, i) => ({
-      number: i,
-      pitches: {},
-      sustTones: {},
-      sustain: false
-    }));
-
-    // Initialize tone grid
-    toneGridRef.current = Array.from({ length: 12 }, () => []);
-
-    // Set canvas size to parent container size
-    const parent = canvas.parentElement;
-    const width = parent ? parent.clientWidth : window.innerWidth;
-    const height = parent ? parent.clientHeight : window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    
-    // Draw initial background
-    const ctx = ctxRef.current;
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    setIsInitialized(true);
-    rebuild();
-  }, []);
-
-  const rebuild = useCallback(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    // Use parent container size
-    const parent = canvas.parentElement;
-    const width = parent ? parent.clientWidth : window.innerWidth;
-    const height = parent ? parent.clientHeight : window.innerHeight;
-    const unit = (width + height) / density;
-
-    canvas.width = width;
-    canvas.height = height;
-    
-    setDimensions({ width, height, unit });
-
-    // Build tone grid based on layout
-    buildToneGrid(width, height, unit);
-    
-    draw(true);
-  }, [density, layout]);
-
-  const buildToneGrid = useCallback((width: number, height: number, unit: number) => {
-    const SQRT_3 = Math.sqrt(3);
-    
-    if (layout === LAYOUT_RIEMANN) {
-      const yUnit = unit * SQRT_3;
-      const uW = Math.ceil(width / unit);
-      const uH = Math.ceil(height / yUnit);
-      
-      for (let j = -Math.floor(uW / 2 + 1); j <= Math.floor(uW / 2 + 1); j++) {
-        for (let i = -Math.floor(uH / 2 + 1); i <= Math.floor(uH / 2 + 1); i++) {
-          addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 - j * unit, height / 2 + i * yUnit, unit);
-          addNode(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 - (j - 0.5) * unit, height / 2 + (i + 0.5) * yUnit, unit);
-        }
-      }
-    } else if (layout === LAYOUT_SONOME) {
-      const xUnit = unit * SQRT_3;
-      const uW = Math.ceil(width / xUnit);
-      const uH = Math.ceil(height / unit);
-
-      for (let j = -Math.floor(uH / 2 + 1); j <= Math.floor(uH / 2 + 1); j++) {
-        for (let i = -Math.floor(uW / 2 + 1); i <= Math.floor(uW / 2 + 1); i++) {
-          addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 + i * xUnit, height / 2 + j * unit, unit);
-          addNode(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 + (i + 0.5) * xUnit, height / 2 + (j - 0.5) * unit, unit);
-        }
-      }
-    }
-  }, [layout]);
-
-  const addNode = useCallback((tone: number, x: number, y: number, unit: number) => {
-    if (x < -unit || y < -unit || x > dimensions.width + unit || y > dimensions.height + unit) {
-      return;
-    }
-
-    // Only store node position and tone, no DOM label
-    const node = { x, y, tone };
-    // Add to grid
-    toneGridRef.current[tone].push(node);
-  }, [dimensions]);
-
   // Utility to get CSS variable
   function getCssVar(name: string, fallback: string) {
     return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
@@ -192,13 +52,39 @@ export function useTonnext(options: UseTonnextOptions) {
     return 0.299 * r + 0.587 * g + 0.114 * b;
   }
 
-  const drawGrid = useCallback(()=>{
-    if(!ctxRef.current) return;
+  const [isInitialized] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const synthRef = useRef<Tone.Synth | null>(null);
+  const polySynthRef = useRef<Tone.PolySynth | null>(null);
+  
+  // State
+  const [density, setDensity] = useState(32);
+  const [ghostDuration, setGhostDuration] = useState(500);
+  const [layout, setLayout] = useState(LAYOUT_RIEMANN);
+  const [sustainEnabled, setSustainEnabled] = useState(false);
+  
+  // Data structures
+  const tonesRef = useRef<Tone[]>([]);
+  const channelsRef = useRef<Channel[]>([]);
+  const ghostsIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const drawTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nodesRef = useRef<{x:number,y:number,tone:number}[]>([]);
+  const activeRef = useRef<boolean[]>(Array(12).fill(false));
+  
+  // Dimensions
+  const [dimensions] = useState({ width: 0, height: 0, unit: 0 });
+
+  const audioStartedRef = useRef(false);
+
+  // 1. drawGrid
+  const drawGrid = useCallback(() => {
+    if (!ctxRef.current) return;
     const ctx = ctxRef.current;
-    const {width,height,unit}=dimensions;
-    if(unit===0) return;
-    const SQRT_3=Math.sqrt(3);
-    ctx.clearRect(0,0,width,height);
+    const { width, height } = dimensions;
+    if (dimensions.unit === 0) return;
+    const SQRT_3 = Math.sqrt(3);
+    ctx.clearRect(0, 0, width, height);
     // Use palette from CSS variables
     const colorMain = getCssVar('--color-main', '#DA4C2B').trim() || '#DA4C2B';
     const colorHighlight = getCssVar('--color-highlight', '#D4D7CB').trim() || '#D4D7CB';
@@ -208,69 +94,70 @@ export function useTonnext(options: UseTonnextOptions) {
     // Always ensure canvas background is different from header/footer
     const headerFooterColor = colorMain;
     const bgColor = headerFooterColor === colorMain ? colorHighlight : colorMain;
-    ctx.fillStyle=bgColor;
-    ctx.fillRect(0,0,width,height);
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
     // Pick a contrasting highlight for nodes
     const bgLum = getLuminance(bgColor);
     // If background is light, use main for highlight; if dark, use highlight
     const nodeHighlight = bgLum > 0.6 ? colorMain : colorHighlight;
     const nodeNormal = colorAccent;
 
-    const radius=unit/5;
-    const nodes: {x:number,y:number,tone:number}[]=[];
+    const radius = dimensions.unit / 5;
+    const nodes: { x: number; y: number; tone: number }[] = [];
 
-    function add(x:number,y:number,tone:number){
-      nodes.push({x,y,tone});
+    function add(x: number, y: number, tone: number) {
+      nodes.push({ x, y, tone });
     }
 
-    if(layout===LAYOUT_RIEMANN){
-      const yUnit=unit*SQRT_3;
-      const uW=Math.ceil(width/unit);
-      const uH=Math.ceil(height/yUnit);
-      for(let j=-Math.floor(uW/2+1);j<=Math.floor(uW/2+1);j++){
-        for(let i=-Math.floor(uH/2+1);i<=Math.floor(uH/2+1);i++){
-          add(width/2 - j*unit, height/2 + i*yUnit, ((i-7*j)%12+12)%12);
-          add(width/2 - (j-0.5)*unit, height/2 + (i+0.5)*yUnit, ((i-7*j+4)%12+12)%12);
+    if (layout === LAYOUT_RIEMANN) {
+      const yUnit = dimensions.unit * SQRT_3;
+      const uW = Math.ceil(width / dimensions.unit);
+      const uH = Math.ceil(height / yUnit);
+      for (let j = -Math.floor(uW / 2 + 1); j <= Math.floor(uW / 2 + 1); j++) {
+        for (let i = -Math.floor(uH / 2 + 1); i <= Math.floor(uH / 2 + 1); i++) {
+          add(((i - 7 * j) % 12 + 12) % 12, width / 2 - j * dimensions.unit, height / 2 + i * yUnit);
+          add(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 - (j - 0.5) * dimensions.unit, height / 2 + (i + 0.5) * yUnit);
         }
       }
-    }else{
-      const xUnit=unit*SQRT_3;
-      const uW=Math.ceil(width/xUnit);
-      const uH=Math.ceil(height/unit);
-      for(let j=-Math.floor(uH/2+1);j<=Math.floor(uH/2+1);j++){
-        for(let i=-Math.floor(uW/2+1);i<=Math.floor(uW/2+1);i++){
-          add(width/2 + i*xUnit, height/2 + j*unit, ((i-7*j)%12+12)%12);
-          add(width/2 + (i+0.5)*xUnit, height/2 + (j-0.5)*unit, ((i-7*j+4)%12+12)%12);
+    } else if (layout === LAYOUT_SONOME) {
+      const xUnit = dimensions.unit * SQRT_3;
+      const uW = Math.ceil(width / xUnit);
+      const uH = Math.ceil(height / dimensions.unit);
+
+      for (let j = -Math.floor(uH / 2 + 1); j <= Math.floor(uH / 2 + 1); j++) {
+        for (let i = -Math.floor(uW / 2 + 1); i <= Math.floor(uW / 2 + 1); i++) {
+          add(((i - 7 * j) % 12 + 12) % 12, width / 2 + i * xUnit, height / 2 + j * dimensions.unit);
+          add(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 + (i + 0.5) * xUnit, height / 2 + (j - 0.5) * dimensions.unit);
         }
       }
     }
 
-    nodesRef.current=nodes;
+    nodesRef.current = nodes;
 
     // draw edges
-    ctx.strokeStyle=colorEdge;
-    ctx.lineWidth=1;
-    const threshold=unit*1.05;
-    for(let i=0;i<nodes.length;i++){
-      for(let j=i+1;j<nodes.length;j++){
-        const dx=nodes[i].x-nodes[j].x;
-        const dy=nodes[i].y-nodes[j].y;
-        const dist=Math.hypot(dx,dy);
-        if(dist>0.9*unit && dist<threshold){
+    ctx.strokeStyle = colorEdge;
+    ctx.lineWidth = 1;
+    const threshold = dimensions.unit * 1.05;
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.9 * dimensions.unit && dist < threshold) {
           ctx.beginPath();
-          ctx.moveTo(nodes[i].x,nodes[i].y);
-          ctx.lineTo(nodes[j].x,nodes[j].y);
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
           ctx.stroke();
         }
       }
     }
 
     // draw nodes (without labels first)
-    nodes.forEach(({x,y,tone})=>{
-      const active=activeRef.current[tone];
-      ctx.fillStyle=active?nodeHighlight:nodeNormal;
+    nodes.forEach(({ x, y, tone }) => {
+      const active = activeRef.current[tone];
+      ctx.fillStyle = active ? nodeHighlight : nodeNormal;
       ctx.beginPath();
-      ctx.arc(x,y,radius,0,Math.PI*2);
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
     });
 
@@ -281,13 +168,13 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.save();
       ctx.strokeStyle = nodeHighlight;
       ctx.lineWidth = 2;
-      const threshold = unit * 1.05;
+      const threshold = dimensions.unit * 1.05;
       for (let i = 0; i < activeNodes.length; i++) {
         for (let j = i + 1; j < activeNodes.length; j++) {
           const dx = activeNodes[i].x - activeNodes[j].x;
           const dy = activeNodes[i].y - activeNodes[j].y;
           const dist = Math.hypot(dx, dy);
-          if (dist > 0.9 * unit && dist < threshold) {
+          if (dist > 0.9 * dimensions.unit && dist < threshold) {
             ctx.beginPath();
             ctx.moveTo(activeNodes[i].x, activeNodes[i].y);
             ctx.lineTo(activeNodes[j].x, activeNodes[j].y);
@@ -302,7 +189,7 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.save();
       ctx.globalAlpha = 0.15;
       ctx.fillStyle = nodeHighlight;
-      const threshold = unit * 1.05;
+      const threshold = dimensions.unit * 1.05;
       // Check all combinations of 3 active nodes
       for (let i = 0; i < activeNodes.length; i++) {
         for (let j = i + 1; j < activeNodes.length; j++) {
@@ -313,9 +200,9 @@ export function useTonnext(options: UseTonnextOptions) {
             const d3 = Math.hypot(b.x - c.x, b.y - c.y);
             // All three must be adjacent (form a triangle in the grid)
             if (
-              d1 > 0.9 * unit && d1 < threshold &&
-              d2 > 0.9 * unit && d2 < threshold &&
-              d3 > 0.9 * unit && d3 < threshold
+              d1 > 0.9 * dimensions.unit && d1 < threshold &&
+              d2 > 0.9 * dimensions.unit && d2 < threshold &&
+              d3 > 0.9 * dimensions.unit && d3 < threshold
             ) {
               ctx.beginPath();
               ctx.moveTo(a.x, a.y);
@@ -332,8 +219,8 @@ export function useTonnext(options: UseTonnextOptions) {
     }
 
     // Draw labels last to ensure they're always on top
-    nodes.forEach(({x,y,tone})=>{
-      const active=activeRef.current[tone];
+    nodes.forEach(({ x, y, tone }) => {
+      const active = activeRef.current[tone];
       
       // Draw note labels
       const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -345,7 +232,7 @@ export function useTonnext(options: UseTonnextOptions) {
       let textColor = '#fff';
       // Helper to compare hex colors (ignoring case)
       function hexEquals(a: string, b: string) {
-        return a.replace('#','').toLowerCase() === b.replace('#','').toLowerCase();
+        return a.replace('#', '').toLowerCase() === b.replace('#', '').toLowerCase();
       }
       // If node fill color is Cinnabar accent, use white
       if (hexEquals(active ? nodeHighlight : nodeNormal, '#D7A798') || hexEquals(active ? nodeHighlight : nodeNormal, '#d7a798')) {
@@ -375,8 +262,9 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.fillText(noteName, x, y);
       ctx.shadowBlur = 0;
     });
-  },[dimensions,layout]);
+  }, [dimensions, layout, activeRef]);
 
+  // 2. drawNow
   const drawNow = useCallback(() => {
     drawTimeoutRef.current = null;
     
@@ -391,7 +279,7 @@ export function useTonnext(options: UseTonnextOptions) {
     drawGrid();
   }, [dimensions, drawGrid]);
 
-  // Add draw function after drawNow
+  // 3. draw
   const draw = useCallback((immediately = false) => {
     if (immediately) {
       if (drawTimeoutRef.current) {
@@ -403,24 +291,78 @@ export function useTonnext(options: UseTonnextOptions) {
     }
   }, [drawNow]);
 
+  // 4. startGhosts
+  const startGhosts = useCallback(() => {
+    if (ghostsIntervalRef.current === null) {
+      ghostsIntervalRef.current = setInterval(() => {
+        let numAlive = 0;
+        let numDead = 0;
+        const now = new Date();
+
+        for (let i = 0; i < 12; i++) {
+          if (tonesRef.current[i].state === STATE_GHOST) {
+            if (now.getTime() - tonesRef.current[i].released!.getTime() >= ghostDuration) {
+              tonesRef.current[i].state = STATE_OFF;
+              numDead++;
+            } else {
+              numAlive++;
+            }
+          }
+        }
+
+        if (numAlive === 0) {
+          if (ghostsIntervalRef.current) {
+            clearInterval(ghostsIntervalRef.current);
+            ghostsIntervalRef.current = null;
+          }
+        }
+
+        if (numDead > 0) {
+          draw();
+        }
+      }, Math.min(ghostDuration, 30));
+    }
+  }, [ghostDuration, draw]);
+
+  // 5. releaseTone
+  const releaseTone = useCallback((tone: Tone) => {
+    tone.released = new Date();
+    if (ghostDuration > 0) {
+      tone.state = STATE_GHOST;
+      startGhosts();
+    } else {
+      tone.state = STATE_OFF;
+    }
+  }, [ghostDuration, startGhosts]);
+
+  // 6. rebuild
+  const rebuild = useCallback(() => {
+    // ...existing code...
+  }, []);
+
+  // 7. initTonnext
+  const initTonnext = useCallback(() => {
+    // ...existing code...
+  }, []);
+
   const handleCanvasClick = useCallback(async (x: number, y: number) => {
     // Resume Tone.js audio context on first interaction
     if (!audioStartedRef.current) {
       await Tone.start();
       audioStartedRef.current = true;
     }
-    if(nodesRef.current.length===0) return;
-    const radius = dimensions.unit/5;
-    let clickedTone: number|null = null;
-    for(const node of nodesRef.current){
+    if (nodesRef.current.length === 0) return;
+    const radius = dimensions.unit / 5;
+    let clickedTone: number | null = null;
+    for (const node of nodesRef.current) {
       const dx = x - node.x;
       const dy = y - node.y;
-      if(Math.hypot(dx,dy) <= radius){
+      if (Math.hypot(dx, dy) <= radius) {
         clickedTone = node.tone;
         break;
       }
     }
-    if(clickedTone===null) return;
+    if (clickedTone === null) return;
 
     const getChordIntervals = (type: string): number[] => {
       switch (type) {
@@ -489,7 +431,7 @@ export function useTonnext(options: UseTonnextOptions) {
         drawGrid();
       }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3);
     }
-  }, [drawGrid,dimensions,options]);
+  }, [drawGrid, dimensions, options, synthRef, polySynthRef, activeRef]);
 
   const handleMouseMove = useCallback((x: number, y: number) => {
     if (canvasRef.current) {
@@ -508,13 +450,13 @@ export function useTonnext(options: UseTonnextOptions) {
       }
       canvasRef.current.style.cursor = overNode ? 'pointer' : 'default';
     }
-  }, [dimensions]);
+  }, [dimensions, nodesRef]);
 
   const handleMouseLeave = useCallback(() => {
     if (canvasRef.current) {
       canvasRef.current.style.cursor = 'default';
     }
-  }, []);
+  }, [canvasRef]);
 
   const noteOn = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
@@ -538,7 +480,7 @@ export function useTonnext(options: UseTonnextOptions) {
     }
     
     draw();
-  }, [draw]);
+  }, [synthRef, draw]);
 
   const noteOff = useCallback((channel: number, pitch: number) => {
     if (synthRef.current) {
@@ -566,49 +508,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
       draw();
     }
-  }, [sustainEnabled, draw]);
-
-  const releaseTone = useCallback((tone: Tone) => {
-    tone.released = new Date();
-    if (ghostDuration > 0) {
-      tone.state = STATE_GHOST;
-      startGhosts();
-    } else {
-      tone.state = STATE_OFF;
-    }
-  }, [ghostDuration]);
-
-  const startGhosts = useCallback(() => {
-    if (ghostsIntervalRef.current === null) {
-      ghostsIntervalRef.current = setInterval(() => {
-        let numAlive = 0;
-        let numDead = 0;
-        const now = new Date();
-
-        for (let i = 0; i < 12; i++) {
-          if (tonesRef.current[i].state === STATE_GHOST) {
-            if (now.getTime() - tonesRef.current[i].released!.getTime() >= ghostDuration) {
-              tonesRef.current[i].state = STATE_OFF;
-              numDead++;
-            } else {
-              numAlive++;
-            }
-          }
-        }
-
-        if (numAlive === 0) {
-          if (ghostsIntervalRef.current) {
-            clearInterval(ghostsIntervalRef.current);
-            ghostsIntervalRef.current = null;
-          }
-        }
-
-        if (numDead > 0) {
-          draw();
-        }
-      }, Math.min(ghostDuration, 30));
-    }
-  }, [ghostDuration, draw]);
+  }, [synthRef, channelsRef, sustainEnabled, draw, releaseTone]);
 
   useEffect(()=>{
     if(isInitialized){
@@ -633,7 +533,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [rebuild]);
 
   // Handle mouse wheel for zoom
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
@@ -644,7 +544,7 @@ export function useTonnext(options: UseTonnextOptions) {
   // Rebuild grid when density changes (for zoom)
   useEffect(() => {
     rebuild();
-  }, [density]);
+  }, [density, rebuild]);
 
   // Redraw canvas when palette CSS variables change
   useEffect(() => {

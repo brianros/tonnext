@@ -21,7 +21,7 @@ export default function TonnextCanvas({ mode, chordType }: TonnextCanvasProps) {
 
   useEffect(() => {
     if (canvasRef.current && !isInitialized) {
-      initTonnext(canvasRef.current);
+      initTonnext();
     }
     // Attach wheel event with passive: false
     const canvas = canvasRef.current;
@@ -32,7 +32,7 @@ export default function TonnextCanvas({ mode, chordType }: TonnextCanvasProps) {
       canvas.addEventListener('wheel', wheelHandler, { passive: false });
       return () => canvas.removeEventListener('wheel', wheelHandler);
     }
-  }, [initTonnext, isInitialized]);
+  }, [initTonnext, isInitialized, handleWheel]);
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;

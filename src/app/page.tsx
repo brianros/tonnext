@@ -140,10 +140,10 @@ function HomeContent() {
   return (
     <div className="h-screen flex flex-col" style={{ height: '100vh' }}>
       {/* Sleek Header */}
-      <header className="" style={{ background: 'var(--color-main)', height: '56px', minHeight: '56px' }}>
+      <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
         <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
           <div className="flex items-center space-x-4 flex-shrink-0">
-            <h1 className="text-2xl font-extrabold tracking-tight text-white flex-shrink-0">Tonnext</h1>
+            <h1 className="blend-btn" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none'}} >Tonnext</h1>
             <div className="flex-shrink-0">
               <MidiPlayerCompact />
             </div>
@@ -175,7 +175,7 @@ function HomeContent() {
                     minWidth: 200,
                     background: 'var(--color-main)',
                     color: '#fff',
-                    fontSize: '2rem',
+                    fontSize: '1.6rem',
                     padding: 0,
                     top: '100%',
                     left: 0,
@@ -251,11 +251,11 @@ function HomeContent() {
       </div>
 
       {/* Sleek Footer with Controls */}
-      <footer style={{ background: 'var(--color-main)', height: '64px', minHeight: '64px' }}>
+      <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
         <div className="max-w-7xl mx-auto flex flex-row items-center justify-center gap-6 h-full">
-          <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
           <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
+          <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
+          <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <button
               className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
@@ -270,6 +270,7 @@ function HomeContent() {
                 lineHeight: 1,
                 background: 'var(--color-highlight)',
                 color: 'var(--color-main)',
+                height: '64px',
               }}
               onClick={() => setChordDropdownOpen((open) => !open)}
               type="button"

@@ -196,7 +196,7 @@ export default function MidiPlayerCompact({
       <button
         onClick={handleUploadClick}
         className="blend-btn"
-        style={{ fontSize: '2rem', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0 }}
+        style={{ fontSize: '1.6rem', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '64px' }}
       >
         Load MIDI
       </button>
@@ -204,7 +204,7 @@ export default function MidiPlayerCompact({
         <button
           onClick={handleLoadBeethoven}
           className="blend-btn"
-          style={{ fontSize: '2rem', padding: '0.5em 1.5em', borderRadius: 0, flexShrink: 0 }}
+          style={{ fontSize: '1.6rem', padding: '0.5em 1.5em', borderRadius: 0, flexShrink: 0, height: '64px' }}
         >
           Test MIDI
         </button>

@@ -11,6 +11,7 @@
   --color-accent: #D7A798;
   --color-hover: #DD4A2F;
   --color-hover2: #DB4A2F;
+  --header-footer-height: 64px;
 }
 
 body {
@@ -102,8 +103,12 @@ html, body {
   box-shadow: none;
   transition: background 0.2s, color 0.2s;
   padding: 0.5em 1.5em;
-  font-size: 2rem;
+  font-size: 1.6rem;
   letter-spacing: 0.01em;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .blend-btn:focus {
   outline: none;
@@ -134,7 +139,7 @@ html, body {
   box-shadow: none;
   transition: background 0.2s, color 0.2s;
   padding: 0.5em 1.5em;
-  font-size: 2rem;
+  font-size: 1.6rem;
   letter-spacing: 0.01em;
   height: 56px;
   min-width: 120px;
@@ -152,7 +157,7 @@ html, body {
 .chord-option {
   color: #fff;
   background: var(--color-main);
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: bold;
   text-transform: uppercase;
   padding: 0.5em 1.5em;

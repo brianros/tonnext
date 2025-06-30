@@ -53,6 +53,33 @@ export default function TonnextCanvas({
     });
   }, [setCanvasCallbacks, handleMidiNoteStart, handleMidiNoteEnd, handleMidiChordStart, handleMidiChordEnd]);
 
+  // Listen for tour-demo-chord event and show a C major chord
+  useEffect(() => {
+    function handleTourDemoChord(e?: CustomEvent) {
+      let notes = [
+        { midi: 60 }, // C4
+        { midi: 64 }, // E4
+        { midi: 67 }, // G4
+      ];
+      if (e && e.detail && e.detail.chord === 'maj7') {
+        notes = [
+          { midi: 60 }, // C4
+          { midi: 64 }, // E4
+          { midi: 67 }, // G4
+          { midi: 71 }, // B4
+        ];
+      }
+      handleMidiChordStart({ notes });
+      setTimeout(() => {
+        handleMidiChordEnd();
+      }, 700);
+    }
+    // Use addEventListener with type assertion for CustomEvent
+    const handler = (e: Event) => handleTourDemoChord(e as CustomEvent);
+    window.addEventListener('tour-demo-chord', handler);
+    return () => window.removeEventListener('tour-demo-chord', handler);
+  }, [handleMidiChordStart, handleMidiChordEnd]);
+
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     

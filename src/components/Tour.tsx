@@ -13,7 +13,6 @@ interface TourStep {
 
 interface TourProps {
   isOpen: boolean;
-  onClose: () => void;
   onComplete: () => void;
   step: number;
   setStep: (step: number) => void;
@@ -53,7 +52,7 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Chord Types',
     content: 'Select from 25+ chord types including major, minor, diminished, augmented, and extended chords like 7ths, 9ths, and suspended chords.',
     target: 'chord-selector',
-    position: 'top'
+    position: 'center'
   },
   {
     id: 'appearance',
@@ -70,13 +69,6 @@ const TOUR_STEPS: TourStep[] = [
     position: 'center'
   },
   {
-    id: 'help',
-    title: 'Help & Settings',
-    content: 'Access detailed help, advanced settings, and customization options through the Help button.',
-    target: 'help',
-    position: 'bottom'
-  },
-  {
     id: 'complete',
     title: 'You\'re All Set!',
     content: 'You now know the basics of Tonnext. Start exploring by clicking on the canvas, uploading MIDI files, or trying different chord types. Have fun creating music!',
@@ -85,13 +77,14 @@ const TOUR_STEPS: TourStep[] = [
   }
 ];
 
-export default function Tour({ isOpen, onClose, onComplete, step, setStep }: TourProps) {
+export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
   const [visible, setVisible] = useState(true);
   const overlayRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const currentTourStep = TOUR_STEPS[step];
+  const isCanvasStep = currentTourStep.id === 'canvas';
 
   // Animate tooltip on step change
   useEffect(() => {
@@ -102,6 +95,17 @@ export default function Tour({ isOpen, onClose, onComplete, step, setStep }: Tou
     }, 220); // match CSS transition duration
     return () => clearTimeout(timeout);
   }, [step, isOpen]);
+
+  // Show a chord being pressed in the canvas during the 'Interactive Canvas' step
+  useEffect(() => {
+    if (!isOpen || !isCanvasStep) return;
+    if (!visible) return;
+    // Wait 1000ms after tooltip is visible
+    const timeout = setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('tour-demo-chord', { detail: { chord: 'maj7' } }));
+    }, 700);
+    return () => clearTimeout(timeout);
+  }, [step, isOpen, isCanvasStep, visible]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -126,18 +130,16 @@ export default function Tour({ isOpen, onClose, onComplete, step, setStep }: Tou
       case 'appearance':
         targetElement = document.querySelector('[data-tour="appearance"]');
         break;
-      case 'help':
-        targetElement = document.querySelector('[data-tour="help"]');
-        break;
       default:
         targetElement = document.body;
     }
 
     setHighlightedElement(targetElement);
     setTimeout(() => {
-      positionTooltip(targetElement, stepObj.position);
+      // For the canvas step, force position to 'left'
+      positionTooltip(targetElement, isCanvasStep ? 'left' : stepObj.position);
     }, 100);
-  }, [step, isOpen]);
+  }, [step, isOpen, isCanvasStep]);
 
   const positionTooltip = (target: HTMLElement | null, position: string) => {
     if (!target || !tooltipRef.current) return;
@@ -152,9 +154,13 @@ export default function Tour({ isOpen, onClose, onComplete, step, setStep }: Tou
     let top = 0;
     let left = 0;
 
+    // Special case for 4th step (Playback Modes)
+    const isModeControlsStep = currentTourStep.id === 'mode-controls';
+
     switch (position) {
       case 'top':
-        top = targetRect.top - tooltipRect.height - 20;
+        // Raise the tooltip higher for the 4th step
+        top = targetRect.top - tooltipRect.height - (isModeControlsStep ? 100 : 20);
         left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
         break;
       case 'bottom':
@@ -163,7 +169,8 @@ export default function Tour({ isOpen, onClose, onComplete, step, setStep }: Tou
         break;
       case 'left':
         top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
-        left = targetRect.left - tooltipRect.width - 20;
+        left = targetRect.left - tooltipRect.width - 40; // extra margin from edge
+        left = Math.max(left, 32); // never too close to the edge
         break;
       case 'right':
         top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
@@ -208,12 +215,24 @@ export default function Tour({ isOpen, onClose, onComplete, step, setStep }: Tou
 
   return (
     <>
-      {/* Overlay */}
-      <div
-        ref={overlayRef}
-        className="tour-overlay"
-        onClick={handleSkip}
-      />
+      {/* Overlay: transparent over canvas for the canvas step */}
+      {!isCanvasStep ? (
+        <div
+          ref={overlayRef}
+          className="tour-overlay"
+          onClick={handleSkip}
+        />
+      ) : (
+        <>
+          {/* Overlay for everything except the canvas */}
+          <div
+            ref={overlayRef}
+            className="tour-overlay"
+            style={{ pointerEvents: 'auto', background: 'transparent' }}
+            onClick={handleSkip}
+          />
+        </>
+      )}
 
       {/* Highlight overlay for target element */}
       {highlightedElement && highlightedElement !== document.body && (
@@ -286,11 +305,6 @@ export default function Tour({ isOpen, onClose, onComplete, step, setStep }: Tou
             </div>
           </div>
         </div>
-
-        {/* Arrow pointing to target */}
-        {highlightedElement && highlightedElement !== document.body && (
-          <div className="tour-tooltip-arrow" />
-        )}
       </div>
     </>
   );

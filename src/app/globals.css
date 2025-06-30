@@ -70,6 +70,8 @@ html, body {
   transition: opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1);
   opacity: 1;
   transform: scale(1);
+  margin: 24px;
+  padding: 0.75rem;
 }
 .tour-tooltip.opacity-0 {
   opacity: 0;
@@ -255,4 +257,24 @@ html, body {
     align-items: center;
     justify-content: center;
   }
+}
+
+@media (max-width: 600px) {
+  .tour-tooltip button {
+    padding-left: 0.7em;
+    padding-right: 0.7em;
+    font-size: 0.9rem;
+  }
+  canvas {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+  }
+}
+
+canvas {
+  -webkit-tap-highlight-color: transparent;
 }

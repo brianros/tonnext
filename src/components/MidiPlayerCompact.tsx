@@ -206,7 +206,7 @@ export default function MidiPlayerCompact({
           className="blend-btn"
           style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderRadius: 0, flexShrink: 0, height: '64px' }}
         >
-          Test MIDI
+          Example Song
         </button>
       )}
 

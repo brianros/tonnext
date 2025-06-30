@@ -66,6 +66,59 @@ const PALETTE_PREVIEW = {
   },
 };
 
+// Grouped chord types for menu organization
+const CHORD_GROUPS = [
+  {
+    label: 'Triads',
+    options: [
+      { value: 'major', label: 'Major' },
+      { value: 'minor', label: 'Minor' },
+      { value: 'diminished', label: 'Diminished' },
+      { value: 'augmented', label: 'Augmented' },
+    ],
+  },
+  {
+    label: 'Sixth Chords',
+    options: [
+      { value: 'major6', label: 'Major 6th' },
+      { value: 'minor6', label: 'Minor 6th' },
+    ],
+  },
+  {
+    label: 'Seventh Chords',
+    options: [
+      { value: 'major7', label: 'Major 7th' },
+      { value: 'minor7', label: 'Minor 7th' },
+      { value: 'dominant7', label: 'Dominant 7th' },
+      { value: 'diminished7', label: 'Diminished 7th' },
+      { value: 'half-diminished7', label: 'Half-diminished 7th (m7♭5)' },
+      { value: 'minorMajor7', label: 'Minor Major 7th' },
+      { value: 'augmented7', label: 'Augmented 7th' },
+      { value: '7b5', label: '7th Flat 5 (7♭5)' },
+      { value: '7#5', label: '7th Sharp 5 (7♯5)' },
+      { value: 'm7b5', label: 'Minor 7th Flat 5 (m7♭5)' },
+      { value: 'sus2_7', label: 'Sus2 7th' },
+      { value: 'sus4_7', label: 'Sus4 7th' },
+    ],
+  },
+  {
+    label: 'Suspended Chords',
+    options: [
+      { value: 'sus2', label: 'Suspended 2nd (sus2)' },
+      { value: 'sus4', label: 'Suspended 4th (sus4)' },
+    ],
+  },
+  {
+    label: 'Added Tone Chords',
+    options: [
+      { value: 'add9', label: 'Add 9' },
+      { value: 'madd9', label: 'Minor Add 9' },
+      { value: 'add11', label: 'Add 11' },
+      { value: 'add13', label: 'Add 13' },
+    ],
+  },
+];
+
 function HomeContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [mode, setMode] = useState<'note' | 'chord' | 'arpeggio'>('arpeggio');
@@ -207,7 +260,7 @@ function HomeContent() {
         height: '100%',
       }}>
         {/* Sleek Header */}
-        <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
+        <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
           <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
             <div className="flex items-center space-x-4 flex-shrink-0">
               <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
@@ -402,34 +455,52 @@ function HomeContent() {
                     borderRadius: 6,
                     marginBottom: 4,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    fontSize: '1.1rem',
+                    fontSize: '0.90rem',
                     fontWeight: 'bold',
                     textTransform: 'uppercase',
                     maxHeight: 330,
                     overflowY: 'auto',
                   }}
                 >
-                  {CHORD_TYPES.map(opt => (
-                    <div
-                      key={opt.value}
-                      onClick={() => { setChordType(opt.value); setChordDropdownOpen(false); }}
-                      style={{
-                        padding: '0.4em 1em',
-                        cursor: 'pointer',
-                        background: chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
-                        color: chordType === opt.value ? 'var(--color-main)' : '#fff',
+                  {CHORD_GROUPS.map(group => (
+                    <div key={group.label}>
+                      <div style={{
+                        padding: '0.3em 1em',
+                        fontSize: '0.95em',
+                        fontWeight: 'bold',
+                        color: 'var(--color-accent)',
+                        background: 'rgba(0,0,0,0.08)',
                         borderBottom: '1px solid var(--color-highlight)',
-                        transition: 'background 0.2s, color 0.2s',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-highlight)', e.currentTarget.style.color = 'var(--color-main)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)', e.currentTarget.style.color = chordType === opt.value ? 'var(--color-main)' : '#fff')}
-                    >
-                      {opt.label}
+                      }}>{group.label}</div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '0px',
+                      }}>
+                        {group.options.map(opt => (
+                          <div
+                            key={opt.value}
+                            onClick={() => { setChordType(opt.value); setChordDropdownOpen(false); }}
+                            style={{
+                              padding: '0.4em 1em',
+                              cursor: 'pointer',
+                              background: chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
+                              color: chordType === opt.value ? 'var(--color-main)' : '#fff',
+                              borderBottom: '1px solid var(--color-highlight)',
+                              transition: 'background 0.2s, color 0.2s',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              width: '100%',
+                              boxSizing: 'border-box',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-highlight)', e.currentTarget.style.color = 'var(--color-main)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)', e.currentTarget.style.color = chordType === opt.value ? 'var(--color-main)' : '#fff')}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -454,9 +525,8 @@ function HomeContent() {
         )}
 
         {/* Tour Component */}
-        <Tour 
+        <Tour
           isOpen={isTourOpen}
-          onClose={() => setIsTourOpen(false)}
           onComplete={() => setIsTourOpen(false)}
           step={tourStep}
           setStep={setTourStep}

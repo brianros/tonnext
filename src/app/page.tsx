@@ -136,6 +136,9 @@ function HomeContent() {
     hover: '#DD4A2F',
     hover2: '#DB4A2F',
   });
+  
+  // Canvas ref for export functionality
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Tour state
   const [isTourOpen, setIsTourOpen] = useState(false);
@@ -366,7 +369,7 @@ function HomeContent() {
                 )}
               </span>
               <div className="flex-shrink-0" data-tour="midi-player">
-                <MidiPlayerCompact />
+                <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
               </div>
             </div>
             <div className="flex space-x-2 items-center flex-shrink-0">
@@ -476,6 +479,7 @@ function HomeContent() {
           <TonnextCanvas 
             mode={mode} 
             chordType={chordType}
+            canvasRef={canvasRef}
           />
         </div>
 

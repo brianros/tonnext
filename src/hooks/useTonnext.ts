@@ -680,6 +680,9 @@ export function useTonnext(options: UseTonnextOptions) {
     const height = parent ? parent.clientHeight : window.innerHeight;
     const unit = (width + height) / density;
     
+    // Set global density for virtual canvas
+    (window as any).__currentCanvasDensity = density;
+    
     setDimensions(prev => {
       if (
         prev.width === width &&
@@ -719,6 +722,7 @@ export function useTonnext(options: UseTonnextOptions) {
     handleWheel,
     noteOn,
     noteOff,
+    density,
     setDensity,
     setLayout,
     // MIDI Integration

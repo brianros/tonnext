@@ -7,13 +7,16 @@ import { useMidiContext } from '@/contexts/MidiContext';
 interface TonnextCanvasProps {
   mode: 'note' | 'chord' | 'arpeggio';
   chordType: string;
+  canvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 
 export default function TonnextCanvas({ 
   mode, 
-  chordType
+  chordType,
+  canvasRef: externalCanvasRef
 }: TonnextCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = externalCanvasRef || internalCanvasRef;
   const { setCanvasCallbacks, getMidiPlayerState } = useMidiContext();
   const { 
     initTonnext, 
@@ -79,6 +82,8 @@ export default function TonnextCanvas({
     window.addEventListener('tour-demo-chord', handler);
     return () => window.removeEventListener('tour-demo-chord', handler);
   }, [handleMidiChordStart, handleMidiChordEnd]);
+
+
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;

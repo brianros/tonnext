@@ -141,7 +141,7 @@ export default function MidiPlayerCompact({
   const handleLoadBeethoven = useCallback(async () => {
     if (playerFunctions) {
       playerFunctions.stopPlayback();
-      await playerFunctions.loadMidiFromUrl('/Beethoven-Moonlight-Sonata.mid', 'Beethoven - Moonlight Sonata');
+      await playerFunctions.loadMidiFromUrl('/example.mid', 'Example MIDI');
       setTestMidiLoaded(true);
     }
   }, [playerFunctions]);

@@ -249,7 +249,7 @@ function HomeContent() {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ height: '100vh', position: 'relative' }}>
+    <div className="h-screen flex flex-col" style={{ height: '100vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       {showLoadingLogo && (
         <LoadingLogo spin={spinLoadingLogo} onFinish={handleLoadingLogoFinish} />
       )}
@@ -258,6 +258,8 @@ function HomeContent() {
         transition: 'filter 0.3s',
         pointerEvents: loading ? 'none' : 'auto',
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}>
         {/* Sleek Header */}
         <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
@@ -364,7 +366,6 @@ function HomeContent() {
                   </div>
                 )}
               </div>
-              <button onClick={() => setIsSettingsOpen(true)} className="blend-btn" data-tour="help">Help</button>
               <button 
                 onClick={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
                 className="blend-btn"
@@ -379,7 +380,7 @@ function HomeContent() {
         {/* Main Canvas - fill all available space */}
         <div
           className="flex-1 relative min-h-0"
-          style={{ height: 'calc(100vh - 56px - 64px)' }}
+          style={{ flex: '1 1 auto', minHeight: 0 }}
           data-tour="canvas"
         >
           <TonnextCanvas 

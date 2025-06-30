@@ -8,16 +8,16 @@ const HOVER = 'var(--color-hover)';
 const ACCENT_DARK = '#b07c6b'; // comet head
 const ACCENT_LIGHT = '#e7cfc2'; // trail
 
-// Node positions for the logo
+// Smaller node positions for the logo
 const nodes = [
-  { cx: 110, cy: 40 },   // top
-  { cx: 190, cy: 180 }, // bottom right
-  { cx: 30, cy: 180 },  // bottom left
+  { cx: 60, cy: 22 },   // top
+  { cx: 104, cy: 98 }, // bottom right
+  { cx: 16, cy: 98 },  // bottom left
 ];
 
 const BAR_SEGMENTS = 40; // for smooth gradient
 const TRAIL_LENGTH = 1.2; // how long the trail is (in node units)
-const LOOP_DURATION = 2.0; // seconds per full loop
+const LOOP_DURATION = 1.2; // seconds per full loop (faster)
 
 function lerpColor(a: string, b: string, t: number) {
   // a, b: hex or rgb strings
@@ -58,7 +58,7 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
       if (lastTimestamp.current == null) lastTimestamp.current = ts;
       const dt = (ts - lastTimestamp.current) / 1000;
       lastTimestamp.current = ts;
-      // 2.0 seconds per full loop
+      // 1.2 seconds per full loop (faster)
       setProgress(prev => (prev + dt * (3 / LOOP_DURATION)) % 3);
       requestRef.current = requestAnimationFrame(animate);
     }
@@ -173,15 +173,15 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
       }}
     >
       <svg
-        viewBox="0 0 220 220"
-        width={220}
-        height={220}
+        viewBox="0 0 120 120"
+        width={120}
+        height={120}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         style={{
           transition: spin ? 'transform 2s cubic-bezier(0.4,2,0.4,1)' : undefined,
           transform: spin ? 'rotate(720deg)' : 'none',
-          transformOrigin: '110px 120px', // center of triangle
+          transformOrigin: '60px 70px', // center of triangle
         }}
       >
         <defs>
@@ -189,18 +189,18 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
           {getBarGradient(1, 2, 'grad12', barIndex === 1, barIndex === 1 ? cometT : 0)}
           {getBarGradient(2, 0, 'grad20', barIndex === 2, barIndex === 2 ? cometT : 0)}
         </defs>
-        <polygon points="110,40 190,180 30,180" fill={HIGHLIGHT} stroke={HOVER} strokeWidth={4} />
+        <polygon points="60,22 104,98 16,98" fill={HIGHLIGHT} stroke={HOVER} strokeWidth={4} />
         {/* Bars with comet trail gradient */}
-        <line x1={nodes[0].cx} y1={nodes[0].cy} x2={nodes[1].cx} y2={nodes[1].cy} stroke="url(#grad01)" strokeWidth={10} strokeLinecap="round" />
-        <line x1={nodes[1].cx} y1={nodes[1].cy} x2={nodes[2].cx} y2={nodes[2].cy} stroke="url(#grad12)" strokeWidth={10} strokeLinecap="round" />
-        <line x1={nodes[2].cx} y1={nodes[2].cy} x2={nodes[0].cx} y2={nodes[0].cy} stroke="url(#grad20)" strokeWidth={10} strokeLinecap="round" />
+        <line x1={nodes[0].cx} y1={nodes[0].cy} x2={nodes[1].cx} y2={nodes[1].cy} stroke="url(#grad01)" strokeWidth={6} strokeLinecap="round" />
+        <line x1={nodes[1].cx} y1={nodes[1].cy} x2={nodes[2].cx} y2={nodes[2].cy} stroke="url(#grad12)" strokeWidth={6} strokeLinecap="round" />
+        <line x1={nodes[2].cx} y1={nodes[2].cy} x2={nodes[0].cx} y2={nodes[0].cy} stroke="url(#grad20)" strokeWidth={6} strokeLinecap="round" />
         {/* Nodes */}
         {nodes.map((node, i) => (
           <circle
             key={i}
             cx={node.cx}
             cy={node.cy}
-            r={28}
+            r={15}
             fill={getNodeColor(i)}
             style={{ transition: 'fill 0.25s' }}
           />

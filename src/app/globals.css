@@ -12,6 +12,7 @@
   --color-hover: #DD4A2F;
   --color-hover2: #DB4A2F;
   --header-footer-height: 64px;
+  --vh: 1vh; /* Will be set by JS for mobile viewport fix */
 }
 
 body {

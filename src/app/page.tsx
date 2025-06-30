@@ -248,8 +248,18 @@ function HomeContent() {
     setCustomPaletteOpen(false);
   };
 
+  useEffect(() => {
+    // Set --vh for mobile viewport height fix
+    function setVh() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    setVh();
+    window.addEventListener('resize', setVh);
+    return () => window.removeEventListener('resize', setVh);
+  }, []);
+
   return (
-    <div className="h-screen flex flex-col" style={{ height: '100vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-screen flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       {showLoadingLogo && (
         <LoadingLogo spin={spinLoadingLogo} onFinish={handleLoadingLogoFinish} />
       )}

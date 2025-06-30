@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 interface SettingsProps {
   onClose: () => void;
+  onStartTour?: () => void;
 }
 
 const DEFAULT_PALETTE = {
@@ -77,7 +78,7 @@ const PALETTE_PRESETS = [
   },
 ];
 
-export default function Settings({ onClose }: SettingsProps) {
+export default function Settings({ onClose, onStartTour }: SettingsProps) {
   const [palette, setPalette] = useState(DEFAULT_PALETTE);
 
   const handlePaletteChange = (key: keyof typeof DEFAULT_PALETTE, value: string) => {
@@ -106,6 +107,27 @@ export default function Settings({ onClose }: SettingsProps) {
           ✕
         </button>
       </div>
+      
+      {/* Tour Section */}
+      {onStartTour && (
+        <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--color-main)', border: '1px solid var(--color-accent)' }}>
+          <h4 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-highlight)' }}>Getting Started</h4>
+          <p className="text-sm mb-3" style={{ color: 'var(--color-highlight)' }}>
+            New to Tonnext? Take a guided tour to learn about all the features and how to use them effectively.
+          </p>
+          <button
+            onClick={() => { onStartTour(); onClose(); }}
+            className="px-4 py-2 text-sm font-medium rounded"
+            style={{
+              background: 'var(--color-accent)',
+              color: 'white',
+            }}
+          >
+            Start Tour
+          </button>
+        </div>
+      )}
+      
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">

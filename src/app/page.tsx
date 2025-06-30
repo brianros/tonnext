@@ -8,6 +8,7 @@ import { MidiProvider } from '@/contexts/MidiContext';
 import { useMidiPlayer } from '@/hooks/useMidiPlayer';
 import CustomPaletteModal, { Palette } from '@/components/CustomPaletteModal';
 import LoadingLogo from '@/components/LoadingLogo';
+import Tour from '@/components/Tour';
 // import Controls from '@/components/Controls'; // No longer used
 
 const CHORD_TYPES = [
@@ -83,6 +84,10 @@ function HomeContent() {
     hover2: '#DB4A2F',
   });
 
+  // Tour state
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
   // Loading overlay demo state
   const [loading, setLoading] = useState(true);
   const [spinLoadingLogo, setSpinLoadingLogo] = useState(false);
@@ -99,12 +104,44 @@ function HomeContent() {
     }
   }, [loading]);
 
+  // Launch tour on first load (after logo is gone)
+  useEffect(() => {
+    if (!showLoadingLogo && !localStorage.getItem('tonnext-visited')) {
+      setTimeout(() => {
+        setTourStep(0);
+        setIsTourOpen(true);
+        localStorage.setItem('tonnext-visited', 'true');
+      }, 300);
+    }
+  }, [showLoadingLogo]);
+
   const handleLoadingLogoFinish = () => {
     setShowLoadingLogo(false);
   };
 
   // Initialize MIDI player to ensure shared state
   useMidiPlayer();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+T or Cmd+T to start tour
+      if ((event.ctrlKey || event.metaKey) && event.key === 't') {
+        event.preventDefault();
+        if (!isTourOpen && !loading) {
+          setIsTourOpen(true);
+          localStorage.setItem('tonnext-visited', 'true');
+        }
+      }
+      // Escape to close tour
+      if (event.key === 'Escape' && isTourOpen) {
+        setIsTourOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isTourOpen, loading]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -183,7 +220,7 @@ function HomeContent() {
                   <circle cx="18" cy="102" r="12" fill="var(--color-accent)" />
                 </svg>
               </span>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0" data-tour="midi-player">
                 <MidiPlayerCompact />
               </div>
             </div>
@@ -204,6 +241,7 @@ function HomeContent() {
                   className="blend-btn"
                   aria-haspopup="true"
                   aria-expanded={appearanceDropdown}
+                  data-tour="appearance"
                 >
                   Appearance
                 </button>
@@ -273,7 +311,14 @@ function HomeContent() {
                   </div>
                 )}
               </div>
-              <button onClick={() => setIsSettingsOpen(true)} className="blend-btn">Help</button>
+              <button onClick={() => setIsSettingsOpen(true)} className="blend-btn" data-tour="help">Help</button>
+              <button 
+                onClick={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
+                className="blend-btn"
+                title="Start guided tour (Ctrl+T)"
+              >
+                Tour
+              </button>
             </div>
           </div>
         </header>
@@ -282,6 +327,7 @@ function HomeContent() {
         <div
           className="flex-1 relative min-h-0"
           style={{ height: 'calc(100vh - 56px - 64px)' }}
+          data-tour="canvas"
         >
           <TonnextCanvas 
             mode={mode} 
@@ -290,12 +336,12 @@ function HomeContent() {
         </div>
 
         {/* Sleek Footer with Controls */}
-        <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
+        <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls">
           <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full">
             <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('note')}>Note</button>
             <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('chord')}>Chord</button>
             <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-            <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }}>
+            <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }} data-tour="chord-selector">
               <button
                 className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
                 style={{
@@ -406,6 +452,15 @@ function HomeContent() {
             onCancel={() => setCustomPaletteOpen(false)}
           />
         )}
+
+        {/* Tour Component */}
+        <Tour 
+          isOpen={isTourOpen}
+          onClose={() => setIsTourOpen(false)}
+          onComplete={() => setIsTourOpen(false)}
+          step={tourStep}
+          setStep={setTourStep}
+        />
       </div>
     </div>
   );

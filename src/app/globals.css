@@ -36,6 +36,67 @@ html, body {
   user-select: none;
 }
 
+/* Tour Component Styles */
+.tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 50;
+  cursor: pointer;
+}
+
+.tour-highlight {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  border: 3px solid var(--color-accent);
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+}
+
+.tour-tooltip {
+  position: fixed;
+  z-index: 50;
+  background: var(--color-main);
+  color: var(--color-highlight);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  min-width: 300px;
+  transition: opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1);
+  opacity: 1;
+  transform: scale(1);
+}
+.tour-tooltip.opacity-0 {
+  opacity: 0;
+}
+.tour-tooltip.opacity-100 {
+  opacity: 1;
+}
+.tour-tooltip.scale-90 {
+  transform: scale(0.9);
+}
+.tour-tooltip.scale-100 {
+  transform: scale(1);
+}
+
+.tour-tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px;
+  border-color: transparent;
+  border-top-color: var(--color-main);
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 #note-labels, #triad-labels {
   position: absolute;
   top: 0;

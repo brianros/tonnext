@@ -146,6 +146,9 @@ function HomeContent() {
   const [spinLoadingLogo, setSpinLoadingLogo] = useState(false);
   const [showLoadingLogo, setShowLoadingLogo] = useState(true);
 
+  const [logoTooltipOpen, setLogoTooltipOpen] = useState(false);
+  const logoTooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000); // back to normal
     return () => clearTimeout(timer);
@@ -275,15 +278,92 @@ function HomeContent() {
         <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
           <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
             <div className="flex items-center space-x-4 flex-shrink-0">
-              <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
-              {/* Triangle logo for mobile */}
-              <span className="tonnext-logo" style={{height: 'clamp(28px, 8vw, 40px)', width: 'clamp(28px, 8vw, 40px)'}}>
-                <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <polygon points="62,22 106,102 18,102" fill="white" />
-                  <circle cx="62" cy="22" r="12" fill="var(--color-accent)" />
-                  <circle cx="106" cy="102" r="12" fill="var(--color-accent)" />
-                  <circle cx="18" cy="102" r="12" fill="var(--color-accent)" />
-                </svg>
+              <span
+                style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+                onMouseEnter={() => {
+                  if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
+                  setLogoTooltipOpen(true);
+                }}
+                onMouseLeave={() => {
+                  logoTooltipTimeout.current = setTimeout(() => setLogoTooltipOpen(false), 200);
+                }}
+                onTouchStart={() => setLogoTooltipOpen(v => !v)}
+                tabIndex={0}
+                aria-label="Tonnetz Acknowledgements"
+              >
+                <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
+                <span 
+                  className="tonnext-logo" 
+                  style={{height: 'clamp(28px, 8vw, 40px)', width: 'clamp(28px, 8vw, 40px)', position: 'relative', marginLeft: 8}}
+                >
+                  <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="62,22 106,102 18,102" fill="white" />
+                    <circle cx="62" cy="22" r="12" fill="var(--color-accent)" />
+                    <circle cx="106" cy="102" r="12" fill="var(--color-accent)" />
+                    <circle cx="18" cy="102" r="12" fill="var(--color-accent)" />
+                  </svg>
+                </span>
+                {logoTooltipOpen && (
+                  <div
+                    ref={el => {
+                      if (el) {
+                        // Ensure tooltip stays within viewport
+                        const rect = el.getBoundingClientRect();
+                        const vw = window.innerWidth;
+                        if (rect.left < 8) {
+                          el.style.left = '8px';
+                          el.style.transform = 'none';
+                        } else if (rect.right > vw - 8) {
+                          el.style.left = 'auto';
+                          el.style.right = '8px';
+                          el.style.transform = 'none';
+                        } else {
+                          el.style.left = '50%';
+                          el.style.right = 'auto';
+                          el.style.transform = 'translateX(-50%)';
+                        }
+                      }
+                    }}
+                    onMouseEnter={() => {
+                      if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
+                      setLogoTooltipOpen(true);
+                    }}
+                    onMouseLeave={() => {
+                      logoTooltipTimeout.current = setTimeout(() => setLogoTooltipOpen(false), 200);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '110%',
+                      left: '50%',
+                      background: 'var(--color-main)',
+                      color: 'var(--color-highlight)',
+                      border: '2px solid var(--color-accent)',
+                      borderRadius: 12,
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+                      padding: '1.1em 1.2em',
+                      zIndex: 100,
+                      minWidth: 260,
+                      maxWidth: 340,
+                      fontSize: '1em',
+                      textAlign: 'left',
+                      transition: 'box-shadow 0.2s',
+                      overflowWrap: 'break-word',
+                    }}
+                  >
+                    <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
+                    <div style={{marginBottom: 8, color: 'var(--color-highlight)'}}>
+                      Tonnext is an interactive tool for exploring music and harmony through geometric visualization.
+                    </div>
+                    <div style={{marginBottom: 8}}>
+                      <span style={{fontWeight: 500}}>Tonnetz</span> is a geometric system for visualizing tonal relationships in music. <a href="https://en.wikipedia.org/wiki/Tonnetz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>Learn more</a>.
+                    </div>
+                    <div style={{marginBottom: 6}}>
+                      Visualization based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>tonnetz-viz</a> by cifkao.
+                    </div>
+                    <div style={{fontSize: '0.95em', color: 'var(--color-highlight)'}}>Brian Rosenfeld - 2025</div>
+                    <div style={{fontSize: '0.95em', color: 'var(--color-accent)'}}><a href="https://mirari.ar" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>mīrārī</a></div>
+                  </div>
+                )}
               </span>
               <div className="flex-shrink-0" data-tour="midi-player">
                 <MidiPlayerCompact />

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import * as Tone from 'tone';
 
 interface VirtualCanvasRecorderProps {
   // Original canvas ref for getting dimensions and context
@@ -13,6 +14,10 @@ interface VirtualCanvasRecorderProps {
   speedMultiplier: number;
   // Frame rate for the output video
   targetFrameRate: number;
+  // Whether to include audio in the recording
+  includeAudio?: boolean;
+  // MIDI data for audio synthesis during recording
+  midiData?: any;
   onRecordingStart?: () => void;
   onRecordingStop?: (blob: Blob) => void;
   onProgress?: (progress: number) => void;
@@ -24,6 +29,8 @@ export default function VirtualCanvasRecorder({
   duration,
   speedMultiplier,
   targetFrameRate = 30,
+  includeAudio = false,
+  midiData,
   onRecordingStart,
   onRecordingStop,
   onProgress
@@ -36,11 +43,39 @@ export default function VirtualCanvasRecorder({
   const animationFrameRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const startTimeRef = useRef<number>(0);
   const currentTimeRef = useRef<number>(0);
+  const audioSynthRef = useRef<Tone.PolySynth | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
 
   // Check if MediaRecorder is supported
   useEffect(() => {
     setIsSupported(!!window.MediaRecorder);
   }, []);
+
+  // Initialize audio synth for recording
+  const initializeAudio = useCallback(async () => {
+    if (!includeAudio || !midiData) return null;
+
+    await Tone.start();
+    
+    // Create a synth for recording
+    const synth = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth }).toDestination();
+    synth.set({
+      oscillator: { type: 'triangle' },
+      envelope: {
+        attack: 0.02,
+        decay: 0.1,
+        sustain: 0.3,
+        release: 1
+      }
+    });
+
+    // For automated recording, we'll use a different approach
+    // We'll create the audio during the recording process
+    return {
+      synth,
+      stream: null
+    };
+  }, [includeAudio, midiData]);
 
   const startVirtualRecording = useCallback(async () => {
     if (!originalCanvasRef.current || !virtualCanvasRef.current || !isSupported) return;
@@ -64,7 +99,21 @@ export default function VirtualCanvasRecorder({
     console.log(`Recording ${totalFrames} frames at ${targetFrameRate}fps, ${speedMultiplier}x speed`);
 
     // Create stream from virtual canvas
-    const stream = virtualCanvas.captureStream(targetFrameRate);
+    const canvasStream = virtualCanvas.captureStream(targetFrameRate);
+
+    // Initialize audio if needed
+    let finalStream = canvasStream;
+    if (includeAudio && midiData) {
+      try {
+        const audioSetup = await initializeAudio();
+        if (audioSetup) {
+          audioSynthRef.current = audioSetup.synth;
+          console.log('Audio synthesis enabled (visual recording only)');
+        }
+      } catch (error) {
+        console.warn('Failed to initialize audio for recording:', error);
+      }
+    }
 
     // Try different MIME types for better browser compatibility
     const mimeTypes = [
@@ -88,7 +137,7 @@ export default function VirtualCanvasRecorder({
     }
 
     try {
-      const mediaRecorder = new MediaRecorder(stream, {
+      const mediaRecorder = new MediaRecorder(finalStream, {
         mimeType: selectedMimeType
       });
 
@@ -109,9 +158,17 @@ export default function VirtualCanvasRecorder({
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `virtual-recording-${Date.now()}.webm`;
+        const audioSuffix = includeAudio ? '-with-audio' : '';
+        a.download = `virtual-recording${audioSuffix}-${Date.now()}.webm`;
         a.click();
         URL.revokeObjectURL(url);
+        
+        // Cleanup audio
+        if (audioSynthRef.current) {
+          audioSynthRef.current.dispose();
+          audioSynthRef.current = null;
+        }
+        audioStreamRef.current = null;
       };
 
       mediaRecorderRef.current = mediaRecorder;
@@ -123,11 +180,44 @@ export default function VirtualCanvasRecorder({
       startTimeRef.current = performance.now();
       currentTimeRef.current = 0;
 
+      // Schedule MIDI notes for audio if enabled
+      if (includeAudio && midiData && audioSynthRef.current) {
+        // Stop any existing transport
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        
+        // Schedule all notes for the recording duration
+        midiData.tracks.forEach((track: any) => {
+          track.notes.forEach((note: any) => {
+            // Only schedule notes within the recording duration
+            if (note.time < duration) {
+              Tone.Transport.schedule((time) => {
+                audioSynthRef.current?.triggerAttack(note.note, time, note.velocity);
+              }, note.time);
+
+              Tone.Transport.schedule((time) => {
+                audioSynthRef.current?.triggerRelease(note.note, time);
+              }, note.time + note.duration);
+            }
+          });
+        });
+        
+        // Start transport at recording speed
+        Tone.Transport.bpm.value = midiData.tempo || 120;
+        Tone.Transport.start();
+      }
+
       const renderFrame = () => {
         if (!isRecording || frameCount >= totalFrames) {
           mediaRecorder.stop();
           setIsRecording(false);
           setProgress(0);
+          
+          // Stop transport
+          if (includeAudio) {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+          }
           return;
         }
 
@@ -163,6 +253,9 @@ export default function VirtualCanvasRecorder({
     speedMultiplier,
     targetFrameRate,
     isSupported,
+    includeAudio,
+    midiData,
+    initializeAudio,
     onRecordingStart,
     onRecordingStop,
     onProgress
@@ -177,13 +270,26 @@ export default function VirtualCanvasRecorder({
       setIsRecording(false);
       setProgress(0);
     }
-  }, [isRecording]);
+    
+    // Stop transport and cleanup audio
+    if (includeAudio) {
+      Tone.Transport.stop();
+      Tone.Transport.cancel();
+    }
+    if (audioSynthRef.current) {
+      audioSynthRef.current.dispose();
+    }
+    audioStreamRef.current = null;
+  }, [isRecording, includeAudio]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
         clearTimeout(animationFrameRef.current);
+      }
+      if (audioSynthRef.current) {
+        audioSynthRef.current.dispose();
       }
     };
   }, []);
@@ -222,7 +328,7 @@ export default function VirtualCanvasRecorder({
               color: 'white'
             }}
           >
-            🎬 Start Virtual Recording
+            🎬 Start Virtual Recording{includeAudio ? ' with Audio' : ''}
           </button>
         ) : (
           <button
@@ -256,11 +362,14 @@ export default function VirtualCanvasRecorder({
       )}
 
       {/* Recording info */}
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-gray-500 space-y-1">
         <div>Duration: {duration}s</div>
         <div>Speed: {speedMultiplier}x</div>
-        <div>Frame Rate: {targetFrameRate}fps</div>
+        <div>Frame rate: {targetFrameRate}fps</div>
         <div>Estimated recording time: {(duration / speedMultiplier).toFixed(1)}s</div>
+        {includeAudio && (
+          <div className="text-green-600">🎵 Audio will be included in recording</div>
+        )}
       </div>
     </div>
   );

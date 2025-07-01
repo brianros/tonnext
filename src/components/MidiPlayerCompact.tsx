@@ -4,6 +4,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
 import { createVirtualTonnetz } from './VirtualTonnetz';
+import AutomatedVideoExport from './AutomatedVideoExport';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -20,7 +21,7 @@ export default function MidiPlayerCompact({
   onNoteEnd, 
   onChordStart, 
   onChordEnd,
-  canvasRef,
+  canvasRef: userCanvasRef,
   mode,
   chordType
 }: MidiPlayerCompactProps) {
@@ -63,6 +64,10 @@ export default function MidiPlayerCompact({
       onChordEnd?: (chord: MidiChord) => void;
     }) => void;
   } | null>(null);
+
+  // Ensure we always have a valid canvas ref
+  const fallbackCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = userCanvasRef ?? fallbackCanvasRef;
 
   // Update local state when context state changes
   useEffect(() => {
@@ -220,138 +225,6 @@ export default function MidiPlayerCompact({
     link.click();
   }, [canvasRef]);
 
-  const handleExportVideo = useCallback(() => {
-    if (!playerState?.midiData) {
-      alert('No MIDI file loaded. Please load a MIDI file before recording.');
-      return;
-    }
-
-    // Check if MediaRecorder is supported
-    if (!window.MediaRecorder) {
-      alert('Video recording is not supported in this browser');
-      return;
-    }
-
-    try {
-      // Create a virtual canvas for high-speed recording
-      const virtualCanvas = document.createElement('canvas');
-      // Match the real canvas size if available
-      if (canvasRef?.current) {
-        virtualCanvas.width = canvasRef.current.width;
-        virtualCanvas.height = canvasRef.current.height;
-      } else {
-        virtualCanvas.width = 1920; // fallback
-        virtualCanvas.height = 1080;
-      }
-      virtualCanvas.style.position = 'absolute';
-      virtualCanvas.style.left = '-9999px';
-      virtualCanvas.style.top = '-9999px';
-      document.body.appendChild(virtualCanvas);
-
-      const ctx = virtualCanvas.getContext('2d');
-      if (!ctx) {
-        alert('Cannot create virtual canvas context');
-        return;
-      }
-
-      // Initialize virtual tonnetz system with the same options as the real canvas
-      const virtualTonnetz = createVirtualTonnetz(virtualCanvas, ctx, { 
-        mode, 
-        chordType, 
-        density: currentDensity 
-      });
-      
-      // Calculate recording parameters
-      const songDuration = playerState?.duration || 30;
-      const speedMultiplier = 8; // 8x speed for faster recording
-      const recordingDuration = songDuration / speedMultiplier;
-      const frameRate = 60; // 60 FPS for smooth video
-      
-      console.log(`Recording at ${speedMultiplier}x speed: ${songDuration}s → ${recordingDuration}s`);
-
-      // Start recording from virtual canvas
-      const stream = virtualCanvas.captureStream(frameRate);
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9'
-      });
-
-      const chunks: Blob[] = [];
-      let recordingActive = true;
-      setIsRecording(true);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        if (chunks.length > 0) {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `visualization-${Date.now()}.webm`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-        
-        // Cleanup
-        document.body.removeChild(virtualCanvas);
-        setIsRecording(false);
-      };
-
-      // Start recording
-      mediaRecorder.start();
-
-      // Show recording indicator
-      const exportBtn = document.getElementById('export-video-btn');
-      if (exportBtn) {
-        exportBtn.textContent = '⏹️ Recording...';
-        exportBtn.setAttribute('disabled', 'true');
-      }
-
-      // Simulate MIDI playback at high speed
-      const startTime = Date.now();
-      const simulateMidiPlayback = () => {
-        if (!recordingActive) return;
-
-        const elapsed = (Date.now() - startTime) / 1000;
-        const virtualTime = elapsed * speedMultiplier;
-        
-        if (virtualTime >= songDuration) {
-          // Recording complete
-          recordingActive = false;
-          mediaRecorder.stop();
-          if (exportBtn) {
-            exportBtn.textContent = '🎬 Export Video';
-            exportBtn.removeAttribute('disabled');
-          }
-          return;
-        }
-
-        // Check if density has changed and update virtual canvas
-        const currentDensityValue = getCurrentDensity();
-        if (currentDensityValue !== virtualTonnetz.getDensity()) {
-          virtualTonnetz.updateDensity(currentDensityValue);
-        }
-
-        // Update virtual tonnetz with current MIDI state
-        virtualTonnetz.update(virtualTime, playerState?.midiData);
-        
-        // Continue simulation
-        requestAnimationFrame(simulateMidiPlayback);
-      };
-
-      // Start simulation
-      simulateMidiPlayback();
-
-    } catch (error) {
-      console.error('Failed to start video recording:', error);
-      alert('Failed to start video recording: ' + error);
-    }
-  }, [playerState?.midiData, playerState?.duration, mode, chordType, canvasRef]);
-
   return (
     <>
       {/* Recording Modal Overlay */}
@@ -493,24 +366,14 @@ export default function MidiPlayerCompact({
             >
               📷 PNG
             </button>
-            <button
-              id="export-video-btn"
-              onClick={handleExportVideo}
-              className="blend-btn midi-theme-btn"
-              style={{
-                fontSize: '0.8rem',
-                padding: '0.3em 0.6em',
-                borderRadius: 0,
-                transition: 'background 0.2s, color 0.2s',
-                cursor: 'pointer',
-                flexShrink: 0,
-                backgroundColor: '#2196F3',
-                color: 'white'
-              }}
-              title="Record 10 seconds of visualization as video"
-            >
-              🎬 Export Video
-            </button>
+            {/* Automated Video Export replaces the old Export Video button */}
+            <div style={{ minWidth: 220 }}>
+              <AutomatedVideoExport
+                mode={mode}
+                chordType={chordType}
+                canvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
+              />
+            </div>
           </div>
         </div>
       )}

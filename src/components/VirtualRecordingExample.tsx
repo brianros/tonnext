@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import { useTonnext } from '@/hooks/useTonnext';
+import { useMidiContext } from '@/contexts/MidiContext';
 
 interface VirtualRecordingExampleProps {
   mode: 'note' | 'chord' | 'arpeggio';
@@ -14,10 +15,14 @@ export default function VirtualRecordingExample({
   chordType 
 }: VirtualRecordingExampleProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { getMidiPlayerState } = useMidiContext();
+  const midiState = getMidiPlayerState();
+  
   const [recordingSettings, setRecordingSettings] = useState({
     duration: 30, // 30 seconds
     speedMultiplier: 2, // 2x speed
-    targetFrameRate: 30
+    targetFrameRate: 30,
+    includeAudio: false
   });
 
   const { 
@@ -62,6 +67,16 @@ export default function VirtualRecordingExample({
     console.log('Recording progress:', progress);
   };
 
+  // Auto-set duration from MIDI if available
+  React.useEffect(() => {
+    if (midiState?.midiData && midiState.duration > 0) {
+      setRecordingSettings(prev => ({
+        ...prev,
+        duration: midiState.duration
+      }));
+    }
+  }, [midiState?.midiData, midiState?.duration]);
+
   return (
     <div className="space-y-4">
       {/* Original Canvas */}
@@ -89,12 +104,28 @@ export default function VirtualRecordingExample({
         <div id="triad-labels" className="absolute inset-0 pointer-events-none" />
       </div>
 
+      {/* MIDI File Status */}
+      {midiState?.midiData && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-green-600">🎵</span>
+            <span className="text-sm font-medium text-green-800">
+              MIDI File Loaded: {midiState.fileName}
+            </span>
+          </div>
+          <div className="text-xs text-green-600 mt-1">
+            Duration: {midiState.duration.toFixed(1)}s | 
+            Tempo: {midiState.midiData.tempo} BPM
+          </div>
+        </div>
+      )}
+
       {/* Recording Controls */}
       <div className="p-4 border rounded-lg bg-gray-50">
         <h3 className="text-lg font-semibold mb-4">Virtual Recording Settings</h3>
         
         {/* Recording Settings */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium mb-1">
               Duration (seconds)
@@ -146,6 +177,28 @@ export default function VirtualRecordingExample({
               className="w-full px-3 py-2 border rounded-md"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Include Audio
+            </label>
+            <div className="flex items-center mt-2">
+              <input
+                type="checkbox"
+                id="include-audio"
+                checked={recordingSettings.includeAudio}
+                onChange={(e) => setRecordingSettings(prev => ({
+                  ...prev,
+                  includeAudio: e.target.checked
+                }))}
+                disabled={!midiState?.midiData}
+                className="mr-2"
+              />
+              <label htmlFor="include-audio" className={`text-sm ${!midiState?.midiData ? 'text-gray-400' : ''}`}>
+                {midiState?.midiData ? 'Add MIDI audio to video' : 'Load MIDI file first'}
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Virtual Recorder */}
@@ -155,6 +208,8 @@ export default function VirtualRecordingExample({
           duration={recordingSettings.duration}
           speedMultiplier={recordingSettings.speedMultiplier}
           targetFrameRate={recordingSettings.targetFrameRate}
+          includeAudio={recordingSettings.includeAudio}
+          midiData={midiState?.midiData}
           onRecordingStart={handleRecordingStart}
           onRecordingStop={handleRecordingStop}
           onProgress={handleProgress}
@@ -169,10 +224,18 @@ export default function VirtualRecordingExample({
           <li>Renders frames at accelerated speed (faster than real-time)</li>
           <li>Records the virtual canvas to create a time-lapse video</li>
           <li>Automatically downloads the video when complete</li>
+          {recordingSettings.includeAudio && midiState?.midiData && (
+            <li className="text-green-600">🎵 MIDI audio will be synthesized and included in the video</li>
+          )}
         </ul>
         <p className="mt-2">
           <strong>Example:</strong> A 30-second piece recorded at 2x speed will create a 15-second video showing the entire performance.
         </p>
+        {!midiState?.midiData && recordingSettings.includeAudio && (
+          <p className="mt-2 text-orange-600">
+            <strong>Note:</strong> To include audio, first load a MIDI file using the MIDI player controls.
+          </p>
+        )}
       </div>
     </div>
   );

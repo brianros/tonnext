@@ -41,7 +41,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
   // Initialize virtual canvas
   React.useEffect(() => {
     if (virtualCanvasRef.current && !isInitialized) {
-      initTonnext(virtualCanvasRef.current);
+      initTonnext(virtualCanvasRef.current).catch(console.error);
     }
   }, [initTonnext, isInitialized]);
 

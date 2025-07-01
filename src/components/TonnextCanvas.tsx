@@ -33,7 +33,7 @@ export default function TonnextCanvas({
 
   useEffect(() => {
     if (canvasRef.current && !isInitialized) {
-      initTonnext(canvasRef.current);
+      initTonnext(canvasRef.current).catch(console.error);
     }
     // Attach wheel event with passive: false
     const canvas = canvasRef.current;

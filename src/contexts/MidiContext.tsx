@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useRef } from 'react';
 import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
+import type { Instrument } from '@/components/InstrumentSelector';
 
 interface MidiContextType {
   setCanvasCallbacks: (callbacks: {
@@ -45,6 +46,7 @@ interface MidiContextType {
       onChordStart?: (chord: MidiChord) => void;
       onChordEnd?: (chord: MidiChord) => void;
     }) => void;
+    updateInstrument: (instrument: Instrument) => Promise<void>;
   }) => void;
   getMidiPlayerFunctions: () => {
     parseMidiFile: (file: File) => Promise<MidiData | null>;
@@ -59,7 +61,11 @@ interface MidiContextType {
       onChordStart?: (chord: MidiChord) => void;
       onChordEnd?: (chord: MidiChord) => void;
     }) => void;
+    updateInstrument: (instrument: Instrument) => Promise<void>;
   } | null;
+  // Instrument state
+  setSelectedInstrument: (instrument: Instrument) => void;
+  getSelectedInstrument: () => Instrument | null;
 }
 
 const MidiContext = createContext<MidiContextType | null>(null);
@@ -93,7 +99,10 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
       onChordStart?: (chord: MidiChord) => void;
       onChordEnd?: (chord: MidiChord) => void;
     }) => void;
+    updateInstrument: (instrument: Instrument) => Promise<void>;
   } | null>(null);
+
+  const selectedInstrumentRef = useRef<Instrument | null>(null);
 
   const setCanvasCallbacks = (callbacks: typeof canvasCallbacksRef.current) => {
     canvasCallbacksRef.current = callbacks;
@@ -119,6 +128,14 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
     return midiPlayerFunctionsRef.current;
   };
 
+  const setSelectedInstrument = (instrument: Instrument) => {
+    selectedInstrumentRef.current = instrument;
+  };
+
+  const getSelectedInstrument = () => {
+    return selectedInstrumentRef.current;
+  };
+
   return (
     <MidiContext.Provider value={{ 
       setCanvasCallbacks, 
@@ -126,7 +143,9 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
       setMidiPlayerState,
       getMidiPlayerState,
       setMidiPlayerFunctions,
-      getMidiPlayerFunctions
+      getMidiPlayerFunctions,
+      setSelectedInstrument,
+      getSelectedInstrument
     }}>
       {children}
     </MidiContext.Provider>

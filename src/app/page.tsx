@@ -4,11 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import Settings from '@/components/Settings';
 import TonnextCanvas from '@/components/TonnextCanvas';
 import MidiPlayerCompact from '@/components/MidiPlayerCompact';
-import { MidiProvider } from '@/contexts/MidiContext';
+import { MidiProvider, useMidiContext } from '@/contexts/MidiContext';
 import { useMidiPlayer } from '@/hooks/useMidiPlayer';
 import CustomPaletteModal, { Palette } from '@/components/CustomPaletteModal';
 import LoadingLogo from '@/components/LoadingLogo';
 import Tour from '@/components/Tour';
+import InstrumentSelector, { Instrument } from '@/components/InstrumentSelector';
 // import Controls from '@/components/Controls'; // No longer used
 import React from 'react';
 
@@ -136,6 +137,15 @@ function HomeContent() {
     hover2: '#DB4A2F',
   });
   
+  // Instrument state
+  const [selectedInstrument, setSelectedInstrument] = useState<Instrument>({
+    id: 'piano',
+    name: 'Piano',
+    category: 'Keys',
+    toneType: 'synth',
+    toneOptions: { oscillator: { type: 'triangle' }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 } }
+  });
+  
   // Canvas ref for export functionality
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -183,6 +193,9 @@ function HomeContent() {
 
   // Initialize MIDI player to ensure shared state
   useMidiPlayer();
+  
+  // Get MIDI context for instrument updates
+  const { setSelectedInstrument: setContextInstrument, getMidiPlayerFunctions } = useMidiContext();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -246,6 +259,21 @@ function HomeContent() {
     });
     setCustomPalette(palette);
     setCustomPaletteOpen(false);
+  };
+
+  // Handler to change instrument
+  const handleInstrumentChange = async (instrument: Instrument) => {
+    console.log('Handling instrument change to:', instrument.name);
+    setSelectedInstrument(instrument);
+    setContextInstrument(instrument);
+    const functions = getMidiPlayerFunctions();
+    if (functions) {
+      console.log('Updating MIDI player instrument...');
+      await functions.updateInstrument(instrument);
+      console.log('Instrument update complete');
+    } else {
+      console.log('No MIDI player functions available');
+    }
   };
 
   useEffect(() => {
@@ -668,6 +696,10 @@ function HomeContent() {
             <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
             <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
             <ChordDropdown value={chordType} onChange={setChordType} />
+            <InstrumentSelector 
+              selectedInstrument={selectedInstrument} 
+              onInstrumentChange={handleInstrumentChange} 
+            />
           </div>
         </footer>
 

@@ -50,7 +50,7 @@ export default function VirtualRecordingExample({
   // Initialize the canvas
   React.useEffect(() => {
     if (canvasRef.current && !isInitialized) {
-      initTonnext(canvasRef.current);
+      initTonnext(canvasRef.current).catch(console.error);
     }
   }, [initTonnext, isInitialized]);
 

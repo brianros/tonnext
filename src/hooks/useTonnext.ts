@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
+import { useMidiContext } from '@/contexts/MidiContext';
+import type { Instrument } from '@/components/InstrumentSelector';
 
 // Constants
 const TONE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -44,6 +46,9 @@ export function useTonnext(options: UseTonnextOptions) {
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const synthRef = useRef<Tone.Synth | null>(null);
   const polySynthRef = useRef<Tone.PolySynth | null>(null);
+  
+  // Get MIDI context for instrument settings
+  const { getSelectedInstrument, getMidiPlayerFunctions } = useMidiContext();
   
   // State
   // Initialize density with a safe default for SSR
@@ -102,6 +107,22 @@ export function useTonnext(options: UseTonnextOptions) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, unit: 0 });
 
   const audioStartedRef = useRef(false);
+
+  // Function to update synths with selected instrument settings
+  const updateSynthsWithInstrument = useCallback(async (instrument: Instrument) => {
+    // Initialize audio context if needed
+    await Tone.start();
+    
+    if (synthRef.current && instrument.toneOptions) {
+      console.log('Updating useTonnext synth to:', instrument.name);
+      synthRef.current.set(instrument.toneOptions);
+    }
+    
+    if (polySynthRef.current && instrument.toneOptions) {
+      console.log('Updating useTonnext polySynth to:', instrument.name);
+      polySynthRef.current.set(instrument.toneOptions);
+    }
+  }, []);
 
   // Utility to get CSS variable
   function getCssVar(name: string, fallback: string) {
@@ -372,7 +393,7 @@ export function useTonnext(options: UseTonnextOptions) {
   }, [drawNow]);
 
   // 6. initTonnext
-  const initTonnext = useCallback((canvas: HTMLCanvasElement) => {
+  const initTonnext = useCallback(async (canvas: HTMLCanvasElement) => {
     canvasRef.current = canvas;
     ctxRef.current = canvas.getContext('2d');
     
@@ -381,6 +402,30 @@ export function useTonnext(options: UseTonnextOptions) {
     // Initialize audio
     synthRef.current = new Tone.Synth().toDestination();
     polySynthRef.current = new Tone.PolySynth().toDestination();
+    
+    // Apply initial instrument settings
+    const selectedInstrument = getSelectedInstrument();
+    if (selectedInstrument) {
+      await updateSynthsWithInstrument(selectedInstrument);
+    } else {
+      // Default piano settings
+      const defaultInstrument: Instrument = {
+        id: 'piano',
+        name: 'Piano',
+        category: 'Keys',
+        toneType: 'synth',
+        toneOptions: {
+          oscillator: { type: 'triangle' },
+          envelope: {
+            attack: 0.02,
+            decay: 0.1,
+            sustain: 0.3,
+            release: 1
+          }
+        }
+      };
+      await updateSynthsWithInstrument(defaultInstrument);
+    }
     
     // Initialize tones
     tonesRef.current = Array.from({ length: 12 }, (_, i) => ({
@@ -505,9 +550,10 @@ export function useTonnext(options: UseTonnextOptions) {
       activeRef.current[clickedTone] = true;
       draw(true);
       if (synthRef.current) {
-      const note = TONE_NAMES[clickedTone] + '4';
-      synthRef.current.triggerAttackRelease(note, 0.3);
-    }
+        const note = TONE_NAMES[clickedTone] + '4';
+        console.log('useTonnext: Playing note with current synth settings:', note);
+        synthRef.current.triggerAttackRelease(note, 0.3);
+      }
       setTimeout(() => {
         activeRef.current[clickedTone] = false;
         draw(true);
@@ -521,6 +567,7 @@ export function useTonnext(options: UseTonnextOptions) {
       // Highlight
       notesIdx.forEach(i => { activeRef.current[i] = true; });
       draw(true);
+      console.log('useTonnext: Playing chord with current polySynth settings:', notes);
       polySynthRef.current.triggerAttackRelease(notes, 0.5);
       setTimeout(() => {
         notesIdx.forEach(i => { activeRef.current[i] = false; });
@@ -753,6 +800,25 @@ export function useTonnext(options: UseTonnextOptions) {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
     return () => observer.disconnect();
   }, []); // No dependency on drawGrid!
+
+  // Listen for instrument changes and update synths
+  useEffect(() => {
+    const checkInstrumentChange = () => {
+      const selectedInstrument = getSelectedInstrument();
+      if (selectedInstrument && (synthRef.current || polySynthRef.current)) {
+        console.log('useTonnext: Updating synths with instrument:', selectedInstrument.name);
+        updateSynthsWithInstrument(selectedInstrument);
+      }
+    };
+
+    // Check immediately
+    checkInstrumentChange();
+
+    // Set up an interval to check for changes (since we don't have a direct way to listen to context changes)
+    const interval = setInterval(checkInstrumentChange, 100);
+
+    return () => clearInterval(interval);
+  }, [getSelectedInstrument, updateSynthsWithInstrument]);
 
   return {
     isInitialized,

@@ -4,6 +4,7 @@ import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import * as Tone from 'tone';
 import { Midi } from '@tonejs/midi';
 import { useMidiContext } from '@/contexts/MidiContext';
+import type { Instrument } from '@/components/InstrumentSelector';
 
 export interface MidiNote {
   note: string;
@@ -40,7 +41,7 @@ export function useMidiPlayer() {
   const [midiData, setMidiData] = useState<MidiData | null>(null);
   const [fileName, setFileName] = useState<string>('');
   
-  const { setMidiPlayerState, setMidiPlayerFunctions } = useMidiContext();
+  const { setMidiPlayerState, setMidiPlayerFunctions, getSelectedInstrument } = useMidiContext();
   
   const synthRef = useRef<Tone.PolySynth | null>(null);
   const currentNotesRef = useRef<Set<number>>(new Set());
@@ -170,6 +171,14 @@ export function useMidiPlayer() {
     // Initialize synth
     if (!synthRef.current) {
       synthRef.current = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth }).toDestination();
+    }
+
+    // Update synth with selected instrument settings
+    const selectedInstrument = getSelectedInstrument();
+    if (selectedInstrument && selectedInstrument.toneOptions) {
+      synthRef.current.set(selectedInstrument.toneOptions);
+    } else {
+      // Default piano settings
       synthRef.current.set({
         oscillator: { type: 'triangle' },
         envelope: {
@@ -452,6 +461,22 @@ export function useMidiPlayer() {
     if (callbacks.onChordEnd) onChordEndRef.current = callbacks.onChordEnd;
   }, []);
 
+  const updateInstrument = useCallback(async (instrument: Instrument) => {
+    // Initialize audio context if needed
+    await Tone.start();
+    
+    // Initialize synth if it doesn't exist
+    if (!synthRef.current) {
+      synthRef.current = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth }).toDestination();
+    }
+    
+    // Apply instrument settings
+    if (instrument.toneOptions) {
+      console.log('Updating instrument to:', instrument.name, instrument.toneOptions);
+      synthRef.current.set(instrument.toneOptions);
+    }
+  }, []);
+
   const functions = useMemo(() => ({
     parseMidiFile,
     loadMidiFromUrl,
@@ -460,12 +485,26 @@ export function useMidiPlayer() {
     pausePlayback,
     seekTo,
     setNoteCallbacks,
-  }), [parseMidiFile, loadMidiFromUrl, startPlayback, stopPlayback, pausePlayback, seekTo, setNoteCallbacks]);
+    updateInstrument,
+  }), [parseMidiFile, loadMidiFromUrl, startPlayback, stopPlayback, pausePlayback, seekTo, setNoteCallbacks, updateInstrument]);
 
   // Share functions with context
   useEffect(() => {
     setMidiPlayerFunctions(functions);
   }, [setMidiPlayerFunctions, functions]);
+
+  // Apply initial instrument settings when synth is created
+  useEffect(() => {
+    const applyInitialInstrument = async () => {
+      const selectedInstrument = getSelectedInstrument();
+      if (selectedInstrument && synthRef.current) {
+        console.log('Applying initial instrument settings:', selectedInstrument.name);
+        await updateInstrument(selectedInstrument);
+      }
+    };
+    
+    applyInitialInstrument();
+  }, [getSelectedInstrument, updateInstrument]);
 
   return {
     // State
@@ -483,5 +522,6 @@ export function useMidiPlayer() {
     pausePlayback,
     seekTo,
     setNoteCallbacks,
+    updateInstrument,
   };
 } 

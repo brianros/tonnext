@@ -841,3 +841,42 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 .custom-chord-dropdown .chord-group-header {
   border-bottom: none !important;
 }
+
+/* Instrument selector dropdown styles */
+.instrument-selector-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--color-main);
+  color: var(--color-highlight);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  margin-bottom: 8px;
+}
+
+.instrument-selector-dropdown button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-size: 0.9rem;
+}
+
+.instrument-selector-dropdown button:hover,
+.instrument-selector-dropdown button.selected {
+  background: var(--color-highlight);
+  color: var(--color-main);
+}
+
+.instrument-selector-dropdown .instrument-category {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  margin-top: 2px;
+}

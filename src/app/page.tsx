@@ -153,6 +153,9 @@ function HomeContent() {
   const logoTooltipTimeout = useRef<NodeJS.Timeout | null>(null);
   const [titleHovered, setTitleHovered] = useState(false);
 
+  // Add state for dropdown
+  const [tonnextDropdownOpen, setTonnextDropdownOpen] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000); // back to normal
     return () => clearTimeout(timer);
@@ -281,19 +284,19 @@ function HomeContent() {
         {/* Sleek Header */}
         <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
           <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
+            {/* Tonnext logo/title container */}
             <div className="flex items-center space-x-4 flex-shrink-0">
               <span
                 style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
                 onMouseEnter={() => {
-                  if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
-                  setLogoTooltipOpen(true);
+                  setTonnextDropdownOpen(true);
                   setTitleHovered(true);
                 }}
                 onMouseLeave={() => {
-                  logoTooltipTimeout.current = setTimeout(() => setLogoTooltipOpen(false), 200);
+                  setTonnextDropdownOpen(false);
                   setTitleHovered(false);
                 }}
-                onTouchStart={() => setLogoTooltipOpen(v => !v)}
+                onTouchStart={() => setTonnextDropdownOpen(v => !v)}
                 tabIndex={0}
                 aria-label="Tonnetz Acknowledgements"
               >
@@ -361,38 +364,27 @@ function HomeContent() {
                     </svg>
                   </span>
                 </div>
-                {logoTooltipOpen && (
+                {tonnextDropdownOpen && (
                   <div
                     ref={el => {
                       if (el) {
                         const rect = el.getBoundingClientRect();
                         const vw = window.innerWidth;
-                        if (rect.left < 8) {
-                          el.style.left = '0';
-                          el.style.right = 'auto';
-                          el.style.transform = 'none';
-                        } else if (rect.right > vw - 8) {
-                          el.style.right = '0';
-                          el.style.left = 'auto';
-                          el.style.transform = 'none';
+                        // If the dropdown would overflow right, shift it left
+                        if (rect.right > vw - 8) {
+                          const overflow = rect.right - (vw - 8);
+                          el.style.left = `-${overflow}px`;
                         } else {
-                          el.style.left = '50%';
-                          el.style.right = 'auto';
-                          el.style.transform = 'translateX(-50%)';
+                          el.style.left = '0';
                         }
                       }
                     }}
-                    onMouseEnter={() => {
-                      if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
-                      setLogoTooltipOpen(true);
-                    }}
-                    onMouseLeave={() => {
-                      logoTooltipTimeout.current = setTimeout(() => setLogoTooltipOpen(false), 200);
-                    }}
                     style={{
                       position: 'absolute',
-                      top: '110%',
-                      left: '50%',
+                      top: '100%',
+                      left: 0,
+                      minWidth: 200,
+                      maxWidth: 240,
                       background: 'var(--color-main)',
                       color: 'var(--color-highlight)',
                       border: '2px solid var(--color-accent)',
@@ -400,13 +392,10 @@ function HomeContent() {
                       boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
                       padding: '1.1em 1.2em',
                       zIndex: 100,
-                      minWidth: 260,
-                      maxWidth: 340,
                       fontSize: '1em',
                       textAlign: 'left',
-                      transition: 'box-shadow 0.2s',
+                      marginTop: 8,
                       overflowWrap: 'break-word',
-                      transform: 'translateX(-50%)',
                     }}
                   >
                     <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
@@ -424,10 +413,12 @@ function HomeContent() {
                   </div>
                 )}
               </span>
-              <div className="flex-shrink-0" data-tour="midi-player">
-                <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
-              </div>
             </div>
+            {/* MIDI player container as sibling */}
+            <div className="midi-controller-container flex-shrink-0" style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
+              <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
+            </div>
+            {/* Other header buttons */}
             <div className="flex space-x-2 items-center flex-shrink-0">
               <div
                 className="relative"

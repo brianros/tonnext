@@ -532,103 +532,107 @@ export default function MidiPlayerCompact({
       )} */}
       
       <div className="midi-player-compact" style={{
-        display: 'flex',
-        alignItems: 'center',
+        display: 'inline-flex',
+        alignItems: 'stretch',
         gap: 0,
         fontSize: '0.9rem',
         flexWrap: 'nowrap',
         whiteSpace: 'nowrap',
-        // overflow: 'hidden' // Removed to prevent thumb clipping
+        width: 'auto',
+        height: '64px',
       }}>
-      {/* File Upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".mid,audio/midi"
-        onChange={handleFileSelect}
-        style={{ display: 'none' }}
-      />
-      <button
-        onClick={handleUploadClick}
-        className="blend-btn"
-        style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '64px' }}
-      >
-        Load
-      </button>
-      {/* Example Song button removed */}
-
-      {/* Playback Controls */}
-      {playerState?.midiData && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 0, flexShrink: 0, height: '64px' }}>
-          <button
-            onClick={handlePlayPause}
-            className="blend-btn"
-            style={{
-              width: '64px',
-              height: '100%',
-              fontSize: '1rem',
-              padding: 0,
-              borderRadius: 0,
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {playerState.isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </button>
-          <button
-            onClick={handleStop}
-            className="blend-btn"
-            style={{
-              width: '64px',
-              height: '100%',
-              fontSize: '1rem',
-              padding: 0,
-              borderRadius: 0,
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Square size={20} />
-          </button>
-          {/* Progress Bar */}
-          <div style={{ width: '120px', marginLeft: 8, flexShrink: 0 }}>
-            <input
-              type="range"
-              className="midi-progress-bar"
-              min={0}
-              max={playerState.duration || 0}
-              value={playerState.currentTime || 0}
-              onChange={handleSeek}
-              step={0.1}
+        {/* File Upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".mid,audio/midi"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+        <button
+          onClick={handleUploadClick}
+          className="blend-btn"
+          style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '100%' }}
+        >
+          Load
+        </button>
+        {/* Playback Controls and Export Button */}
+        {playerState?.midiData && (
+          <>
+            <button
+              onClick={handlePlayPause}
+              className="blend-btn"
               style={{
-                width: '100%',
-                height: '4px',
-                borderRadius: '2px',
-                outline: 'none',
-                cursor: 'pointer',
-                position: 'relative',
-                zIndex: 2
+                width: '64px',
+                height: '100%',
+                fontSize: '1rem',
+                padding: 0,
+                borderRadius: 0,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
               }}
-            />
-          </div>
-          {/* Time Display */}
-          <span style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0 }}>
-            {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
-          </span>
-          {/* File Name */}
-          <span style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}>
-            {playerState.fileName}
-          </span>
-          
-                      {/* Export Video Button */}
+            >
+              {playerState.isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            </button>
+            <button
+              onClick={handleStop}
+              className="blend-btn"
+              style={{
+                width: '64px',
+                height: '100%',
+                fontSize: '1rem',
+                padding: 0,
+                borderRadius: 0,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
+              }}
+            >
+              <Square size={20} />
+            </button>
+            {/* Centered non-button controls */}
+            <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+              {/* Progress Bar */}
+              <div style={{ width: '120px', marginLeft: 8, flexShrink: 0 }}>
+                <input
+                  type="range"
+                  className="midi-progress-bar"
+                  min={0}
+                  max={playerState.duration || 0}
+                  value={playerState.currentTime || 0}
+                  onChange={handleSeek}
+                  step={0.1}
+                  style={{
+                    width: '100%',
+                    height: '4px',
+                    borderRadius: '2px',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    zIndex: 2
+                  }}
+                />
+              </div>
+              {/* Time Display */}
+              <span style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0 }}>
+                {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
+              </span>
+              {/* File Name */}
+              <span style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}>
+                {playerState.fileName}
+              </span>
+            </div>
+            {/* Export Video Button */}
             <div
               style={{
                 position: 'relative',
-                display: 'inline-block'
+                display: 'inline-block',
+                marginLeft: 8
               }}
               onMouseEnter={() => isExporting && setShowCancel(true)}
               onMouseLeave={() => setShowCancel(false)}
@@ -651,13 +655,13 @@ export default function MidiPlayerCompact({
                   padding: '0.5em 0',
                   borderRadius: 0,
                   flexShrink: 0,
-                  minWidth: '140px',
                   maxWidth: '220px',
                   width: 'clamp(140px, 15vw, 220px)',
                   textAlign: 'center',
                   boxSizing: 'border-box',
                   position: 'relative',
-                  zIndex: 1
+                  zIndex: 1,
+                  height: '100%',
                 }}
                 title={isExporting && showCancel ? 'Cancel export' : isExporting ? 'Exporting video...' : 'Export video with settings'}
               >
@@ -672,42 +676,42 @@ export default function MidiPlayerCompact({
                     : 'Export'}
               </button>
             </div>
-        </div>
-      )}
-    </div>
+          </>
+        )}
+      </div>
 
-    {/* Export Video Modal */}
-    <ExportVideoModal
-      isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-      onExport={(settings) => {
-        setIsModalOpen(false);
-        triggerVirtualExport(settings);
-      }}
-      originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
-      midiData={playerState?.midiData}
-      mode={mode}
-      chordType={chordType}
-    />
-
-    {/* VirtualCanvasRecorder - only shown when recording */}
-    {/* {isRecording && (
-      <VirtualCanvasRecorder
+      {/* Export Video Modal */}
+      <ExportVideoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onExport={(settings) => {
+          setIsModalOpen(false);
+          triggerVirtualExport(settings);
+        }}
         originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
-        onRenderFrame={handleRenderFrame}
-        duration={recordingSettings.duration}
-        speedMultiplier={recordingSettings.speedMultiplier}
-        targetFrameRate={recordingSettings.targetFrameRate}
-        includeAudio={recordingSettings.includeAudio}
-        aspectRatio={recordingSettings.aspectRatio}
-        targetWidth={recordingSettings.targetWidth}
-        zoom={recordingSettings.zoom}
         midiData={playerState?.midiData}
-        onRecordingStart={handleRecordingStart}
-        onRecordingStop={handleRecordingStop}
-        onProgress={handleProgress}
+        mode={mode}
+        chordType={chordType}
       />
-    )} */}
+
+      {/* VirtualCanvasRecorder - only shown when recording */}
+      {/* {isRecording && (
+        <VirtualCanvasRecorder
+          originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
+          onRenderFrame={handleRenderFrame}
+          duration={recordingSettings.duration}
+          speedMultiplier={recordingSettings.speedMultiplier}
+          targetFrameRate={recordingSettings.targetFrameRate}
+          includeAudio={recordingSettings.includeAudio}
+          aspectRatio={recordingSettings.aspectRatio}
+          targetWidth={recordingSettings.targetWidth}
+          zoom={recordingSettings.zoom}
+          midiData={playerState?.midiData}
+          onRecordingStart={handleRecordingStart}
+          onRecordingStop={handleRecordingStop}
+          onProgress={handleProgress}
+        />
+      )} */}
     </>
   );
 } 

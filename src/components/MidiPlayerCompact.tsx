@@ -19,6 +19,8 @@ interface MidiPlayerCompactProps {
   chordType: string;
 }
 
+const MIRARI_WATERMARK_SRC = '/mirari-w.png';
+
 export default function MidiPlayerCompact({ 
   onNoteStart, 
   onNoteEnd, 
@@ -465,6 +467,14 @@ export default function MidiPlayerCompact({
       density
     });
 
+    // Load watermark image
+    const watermarkImg = new window.Image();
+    watermarkImg.src = MIRARI_WATERMARK_SRC;
+    await new Promise((resolve, reject) => {
+      watermarkImg.onload = resolve;
+      watermarkImg.onerror = reject;
+    });
+
     const totalFrames = Math.ceil((settings.duration * settings.targetFrameRate));
     let frame = 0;
     const timeStep = settings.duration / totalFrames;
@@ -473,11 +483,54 @@ export default function MidiPlayerCompact({
       if (virtualTonnetz && midiData) {
         virtualTonnetz.update(simulationTime, midiData);
       }
-      
+      // Draw watermark at bottom right
+      if (ctx && watermarkImg.complete) {
+        const margin = Math.round(hiddenCanvas.width * 0.03);
+        const extraMargin = Math.round(hiddenCanvas.width * 0.05); // 5% more inward
+        const logoSize = Math.round(hiddenCanvas.width * 0.08); // 8% of canvas width (square)
+        const logoX = hiddenCanvas.width - logoSize - margin - extraMargin;
+        const logoY = hiddenCanvas.height - logoSize - margin - extraMargin;
+        const cornerRadius = Math.round(logoSize * 0.25);
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        // Draw black rounded square behind the logo
+        ctx.beginPath();
+        ctx.moveTo(logoX + cornerRadius, logoY);
+        ctx.lineTo(logoX + logoSize - cornerRadius, logoY);
+        ctx.arcTo(logoX + logoSize, logoY, logoX + logoSize, logoY + cornerRadius, cornerRadius);
+        ctx.lineTo(logoX + logoSize, logoY + logoSize - cornerRadius);
+        ctx.arcTo(logoX + logoSize, logoY + logoSize, logoX + logoSize - cornerRadius, logoY + logoSize, cornerRadius);
+        ctx.lineTo(logoX + cornerRadius, logoY + logoSize);
+        ctx.arcTo(logoX, logoY + logoSize, logoX, logoY + logoSize - cornerRadius, cornerRadius);
+        ctx.lineTo(logoX, logoY + cornerRadius);
+        ctx.arcTo(logoX, logoY, logoX + cornerRadius, logoY, cornerRadius);
+        ctx.closePath();
+        ctx.fillStyle = 'black';
+        ctx.fill();
+        // Draw the watermark image centered in the square
+        // Fit image inside the square, maintaining aspect ratio
+        let drawW = logoSize, drawH = logoSize;
+        const aspect = watermarkImg.width / watermarkImg.height;
+        if (aspect > 1) {
+          drawH = logoSize / aspect;
+        } else {
+          drawW = logoSize * aspect;
+        }
+        const drawX = logoX + (logoSize - drawW) / 2;
+        const drawY = logoY + (logoSize - drawH) / 2;
+        ctx.drawImage(
+          watermarkImg,
+          drawX,
+          drawY,
+          drawW,
+          drawH
+        );
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+      }
       // Update progress
       const progress = (frame / totalFrames) * 100;
       setExportProgress(progress);
-      
       frame++;
       if (frame < totalFrames) {
         animationFrameRef.current = setTimeout(renderNextFrame, 1000 / settings.targetFrameRate);
@@ -623,7 +676,7 @@ export default function MidiPlayerCompact({
                 <span style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
                   {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
                 </span>
-                <span style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                <span className="song-title" style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
                   {playerState.fileName}
                 </span>
               </div>

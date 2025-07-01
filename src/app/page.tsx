@@ -196,20 +196,33 @@ function HomeContent() {
           localStorage.setItem('tonnext-visited', 'true');
         }
       }
-      // Escape to close tour
-      if (event.key === 'Escape' && isTourOpen) {
-        setIsTourOpen(false);
+      // Escape to close tour or tonnext dropdown
+      if (event.key === 'Escape') {
+        if (isTourOpen) {
+          setIsTourOpen(false);
+        }
+        if (tonnextDropdownOpen) {
+          setTonnextDropdownOpen(false);
+          setTitleHovered(false);
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isTourOpen, loading]);
+  }, [isTourOpen, loading, tonnextDropdownOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (chordDropdownRef.current && !chordDropdownRef.current.contains(event.target as Node)) {
+      const button = chordDropdownRef.current;
+      const dropdown = document.querySelector('[data-tour="chord-selector"] > div[style]');
+      if (
+        button &&
+        !button.contains(event.target as Node) &&
+        dropdown &&
+        !dropdown.contains(event.target as Node)
+      ) {
         setChordDropdownOpen(false);
       }
     }
@@ -273,7 +286,7 @@ function HomeContent() {
       {showLoadingLogo && (
         <LoadingLogo spin={spinLoadingLogo} onFinish={handleLoadingLogoFinish} />
       )}
-      <div style={{
+      <div className="main-content" style={{
         filter: loading ? 'blur(6px) brightness(0.7)' : 'none',
         transition: 'filter 0.3s',
         pointerEvents: loading ? 'none' : 'auto',
@@ -286,21 +299,25 @@ function HomeContent() {
           <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
             {/* Tonnext logo/title container */}
             <div className="flex items-center space-x-4 flex-shrink-0">
-              <span
-                style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+              <div
+                style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '64px', minWidth: '148px', cursor: 'pointer', padding: 0 }}
                 onMouseEnter={() => {
                   setTonnextDropdownOpen(true);
                   setTitleHovered(true);
                 }}
-                onMouseLeave={() => {
-                  setTonnextDropdownOpen(false);
-                  setTitleHovered(false);
+                onMouseLeave={(e) => {
+                  // Check if we're moving to the dropdown
+                  const relatedTarget = e.relatedTarget as HTMLElement;
+                  if (!relatedTarget || !relatedTarget.closest('.tonnext-dropdown')) {
+                    setTonnextDropdownOpen(false);
+                    setTitleHovered(false);
+                  }
                 }}
                 onTouchStart={() => setTonnextDropdownOpen(v => !v)}
                 tabIndex={0}
                 aria-label="Tonnetz Acknowledgements"
               >
-                <div style={{ position: 'relative', width: '116px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'relative', width: '116px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}>
                   <h1 
                     className="blend-btn tonnext-title" 
                     style={{
@@ -311,9 +328,9 @@ function HomeContent() {
                       textTransform: 'none', 
                       alignItems: 'center',
                       display: 'flex',
-                      transition: 'opacity 0.5s',
+                      transition: 'opacity 0.7s',
                       opacity: titleHovered ? 0 : 1,
-                      pointerEvents: titleHovered ? 'none' : 'auto',
+                      pointerEvents: 'none',
                       position: 'absolute',
                       left: 0,
                       top: 0,
@@ -330,16 +347,15 @@ function HomeContent() {
                       height: '48px',
                       width: '48px',
                       position: 'absolute',
-                      transition: 'opacity 0.5s',
+                      transition: 'opacity 0.7s',
                       opacity: titleHovered ? 1 : 0,
-                      pointerEvents: titleHovered ? 'auto' : 'none',
+                      pointerEvents: 'none',
                       zIndex: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       left: '0',
                       top: '0',
-                      // The following will be set dynamically in useEffect
                     }}
                     ref={el => {
                       if (el && titleHovered) {
@@ -366,6 +382,15 @@ function HomeContent() {
                 </div>
                 {tonnextDropdownOpen && (
                   <div
+                    className="tonnext-dropdown"
+                    onMouseEnter={() => {
+                      setTonnextDropdownOpen(true);
+                      setTitleHovered(true);
+                    }}
+                    onMouseLeave={() => {
+                      setTonnextDropdownOpen(false);
+                      setTitleHovered(false);
+                    }}
                     ref={el => {
                       if (el) {
                         const rect = el.getBoundingClientRect();
@@ -378,24 +403,6 @@ function HomeContent() {
                           el.style.left = '0';
                         }
                       }
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      minWidth: 200,
-                      maxWidth: 240,
-                      background: 'var(--color-main)',
-                      color: 'var(--color-highlight)',
-                      border: '2px solid var(--color-accent)',
-                      borderRadius: 12,
-                      boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
-                      padding: '1.1em 1.2em',
-                      zIndex: 100,
-                      fontSize: '1em',
-                      textAlign: 'left',
-                      marginTop: 8,
-                      overflowWrap: 'break-word',
                     }}
                   >
                     <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
@@ -412,7 +419,7 @@ function HomeContent() {
                     <div style={{fontSize: '0.95em', color: 'var(--color-accent)'}}><a href="https://mirari.ar" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>mīrārī</a></div>
                   </div>
                 )}
-              </span>
+              </div>
             </div>
             {/* MIDI player container as sibling */}
             <div className="midi-controller-container flex-shrink-0" style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
@@ -540,6 +547,7 @@ function HomeContent() {
             <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
             <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }} data-tour="chord-selector">
               <button
+                ref={chordDropdownRef}
                 className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
                 style={{
                   minWidth: 120,
@@ -583,7 +591,8 @@ function HomeContent() {
               </button>
               {chordDropdownOpen && (
                 <div
-                  ref={chordDropdownRef}
+                  onMouseEnter={() => setChordDropdownOpen(true)}
+                  onMouseLeave={() => setChordDropdownOpen(false)}
                   style={{
                     position: 'absolute',
                     left: 0,

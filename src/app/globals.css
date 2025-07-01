@@ -243,12 +243,109 @@ html, body {
   color: var(--color-main) !important;
 }
 
+/* Header Layout Styles */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-width: 100vw;
+  overflow: visible;
+}
+
+/* Header container with max width */
+header > div {
+  max-width: 95vw;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Footer Layout Styles */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+/* Footer container with max width */
+footer > div {
+  max-width: 95vw;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Main content area - account for fixed header and footer */
+.main-content {
+  padding-top: var(--header-footer-height);
+  padding-bottom: var(--header-footer-height);
+  min-height: calc(100vh - var(--header-footer-height) - var(--header-footer-height));
+}
+
+/* Tonnext title/logo container */
 .tonnext-title {
   display: flex;
+  max-width: 20vw;
+  overflow: hidden;
 }
 .tonnext-logo {
   display: none;
+  max-width: 12vw;
+  min-width: 0;
+  height: 65%;
+  width: auto;
+  transition: opacity 0.7s;
+  transform-origin: 50% 56%; /* center of triangle in SVG viewBox */
 }
+
+.tonnext-logo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Tonnext acknowledgements dropdown */
+.tonnext-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  max-width: 240px;
+  background: var(--color-main);
+  color: var(--color-highlight);
+  border: 2px solid var(--color-accent);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  padding: 1.1em 1.2em;
+  z-index: 1000;
+  font-size: 1em;
+  text-align: left;
+  overflow-wrap: break-word;
+  pointer-events: auto;
+}
+
+.tonnext-dropdown a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.tonnext-dropdown a:hover {
+  color: var(--color-highlight);
+}
+
+/* Song title text overflow handling */
+.midi-player-compact .song-title {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 15vw !important;
+}
+
+/* Mobile responsive adjustments */
 @media (max-width: 639px) {
   .tonnext-title {
     display: none !important;
@@ -257,6 +354,36 @@ html, body {
     display: flex !important;
     align-items: center;
     justify-content: center;
+    max-width: 15vw;
+    min-width: 40px;
+  }
+  
+  /* Adjust header and footer containers for mobile */
+  header > div,
+  footer > div {
+    max-width: 98vw;
+  }
+  
+  /* Reduce song title width on mobile */
+  .midi-player-compact .song-title {
+    max-width: 20vw !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .tonnext-logo {
+    max-width: 12vw;
+    min-width: 36px;
+  }
+  
+  .midi-player-compact .song-title {
+    max-width: 25vw !important;
+  }
+  
+  /* Further adjust containers for very small screens */
+  header > div,
+  footer > div {
+    max-width: 99vw;
   }
 }
 
@@ -647,4 +774,19 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 .export-modal-footer .blend-btn {
   padding-top: 0.4em;
   padding-bottom: 0.4em;
+}
+
+@keyframes tonnext-logo-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Make the logo spin slowly on hover of its parent */
+.tonnext-logo {
+  transition: opacity 0.7s;
+}
+
+/* The parent div is the clickable area for the logo/title */
+.flex.items-center.space-x-4.flex-shrink-0 > div:hover .tonnext-logo {
+  animation: tonnext-logo-spin 16s linear infinite;
 }

@@ -6,6 +6,7 @@ import { useTonnext } from '@/hooks/useTonnext';
 import { useMidiContext } from '@/contexts/MidiContext';
 import { VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
+import { Music, Video } from 'lucide-react';
 
 interface VirtualRecordingExampleProps {
   mode: 'note' | 'chord' | 'arpeggio';
@@ -136,7 +137,7 @@ export default function VirtualRecordingExample({
       {midiState?.midiData && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center gap-2">
-            <span className="text-green-600">🎵</span>
+            <Music className="text-green-600" size={16} />
             <span className="text-sm font-medium text-green-800">
               MIDI File Loaded: {midiState.fileName}
             </span>
@@ -157,7 +158,7 @@ export default function VirtualRecordingExample({
             onClick={() => setIsModalOpen(true)}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
-            <span>🎬</span>
+            <Video size={16} />
             <span>Export Video</span>
           </button>
           
@@ -184,7 +185,7 @@ export default function VirtualRecordingExample({
           <li>Records the virtual canvas to create a time-lapse video</li>
           <li>Automatically downloads the video when complete</li>
           {recordingSettings.includeAudio && midiState?.midiData && (
-            <li className="text-green-600">🎵 MIDI audio will be synthesized and included in the video</li>
+            <li className="text-green-600"><Music size={16} /> MIDI audio will be synthesized and included in the video</li>
           )}
         </ul>
         <p className="mt-2">

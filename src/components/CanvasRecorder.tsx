@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback } from 'react';
+import { Square, Video } from 'lucide-react';
 
 interface CanvasRecorderProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -116,7 +117,7 @@ export default function CanvasRecorder({
             color: 'white'
           }}
         >
-          🎥 Start Recording
+          <Video size={16} /> Start Recording
         </button>
       ) : (
         <button
@@ -129,7 +130,7 @@ export default function CanvasRecorder({
             color: 'white'
           }}
         >
-          ⏹️ Stop Recording
+          <Square size={16} /> Stop Recording
         </button>
       )}
     </div>

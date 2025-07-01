@@ -7,6 +7,7 @@ import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
+import { Play, Pause, Square, Video } from 'lucide-react';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -42,6 +43,11 @@ export default function MidiPlayerCompact({
   const [testMidiLoaded, setTestMidiLoaded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  // Export progress tracking
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [showCancel, setShowCancel] = useState(false);
+  
   // Recording settings and state
   const [recordingSettings, setRecordingSettings] = useState({
     duration: 30,
@@ -53,6 +59,10 @@ export default function MidiPlayerCompact({
     zoom: 1.0
   });
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const animationFrameRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const wasCancelled = useRef(false);
+  const exportBtnRef = useRef<HTMLButtonElement | null>(null);
   
   // Get shared state from context
   const [playerState, setPlayerState] = useState<{
@@ -212,6 +222,8 @@ export default function MidiPlayerCompact({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }, []);
 
+
+
   const handleSeek = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(event.target.value);
     if (playerFunctions) {
@@ -235,19 +247,22 @@ export default function MidiPlayerCompact({
     }
   }, [playerFunctions]);
 
-  // Export functionality
-  const handleExportImage = useCallback(() => {
-    if (!canvasRef?.current) {
-      console.warn('Canvas reference not available for export');
-      return;
+  // Cancel export function
+  const handleCancelExport = useCallback(() => {
+    wasCancelled.current = true;
+    if (mediaRecorderRef.current && isExporting) {
+      mediaRecorderRef.current.stop();
     }
+    if (animationFrameRef.current) {
+      clearTimeout(animationFrameRef.current);
+    }
+    // Reset export state
+    setIsExporting(false);
+    setExportProgress(0);
+    setShowCancel(false);
+  }, [isExporting]);
 
-    const canvas = canvasRef.current;
-    const link = document.createElement('a');
-    link.download = `visualization-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  }, [canvasRef]);
+
 
   // Callback to render a frame at a specific time for video recording
   const handleRenderFrame = useCallback((canvas: HTMLCanvasElement, time: number) => {
@@ -275,12 +290,17 @@ export default function MidiPlayerCompact({
   // Remove isRecording and VirtualCanvasRecorder overlay state
   // Add a function to programmatically trigger the virtual canvas export
   const triggerVirtualExport = useCallback(async (settings: any) => {
-    // Create a hidden canvas
-    const hiddenCanvas = document.createElement('canvas');
-    hiddenCanvas.style.position = 'fixed';
-    hiddenCanvas.style.left = '-9999px';
-    hiddenCanvas.style.top = '-9999px';
-    document.body.appendChild(hiddenCanvas);
+    try {
+          // Set export state
+    setIsExporting(true);
+    setExportProgress(0);
+      
+      // Create a hidden canvas
+      const hiddenCanvas = document.createElement('canvas');
+      hiddenCanvas.style.position = 'fixed';
+      hiddenCanvas.style.left = '-9999px';
+      hiddenCanvas.style.top = '-9999px';
+      document.body.appendChild(hiddenCanvas);
 
     // Calculate dimensions based on aspect ratio
     const originalCanvas = canvasRef.current;
@@ -320,6 +340,14 @@ export default function MidiPlayerCompact({
     const ctx = hiddenCanvas.getContext('2d');
     if (!ctx || !originalCanvas) {
       document.body.removeChild(hiddenCanvas);
+      // Reset export state on error
+      setIsExporting(false);
+      setExportProgress(0);
+      setShowCancel(false);
+      mediaRecorderRef.current = null;
+      if (animationFrameRef.current) {
+        clearTimeout(animationFrameRef.current);
+      }
       return;
     }
 
@@ -377,9 +405,18 @@ export default function MidiPlayerCompact({
     }
     if (!selectedMimeType) {
       document.body.removeChild(hiddenCanvas);
+      // Reset export state on error
+      setIsExporting(false);
+      setExportProgress(0);
+      setShowCancel(false);
+      mediaRecorderRef.current = null;
+      if (animationFrameRef.current) {
+        clearTimeout(animationFrameRef.current);
+      }
       return;
     }
     const mediaRecorder = new MediaRecorder(finalStream, { mimeType: selectedMimeType });
+    mediaRecorderRef.current = mediaRecorder;
     const chunks: Blob[] = [];
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -387,19 +424,28 @@ export default function MidiPlayerCompact({
       }
     };
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: selectedMimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `virtual-recording-${Date.now()}${settings.includeAudio ? '-with-audio' : ''}.webm`;
-      a.click();
-      URL.revokeObjectURL(url);
+      if (!wasCancelled.current) {
+        const blob = new Blob(chunks, { type: selectedMimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `virtual-recording-${Date.now()}${settings.includeAudio ? '-with-audio' : ''}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      wasCancelled.current = false;
       document.body.removeChild(hiddenCanvas);
       if (scheduled) {
         Tone.Transport.stop();
         Tone.Transport.cancel();
         synth?.dispose();
       }
+      
+      // Reset export state
+      setIsExporting(false);
+      setExportProgress(0);
+      setShowCancel(false);
+      mediaRecorderRef.current = null;
     };
     mediaRecorder.start();
 
@@ -419,9 +465,14 @@ export default function MidiPlayerCompact({
       if (virtualTonnetz && midiData) {
         virtualTonnetz.update(simulationTime, midiData);
       }
+      
+      // Update progress
+      const progress = (frame / totalFrames) * 100;
+      setExportProgress(progress);
+      
       frame++;
       if (frame < totalFrames) {
-        setTimeout(renderNextFrame, 1000 / settings.targetFrameRate);
+        animationFrameRef.current = setTimeout(renderNextFrame, 1000 / settings.targetFrameRate);
       } else {
         mediaRecorder.stop();
       }
@@ -430,6 +481,17 @@ export default function MidiPlayerCompact({
       Tone.Transport.start();
     }
     renderNextFrame();
+  } catch (error) {
+    console.error('Export failed:', error);
+    // Reset export state on error
+    setIsExporting(false);
+    setExportProgress(0);
+    setShowCancel(false);
+    mediaRecorderRef.current = null;
+    if (animationFrameRef.current) {
+      clearTimeout(animationFrameRef.current);
+    }
+  }
   }, [canvasRef, mode, chordType, playerState?.midiData]);
 
   return (
@@ -497,39 +559,46 @@ export default function MidiPlayerCompact({
 
       {/* Playback Controls */}
       {playerState?.midiData && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 0, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 0, flexShrink: 0, height: '64px' }}>
           <button
             onClick={handlePlayPause}
-            className="blend-btn midi-theme-btn"
+            className="blend-btn"
             style={{
+              width: '64px',
+              height: '100%',
               fontSize: '1rem',
-              padding: '0.3em 0.8em',
+              padding: 0,
               borderRadius: 0,
-              transition: 'background 0.2s, color 0.2s',
-              cursor: 'pointer',
-              flexShrink: 0
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            {playerState.isPlaying ? '⏸️' : '▶️'}
+            {playerState.isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </button>
           <button
             onClick={handleStop}
-            className="blend-btn midi-theme-btn"
+            className="blend-btn"
             style={{
+              width: '64px',
+              height: '100%',
               fontSize: '1rem',
-              padding: '0.3em 0.8em',
+              padding: 0,
               borderRadius: 0,
-              transition: 'background 0.2s, color 0.2s',
-              cursor: 'pointer',
-              flexShrink: 0
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            ⏹️
+            <Square size={20} />
           </button>
           {/* Progress Bar */}
           <div style={{ width: '120px', marginLeft: 8, flexShrink: 0 }}>
             <input
               type="range"
+              className="midi-progress-bar"
               min={0}
               max={playerState.duration || 0}
               value={playerState.currentTime || 0}
@@ -539,7 +608,6 @@ export default function MidiPlayerCompact({
                 width: '100%',
                 height: '4px',
                 borderRadius: '2px',
-                background: 'var(--color-highlight)',
                 outline: 'none',
                 cursor: 'pointer'
               }}
@@ -554,44 +622,54 @@ export default function MidiPlayerCompact({
             {playerState.fileName}
           </span>
           
-          {/* Export Buttons */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 8, flexShrink: 0 }}>
-            <button
-              onClick={handleExportImage}
-              className="blend-btn midi-theme-btn"
+                      {/* Export Video Button */}
+            <div
               style={{
-                fontSize: '0.8rem',
-                padding: '0.3em 0.6em',
-                borderRadius: 0,
-                transition: 'background 0.2s, color 0.2s',
-                cursor: 'pointer',
-                flexShrink: 0,
-                backgroundColor: '#4CAF50',
-                color: 'white'
+                position: 'relative',
+                display: 'inline-block'
               }}
-              title="Export current visualization as PNG image"
+              onMouseEnter={() => isExporting && setShowCancel(true)}
+              onMouseLeave={() => setShowCancel(false)}
             >
-              📷 PNG
-            </button>
-            {/* Export Video Button */}
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="blend-btn midi-theme-btn"
-              style={{
-                fontSize: '0.8rem',
-                padding: '0.3em 0.6em',
-                borderRadius: 0,
-                transition: 'background 0.2s, color 0.2s',
-                cursor: 'pointer',
-                flexShrink: 0,
-                backgroundColor: '#2196F3',
-                color: 'white'
-              }}
-              title="Export video with settings"
-            >
-              🎬 Export Video
-            </button>
-          </div>
+              <button
+                ref={exportBtnRef}
+                onClick={() => {
+                  if (isExporting && showCancel) {
+                    handleCancelExport();
+                    exportBtnRef.current?.blur();
+                  } else if (!isExporting) {
+                    setIsModalOpen(true);
+                    setTimeout(() => exportBtnRef.current?.blur(), 0);
+                  }
+                }}
+                disabled={isExporting && !showCancel}
+                className="blend-btn"
+                style={{
+                  fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+                  padding: '0.5em 0',
+                  borderRadius: 0,
+                  flexShrink: 0,
+                  minWidth: '140px',
+                  maxWidth: '220px',
+                  width: 'clamp(140px, 15vw, 220px)',
+                  textAlign: 'center',
+                  boxSizing: 'border-box',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+                title={isExporting && showCancel ? 'Cancel export' : isExporting ? 'Exporting video...' : 'Export video with settings'}
+              >
+                {/* Visually hidden span to reserve space for the longest text */}
+                <span style={{visibility: 'hidden', position: 'absolute', pointerEvents: 'none', height: 0, overflow: 'hidden'}}>
+                  <Square size={16} /> Exporting 100%
+                </span>
+                {isExporting && showCancel
+                  ? 'Cancel'
+                  : isExporting
+                    ? <><Square size={16} /> Exporting {exportProgress.toFixed(0)}%</>
+                    : 'EXPORT TO VIDEO'}
+              </button>
+            </div>
         </div>
       )}
     </div>

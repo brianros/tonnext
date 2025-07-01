@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { Square, Video, Music } from 'lucide-react';
 import * as Tone from 'tone';
 
 interface VirtualCanvasRecorderProps {
@@ -382,7 +383,7 @@ export default function VirtualCanvasRecorder({
               color: 'white'
             }}
           >
-            🎬 Start Virtual Recording{includeAudio ? ' with Audio' : ''}
+            <Video size={16} /> Start Virtual Recording{includeAudio ? ' with Audio' : ''}
           </button>
         ) : (
           <button
@@ -395,7 +396,7 @@ export default function VirtualCanvasRecorder({
               color: 'white'
             }}
           >
-            ⏹️ Stop Recording
+            <Square size={16} /> Stop Recording
           </button>
         )}
       </div>
@@ -425,7 +426,7 @@ export default function VirtualCanvasRecorder({
         <div>Zoom: {Math.round(zoom * 100)}%</div>
         <div>Estimated recording time: {(duration / speedMultiplier).toFixed(1)}s</div>
         {includeAudio && (
-          <div className="text-green-600">🎵 Audio will be included in recording</div>
+          <div className="text-green-600"><Music size={16} /> Audio will be included in recording</div>
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useCallback } from 'react';
+import { Play, Pause, Square } from 'lucide-react';
 import { useMidiPlayer, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
 
@@ -147,14 +148,14 @@ export default function MidiPlayer({
               className="blend-btn"
               style={{ minWidth: '60px' }}
             >
-              {isPlaying ? '⏸️' : '▶️'}
+              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
             </button>
             <button
               onClick={stopPlayback}
               className="blend-btn"
               style={{ minWidth: '60px' }}
             >
-              ⏹️
+              <Square size={16} />
             </button>
             <span style={{ fontSize: '0.9rem' }}>
               {formatTime(currentTime)} / {formatTime(duration)}

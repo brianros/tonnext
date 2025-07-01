@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback } from 'react';
+import { Square, Video } from 'lucide-react';
 import * as Tone from 'tone';
 import { useMidiContext } from '@/contexts/MidiContext';
 import { useTonnext } from '@/hooks/useTonnext';
@@ -231,7 +232,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
         }}
         title={isExporting ? 'Exporting...' : 'Export video with audio'}
       >
-        {isExporting ? '⏹️ Exporting...' : '🎬 Export Video'}
+        {isExporting ? <><Square size={16} /> Exporting...</> : <><Video size={16} /> Export Video</>}
       </button>
     </>
   );

@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { VirtualTonnetz } from './VirtualTonnetz';
+import { Monitor, Smartphone, Tv, Square, RectangleHorizontal } from 'lucide-react';
 
 interface ExportVideoModalProps {
   isOpen: boolean;
@@ -24,11 +25,11 @@ interface ExportSettings {
 }
 
 const ASPECT_RATIOS = [
-  { value: 'original', label: 'Original', icon: '📐' },
-  { value: '16:9', label: 'Landscape (16:9)', icon: '🖥️' },
-  { value: '9:16', label: 'Portrait (9:16)', icon: '📱' },
-  { value: '4:3', label: 'Classic (4:3)', icon: '📺' },
-  { value: '1:1', label: 'Square (1:1)', icon: '⬜' },
+  { value: '16:9', label: 'Landscape (16:9)', icon: <Monitor size={20} /> },
+  { value: '9:16', label: 'Portrait (9:16)', icon: <Smartphone size={20} /> },
+  { value: '4:3', label: 'Classic (4:3)', icon: <Tv size={20} /> },
+  { value: '1:1', label: 'Square (1:1)', icon: <Square size={20} /> },
+  { value: '4:5', label: 'Social (4:5)', icon: <RectangleHorizontal size={20} /> },
 ];
 
 export default function ExportVideoModal({
@@ -78,16 +79,13 @@ export default function ExportVideoModal({
         width = Math.min(maxPreviewWidth, maxPreviewHeight);
         height = width;
         break;
-      case 'original':
+      case '4:5':
+        width = maxPreviewWidth;
+        height = Math.round(maxPreviewWidth * (5 / 4));
+        break;
       default:
-        if (originalCanvasRef.current) {
-          const scale = Math.min(maxPreviewWidth / originalCanvasRef.current.width, maxPreviewHeight / originalCanvasRef.current.height);
-          width = Math.round(originalCanvasRef.current.width * scale);
-          height = Math.round(originalCanvasRef.current.height * scale);
-        } else {
-          width = maxPreviewWidth;
-          height = maxPreviewHeight;
-        }
+        width = maxPreviewWidth;
+        height = maxPreviewHeight;
         break;
     }
     
@@ -154,133 +152,76 @@ export default function ExportVideoModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div 
-        className="tour-tooltip"
-        style={{
-          position: 'static',
-          maxWidth: '900px',
-          width: '90vw',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxSizing: 'border-box',
-        }}
-      >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-white">Export Video</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white text-xl font-bold"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* Two-column layout */}
-          <div className="flex flex-row gap-8">
-            {/* Left: Preview Section */}
-            <div style={{ flex: 1, minWidth: 320 }}>
-              <h3 className="text-lg font-semibold mb-4 text-white">Preview</h3>
-              <div className="border-2 border-var(--color-accent) rounded-lg p-4 bg-black bg-opacity-20 flex items-center justify-center">
+    <div className="export-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="export-modal-outer" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', paddingTop: '24px', paddingBottom: '24px' }}>
+        <div className="export-modal" style={{ position: 'relative', paddingTop: '32px', paddingLeft: '32px', paddingRight: '32px' }}>
+          <button
+            onClick={onClose}
+            className="export-modal-btn export-modal-close"
+            title="Close"
+            style={{ position: 'absolute', top: 12, right: 18, zIndex: 2 }}
+          >
+            ×
+          </button>
+          <div className="export-modal-content" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '340px', gap: '48px' }}>
+            <div className="export-modal-preview-col">
+              <h3 className="export-modal-preview-title">Preview</h3>
+              <div className="export-modal-preview-area" style={{ width: '260px', height: '260px' }}>
                 <canvas
                   ref={previewCanvasRef}
-                  className="border border-var(--color-accent) rounded"
-                  style={{ maxWidth: '100%', maxHeight: '300px' }}
+                  className="export-modal-preview-canvas"
+                  style={{ maxWidth: '90%', maxHeight: '90%' }}
                 />
               </div>
-              <div className="text-xs text-gray-400 mt-2 text-center">
-                {calculatePreviewDimensions(settings.aspectRatio, settings.zoom).width} × {calculatePreviewDimensions(settings.aspectRatio, settings.zoom).height} px
-                <br />
-                Density: {Math.round(20 / settings.zoom)} (Zoom: {Math.round(settings.zoom * 100)}%)
+              <div className="export-modal-zoom" style={{ width: '100%', marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={settings.zoom}
+                  onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                  className="export-modal-zoom-slider"
+                  style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '173px', background: '#D4D7CB', borderRadius: '2px' }}
+                />
               </div>
             </div>
-
-            {/* Right: Controls Section */}
-            <div style={{ flex: 1, minWidth: 320 }} className="space-y-6">
-              {/* Aspect Ratio */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-white">Aspect Ratio</h3>
-                <div className="grid grid-cols-2 gap-2">
+            <div className="export-modal-controls" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '60px' }}>
+              <div className="export-modal-aspect">
+                <div className="export-modal-aspect-list">
                   {ASPECT_RATIOS.map((ratio) => (
                     <button
                       key={ratio.value}
                       onClick={() => setSettings(prev => ({ ...prev, aspectRatio: ratio.value }))}
-                      className={`p-3 border rounded-lg text-left transition-colors ${
-                        settings.aspectRatio === ratio.value
-                          ? 'border-var(--color-accent) bg-var(--color-accent) text-white'
-                          : 'border-var(--color-highlight) hover:border-var(--color-accent) text-white'
-                      }`}
+                      className={`export-modal-aspect-btn${settings.aspectRatio === ratio.value ? ' selected' : ''}`}
                     >
-                      <div className="text-lg">{ratio.icon}</div>
-                      <div className="text-sm font-medium">{ratio.label}</div>
+                      <div className="export-modal-aspect-icon">{ratio.icon}</div>
+                      <div className="export-modal-aspect-label">{ratio.label}</div>
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Zoom Control */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-white">Zoom</h3>
-                <div className="space-y-2">
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="2.0"
-                    step="0.1"
-                    value={settings.zoom}
-                    onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
-                    className="w-full"
-                    style={{
-                      accentColor: 'var(--color-accent)'
-                    }}
-                  />
-                  <div className="flex justify-between text-sm text-gray-400">
-                    <span>50%</span>
-                    <span className="font-medium text-white">{Math.round(settings.zoom * 100)}%</span>
-                    <span>200%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Include Audio Checkbox */}
-              <div className="flex items-center mt-4">
+              <div className="export-modal-audio">
                 <input
                   type="checkbox"
                   id="include-audio"
                   checked={settings.includeAudio}
                   onChange={(e) => setSettings(prev => ({ ...prev, includeAudio: e.target.checked }))}
                   disabled={!midiData}
-                  className="mr-2"
+                  className="export-modal-audio-checkbox"
                   style={{ accentColor: 'var(--color-accent)' }}
                 />
-                <label htmlFor="include-audio" className={`text-sm text-white ${!midiData ? 'text-gray-400' : ''}`}>
+                <label htmlFor="include-audio" className={`export-modal-audio-label${!midiData ? ' disabled' : ''}`}>
                   Include MIDI audio {!midiData && '(Load MIDI file first)'}
                 </label>
               </div>
-
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-var(--color-accent)">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded"
-              style={{
-                background: 'var(--color-highlight)',
-                color: 'var(--color-main)',
-              }}
-            >
-              Cancel
-            </button>
+          <div className="export-modal-footer" style={{ marginTop: 0 }}>
             <button
               onClick={handleExport}
-              className="px-6 py-2 text-sm font-medium rounded"
-              style={{
-                background: 'var(--color-accent)',
-                color: 'white',
-              }}
+              className="blend-btn"
+              style={{ minWidth: 140 }}
             >
               Export Video
             </button>

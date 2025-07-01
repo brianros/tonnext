@@ -49,6 +49,24 @@ export function useTonnext(options: UseTonnextOptions) {
   // Initialize density with a safe default for SSR
   const [density, setDensity] = useState(20);
   
+  // Track if density has been manually set by user (for zoom)
+  const [densityManuallySet, setDensityManuallySet] = useState(false);
+  
+  // Ref to track current density for resize handler
+  const densityRef = useRef(density);
+  
+  // Ref to track manually set state for resize handler
+  const densityManuallySetRef = useRef(densityManuallySet);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    densityRef.current = density;
+  }, [density]);
+  
+  useEffect(() => {
+    densityManuallySetRef.current = densityManuallySet;
+  }, [densityManuallySet]);
+  
   // Responsive density function (uses window, so only call on client)
   const getResponsiveDensity = () => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -63,7 +81,10 @@ export function useTonnext(options: UseTonnextOptions) {
 
   // On mount, update density responsively (client only)
   useEffect(() => {
-    setDensity(getResponsiveDensity());
+    // Only set responsive density if it hasn't been manually set
+    if (!densityManuallySet) {
+      setDensity(getResponsiveDensity());
+    }
   }, []);
 
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
@@ -141,9 +162,15 @@ export function useTonnext(options: UseTonnextOptions) {
 
   // 3. drawGrid
   const drawGrid = useCallback(()=>{
-    if(!ctxRef.current) return;
+    if(!ctxRef.current || !canvasRef.current) return;
     const ctx = ctxRef.current;
-    const {width,height,unit}=dimensions;
+    const canvas = canvasRef.current;
+    
+    // Calculate dimensions directly from canvas and current density to avoid stale state
+    const width = canvas.width;
+    const height = canvas.height;
+    const unit = (width + height) / densityRef.current;
+    
     if(unit===0) return;
     const SQRT_3=Math.sqrt(3);
     ctx.clearRect(0,0,width,height);
@@ -315,7 +342,7 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.fillText(noteName, x, y);
       ctx.shadowBlur = 0;
     });
-  },[dimensions,layout,activeRef]);
+  },[layout,activeRef]);
 
   // 4. drawNow
   const drawNow = useCallback(() => {
@@ -476,14 +503,14 @@ export function useTonnext(options: UseTonnextOptions) {
     if (options.mode === 'note') {
       // Play note and highlight briefly (no toggle)
       activeRef.current[clickedTone] = true;
-      drawGrid();
+      draw(true);
       if (synthRef.current) {
       const note = TONE_NAMES[clickedTone] + '4';
       synthRef.current.triggerAttackRelease(note, 0.3);
     }
       setTimeout(() => {
         activeRef.current[clickedTone] = false;
-        drawGrid();
+        draw(true);
       }, 300);
     } else if (options.mode === 'chord' && polySynthRef.current) {
       // Highlight all chord notes, play chord, then clear highlights
@@ -493,11 +520,11 @@ export function useTonnext(options: UseTonnextOptions) {
       const notes = notesIdx.map(i => TONE_NAMES[i] + '4');
       // Highlight
       notesIdx.forEach(i => { activeRef.current[i] = true; });
-      drawGrid();
+      draw(true);
       polySynthRef.current.triggerAttackRelease(notes, 0.5);
       setTimeout(() => {
         notesIdx.forEach(i => { activeRef.current[i] = false; });
-        drawGrid();
+        draw(true);
       }, 500);
     } else if (options.mode === 'arpeggio' && polySynthRef.current) {
       // Stop any previous arpeggio
@@ -510,13 +537,13 @@ export function useTonnext(options: UseTonnextOptions) {
       const notes = notesIdx.map(i => TONE_NAMES[i] + '4');
       // Clear all highlights first
       for (let i = 0; i < 12; i++) activeRef.current[i] = false;
-      drawGrid();
+      draw(true);
       // Play arpeggio
       const arpeggioStep = 160; // ms
       notesIdx.forEach((idx, step) => {
         arpeggioTimeoutsRef.current.push(setTimeout(() => {
           activeRef.current[idx] = true;
-          drawGrid();
+          draw(true);
           polySynthRef.current!.triggerAttackRelease(TONE_NAMES[idx] + '4', arpeggioStep / 1000); // duration in seconds
         }, step * arpeggioStep));
       });
@@ -528,7 +555,7 @@ export function useTonnext(options: UseTonnextOptions) {
       // After full chord, clear highlights
       arpeggioTimeoutsRef.current.push(setTimeout(() => {
         notesIdx.forEach(i => { activeRef.current[i] = false; });
-        drawGrid();
+        draw(true);
       }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3));
     }
   }, [drawGrid,dimensions,options,synthRef,polySynthRef,activeRef,arpeggioTimeoutsRef]);
@@ -586,14 +613,14 @@ export function useTonnext(options: UseTonnextOptions) {
   const handleMidiNoteStart = useCallback((midiNote: { note: string; midi: number; velocity: number }) => {
     const toneIndex = midiNote.midi % 12;
     activeRef.current[toneIndex] = true;
-    updateHighlights();
-  }, [updateHighlights]);
+    draw(true);
+  }, [draw]);
 
   const handleMidiNoteEnd = useCallback((midiNote: { note: string; midi: number }) => {
     const toneIndex = midiNote.midi % 12;
     activeRef.current[toneIndex] = false;
-    updateHighlights();
-  }, [updateHighlights]);
+    draw(true);
+  }, [draw]);
 
   const handleMidiChordStart = useCallback((chord: { notes: Array<{ midi: number }> }) => {
     // Clear previous highlights
@@ -607,16 +634,16 @@ export function useTonnext(options: UseTonnextOptions) {
       activeRef.current[toneIndex] = true;
     });
     
-    updateHighlights();
-  }, [updateHighlights]);
+    draw(true);
+  }, [draw]);
 
   const handleMidiChordEnd = useCallback(() => {
     // Clear all highlights
     for (let i = 0; i < 12; i++) {
       activeRef.current[i] = false;
     }
-    updateHighlights();
-  }, [updateHighlights]);
+    draw(true);
+  }, [draw]);
 
   useEffect(() => {
     if (isInitialized) {
@@ -627,12 +654,13 @@ export function useTonnext(options: UseTonnextOptions) {
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
+      console.log('Window resize handler called, densityManuallySet:', densityManuallySetRef.current);
       if (canvasRef.current) {
         const canvas = canvasRef.current;
         const parent = canvas.parentElement;
         const width = parent ? parent.clientWidth : window.innerWidth;
         const height = parent ? parent.clientHeight : window.innerHeight;
-        const unit = (width + height) / density;
+        const unit = (width + height) / densityRef.current;
         
         canvas.width = width;
         canvas.height = height;
@@ -643,8 +671,13 @@ export function useTonnext(options: UseTonnextOptions) {
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         
-        // Update density based on new screen size
-        setDensity(getResponsiveDensity());
+        // Only update density to responsive value if it hasn't been manually set by user
+        if (!densityManuallySetRef.current) {
+          console.log('Window resize: Setting responsive density');
+          setDensity(getResponsiveDensity());
+        } else {
+          console.log('Window resize: Skipping density update (manually set)');
+        }
         
         // Update dimensions and rebuild grid directly
         setDimensions({ width, height, unit });
@@ -655,7 +688,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [density, buildToneGrid, draw]);
+  }, [buildToneGrid, draw]);
 
   // Handle mouse wheel for zoom
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
@@ -668,7 +701,15 @@ export function useTonnext(options: UseTonnextOptions) {
       // Standard zoom limits for desktop
       setDensity(prev => Math.max(10, Math.min(40, prev + event.deltaY * 0.01)));
     }
+    // Mark density as manually set by user
+    setDensityManuallySet(true);
   };
+
+  // Function to reset zoom to responsive default
+  const resetZoom = useCallback(() => {
+    setDensityManuallySet(false);
+    setDensity(getResponsiveDensity());
+  }, [densityManuallySet]);
 
   // Rebuild grid when density changes (for zoom)
   useEffect(() => {
@@ -725,6 +766,7 @@ export function useTonnext(options: UseTonnextOptions) {
     density,
     setDensity,
     setLayout,
+    resetZoom,
     // MIDI Integration
     handleMidiNoteStart,
     handleMidiNoteEnd,

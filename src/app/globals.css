@@ -286,8 +286,8 @@ canvas {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: url('data:image/svg+xml;utf8,<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%23ff5722" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/></svg>') center/contain no-repeat, #fff;
-  border: 2px solid #ff5722;
+  background: var(--color-highlight);
+  border: 2px solid var(--color-accent);
   box-shadow: 0 0 2px rgba(0,0,0,0.15);
   cursor: pointer;
 }
@@ -295,8 +295,8 @@ canvas {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: url('data:image/svg+xml;utf8,<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%23ff5722" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/></svg>') center/contain no-repeat, #fff;
-  border: 2px solid #ff5722;
+  background: var(--color-highlight);
+  border: 2px solid var(--color-accent);
   box-shadow: 0 0 2px rgba(0,0,0,0.15);
   cursor: pointer;
 }
@@ -304,36 +304,56 @@ canvas {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: url('data:image/svg+xml;utf8,<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%23ff5722" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/></svg>') center/contain no-repeat, #fff;
-  border: 2px solid #ff5722;
+  background: var(--color-highlight);
+  border: 2px solid var(--color-accent);
   box-shadow: 0 0 2px rgba(0,0,0,0.15);
   cursor: pointer;
 }
 .midi-player-compact input[type="range"] {
-  accent-color: #ff5722;
-  /* Remove default thumb for Firefox */
+  accent-color: var(--color-accent);
   overflow: hidden;
 }
 
-.midi-progress-bar::-webkit-slider-runnable-track {
-  height: 4px;
+input[type="range"].midi-progress-bar::-webkit-slider-thumb,
+.midi-progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: var(--color-highlight);
-  border-radius: 2px;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 2px rgba(0,0,0,0.15);
+  cursor: pointer;
 }
-.midi-progress-bar::-moz-range-track {
-  height: 4px;
+input[type="range"].midi-progress-bar::-moz-range-thumb,
+.midi-progress-bar::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: var(--color-highlight);
-  border-radius: 2px;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 2px rgba(0,0,0,0.15);
+  cursor: pointer;
 }
-.midi-progress-bar::-ms-fill-lower,
-.midi-progress-bar::-ms-fill-upper {
-  height: 4px;
+input[type="range"].midi-progress-bar::-ms-thumb,
+.midi-progress-bar::-ms-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: var(--color-highlight);
-  border-radius: 2px;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 2px rgba(0,0,0,0.15);
+  cursor: pointer;
 }
-.midi-progress-bar {
-  background: var(--color-highlight);
-}
+
+/* Remove default thumb/track styles for better cross-browser support */
+.midi-progress-bar::-webkit-slider-thumb { background: var(--color-highlight) !important; border: 2px solid var(--color-accent) !important; }
+.midi-progress-bar::-webkit-slider-runnable-track { background: var(--color-highlight) !important; border: none !important; }
+.midi-progress-bar::-moz-range-thumb { background: var(--color-highlight) !important; border: 2px solid var(--color-accent) !important; }
+.midi-progress-bar::-moz-range-track { background: var(--color-highlight) !important; border: none !important; }
+.midi-progress-bar::-ms-thumb { background: var(--color-highlight) !important; border: 2px solid var(--color-accent) !important; }
+.midi-progress-bar::-ms-fill-lower, .midi-progress-bar::-ms-fill-upper { background: var(--color-highlight) !important; border: none !important; }
 
 .export-modal-overlay {
   position: fixed;
@@ -399,7 +419,7 @@ canvas {
   width: 40px;
   height: 40px;
   font-size: 1.5rem;
-  border-radius: 12px;
+  border-radius: 50%;
   margin-left: 8px;
 }
 .export-modal-content {
@@ -432,6 +452,7 @@ canvas {
   justify-content: center;
   background: rgba(0,0,0,0.10);
   border-radius: 12px;
+  margin: 8px 0;
 }
 .export-modal-preview-canvas {
   background: #D4D7CB;
@@ -626,8 +647,4 @@ canvas {
 .export-modal-footer .blend-btn {
   padding-top: 0.4em;
   padding-bottom: 0.4em;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
 }

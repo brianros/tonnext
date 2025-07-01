@@ -61,6 +61,10 @@ export function useTonnext(options: UseTonnextOptions) {
   // State
   const getResponsiveDensity = () => Math.max(16, Math.min(40, Math.floor(window.innerWidth / 32)));
   const [density, setDensity] = useState(getResponsiveDensity());
+  
+  // Track if density has been manually set by user (for zoom)
+  const densityManuallySetRef = useRef(false);
+  
   const [ghostDuration, setGhostDuration] = useState(500);
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
   const [sustainEnabled, setSustainEnabled] = useState(false);
@@ -528,7 +532,10 @@ export function useTonnext(options: UseTonnextOptions) {
           ctx.fillStyle = '#1a1a1a';
           ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
-        setDensity(getResponsiveDensity());
+        // Only update density to responsive value if it hasn't been manually set by user
+        if (!densityManuallySetRef.current) {
+          setDensity(getResponsiveDensity());
+        }
         rebuild();
       }
     };
@@ -541,6 +548,8 @@ export function useTonnext(options: UseTonnextOptions) {
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
     event.preventDefault();
     setDensity(prev => Math.max(10, Math.min(30, prev - event.deltaY * 0.01)));
+    // Mark density as manually set by user
+    densityManuallySetRef.current = true;
   };
 
   // Rebuild grid when density changes (for zoom)

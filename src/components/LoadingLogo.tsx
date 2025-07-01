@@ -48,6 +48,7 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
   const requestRef = useRef<number | null>(null);
   const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTimestamp = useRef<number | null>(null);
+  const [fadeOut, setFadeOut] = useState(false);
 
   // Animate comet progress
   useEffect(() => {
@@ -73,11 +74,14 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
   // When spin becomes true, trigger spin animation, then fade out and call onFinish
   useEffect(() => {
     if (spin) {
+      setFadeOut(true);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
       spinTimeoutRef.current = setTimeout(() => {
         setVisible(false);
         if (onFinish) onFinish();
       }, 2000); // match spin duration (2s)
+    } else {
+      setFadeOut(false);
     }
     return () => {
       if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
@@ -168,8 +172,8 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
         alignItems: 'center',
         justifyContent: 'center',
         pointerEvents: 'all',
-        transition: 'opacity 0.5s',
-        opacity: spin ? 0 : 1,
+        transition: 'opacity 1.5s',
+        opacity: fadeOut ? 0 : 1,
       }}
     >
       <svg
@@ -179,8 +183,9 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         style={{
-          transition: spin ? 'transform 2s cubic-bezier(0.4,2,0.4,1)' : undefined,
-          transform: spin ? 'rotate(720deg)' : 'none',
+          transition: 'transform 1s cubic-bezier(0.4,2,0.4,1), opacity 1s',
+          transform: fadeOut ? 'scale(0.5) rotate(540deg)' : 'scale(1) rotate(0deg)',
+          opacity: fadeOut ? 0.2 : 1,
           transformOrigin: '60px 70px', // center of triangle
         }}
       >
@@ -189,7 +194,7 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
           {getBarGradient(1, 2, 'grad12', barIndex === 1, barIndex === 1 ? cometT : 0)}
           {getBarGradient(2, 0, 'grad20', barIndex === 2, barIndex === 2 ? cometT : 0)}
         </defs>
-        <polygon points="60,22 104,98 16,98" fill={HIGHLIGHT} stroke={HOVER} strokeWidth={4} />
+        <polygon points="60,22 104,98 16,98" fill="transparent" stroke={HOVER} strokeWidth={4} />
         {/* Bars with comet trail gradient */}
         <line x1={nodes[0].cx} y1={nodes[0].cy} x2={nodes[1].cx} y2={nodes[1].cy} stroke="url(#grad01)" strokeWidth={6} strokeLinecap="round" />
         <line x1={nodes[1].cx} y1={nodes[1].cy} x2={nodes[2].cx} y2={nodes[2].cy} stroke="url(#grad12)" strokeWidth={6} strokeLinecap="round" />

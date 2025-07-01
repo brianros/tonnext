@@ -196,6 +196,14 @@ export default function MidiPlayerCompact({
     }
   }, [playerState?.midiData, playerState?.duration]);
 
+  // Remove Example Song button and load example MIDI by default
+  useEffect(() => {
+    if (!playerState?.midiData && playerFunctions) {
+      playerFunctions.loadMidiFromUrl('/example.mid', 'Example MIDI');
+      setTestMidiLoaded(true);
+    }
+  }, [playerState?.midiData, playerFunctions]);
+
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.type === 'audio/midi' || file.name.endsWith('.mid')) && playerFunctions) {
@@ -530,7 +538,7 @@ export default function MidiPlayerCompact({
         fontSize: '0.9rem',
         flexWrap: 'nowrap',
         whiteSpace: 'nowrap',
-        overflow: 'hidden'
+        // overflow: 'hidden' // Removed to prevent thumb clipping
       }}>
       {/* File Upload */}
       <input
@@ -547,15 +555,7 @@ export default function MidiPlayerCompact({
       >
         Load MIDI
       </button>
-      {!testMidiLoaded && (
-        <button
-          onClick={handleLoadBeethoven}
-          className="blend-btn"
-          style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderRadius: 0, flexShrink: 0, height: '64px' }}
-        >
-          Example Song
-        </button>
-      )}
+      {/* Example Song button removed */}
 
       {/* Playback Controls */}
       {playerState?.midiData && (
@@ -609,7 +609,9 @@ export default function MidiPlayerCompact({
                 height: '4px',
                 borderRadius: '2px',
                 outline: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                position: 'relative',
+                zIndex: 2
               }}
             />
           </div>
@@ -661,12 +663,12 @@ export default function MidiPlayerCompact({
               >
                 {/* Visually hidden span to reserve space for the longest text */}
                 <span style={{visibility: 'hidden', position: 'absolute', pointerEvents: 'none', height: 0, overflow: 'hidden'}}>
-                  <Square size={16} /> Exporting 100%
+                  Exporting 100%
                 </span>
                 {isExporting && showCancel
                   ? 'Cancel'
                   : isExporting
-                    ? <><Square size={16} /> Exporting {exportProgress.toFixed(0)}%</>
+                    ? <>Exporting {exportProgress.toFixed(0)}%</>
                     : 'EXPORT TO VIDEO'}
               </button>
             </div>

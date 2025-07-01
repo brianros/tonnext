@@ -143,8 +143,8 @@ export default function ExportVideoModal({
     ctx.fillStyle = '#D4D7CB';
     ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
     
-    // Calculate density based on zoom (higher zoom = lower density = nodes closer together)
-    const baseDensity = 20;
+    // Calculate density based on zoom, using current canvas density as base
+    const baseDensity = (window as any).__currentCanvasDensity || 20;
     const density = Math.round(baseDensity / settings.zoom);
     
     // Always create a new VirtualTonnetz instance after resizing

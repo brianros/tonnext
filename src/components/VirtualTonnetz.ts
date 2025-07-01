@@ -99,9 +99,8 @@ export class VirtualTonnetz {
   }
 
   private addNode(tone: number, x: number, y: number, unit: number) {
-    if (x >= 0 && x < this.dimensions.width && y >= 0 && y < this.dimensions.height) {
-      this.nodes.push({ x, y, tone });
-    }
+    // Remove border filtering to match main canvas behavior
+    this.nodes.push({ x, y, tone });
   }
 
   private drawGrid() {

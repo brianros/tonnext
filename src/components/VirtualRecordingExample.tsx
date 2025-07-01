@@ -4,6 +4,8 @@ import React, { useRef, useState } from 'react';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import { useTonnext } from '@/hooks/useTonnext';
 import { useMidiContext } from '@/contexts/MidiContext';
+import { VirtualTonnetz } from './VirtualTonnetz';
+import ExportVideoModal from './ExportVideoModal';
 
 interface VirtualRecordingExampleProps {
   mode: 'note' | 'chord' | 'arpeggio';
@@ -15,15 +17,21 @@ export default function VirtualRecordingExample({
   chordType 
 }: VirtualRecordingExampleProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
   const { getMidiPlayerState } = useMidiContext();
   const midiState = getMidiPlayerState();
   
   const [recordingSettings, setRecordingSettings] = useState({
-    duration: 30, // 30 seconds
-    speedMultiplier: 2, // 2x speed
-    targetFrameRate: 30,
-    includeAudio: false
+    duration: 30, // Will be updated from MIDI
+    speedMultiplier: 1, // Fixed at 1x
+    targetFrameRate: 30, // Fixed at 30fps
+    includeAudio: false,
+    aspectRatio: 'original',
+    targetWidth: 1920, // Fixed at 1920px
+    zoom: 1.0
   });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { 
     initTonnext, 
@@ -47,11 +55,24 @@ export default function VirtualRecordingExample({
 
   // Callback to render a frame at a specific time
   const handleRenderFrame = (canvas: HTMLCanvasElement, time: number) => {
-    // Fallback: just render the current state
-    const ctx = canvas.getContext('2d');
-    if (ctx && canvasRef.current) {
-      // Copy the current canvas state to the virtual canvas
-      ctx.drawImage(canvasRef.current, 0, 0);
+    // Initialize VirtualTonnetz if not already done
+    if (!virtualTonnetzRef.current) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Calculate density based on zoom (higher zoom = lower density = nodes closer together)
+        const baseDensity = 20;
+        const density = Math.round(baseDensity / recordingSettings.zoom);
+        virtualTonnetzRef.current = new VirtualTonnetz(canvas, ctx, { 
+          mode, 
+          chordType,
+          density 
+        });
+      }
+    }
+    
+    // Update the virtual tonnetz with the current time
+    if (virtualTonnetzRef.current && midiState?.midiData) {
+      virtualTonnetzRef.current.update(time, midiState.midiData);
     }
   };
 
@@ -65,6 +86,13 @@ export default function VirtualRecordingExample({
 
   const handleProgress = (progress: number) => {
     console.log('Recording progress:', progress);
+  };
+
+  const [isRecording, setIsRecording] = useState(false);
+
+  const handleExportSettings = (settings: any) => {
+    setRecordingSettings(settings);
+    setIsRecording(true); // This will trigger the recording
   };
 
   // Auto-set duration from MIDI if available
@@ -120,100 +148,31 @@ export default function VirtualRecordingExample({
         </div>
       )}
 
-      {/* Recording Controls */}
+      {/* Video Export */}
       <div className="p-4 border rounded-lg bg-gray-50">
-        <h3 className="text-lg font-semibold mb-4">Virtual Recording Settings</h3>
+        <h3 className="text-lg font-semibold mb-4">Video Export</h3>
         
-        {/* Recording Settings */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Duration (seconds)
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="300"
-              value={recordingSettings.duration}
-              onChange={(e) => setRecordingSettings(prev => ({
-                ...prev,
-                duration: parseInt(e.target.value) || 30
-              }))}
-              className="w-full px-3 py-2 border rounded-md"
-            />
-          </div>
+        <div className="flex gap-4 items-center">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <span>🎬</span>
+            <span>Export Video</span>
+          </button>
           
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Speed Multiplier
-            </label>
-            <input
-              type="number"
-              min="0.1"
-              max="10"
-              step="0.1"
-              value={recordingSettings.speedMultiplier}
-              onChange={(e) => setRecordingSettings(prev => ({
-                ...prev,
-                speedMultiplier: parseFloat(e.target.value) || 1
-              }))}
-              className="w-full px-3 py-2 border rounded-md"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Frame Rate (fps)
-            </label>
-            <input
-              type="number"
-              min="15"
-              max="60"
-              value={recordingSettings.targetFrameRate}
-              onChange={(e) => setRecordingSettings(prev => ({
-                ...prev,
-                targetFrameRate: parseInt(e.target.value) || 30
-              }))}
-              className="w-full px-3 py-2 border rounded-md"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Include Audio
-            </label>
-            <div className="flex items-center mt-2">
-              <input
-                type="checkbox"
-                id="include-audio"
-                checked={recordingSettings.includeAudio}
-                onChange={(e) => setRecordingSettings(prev => ({
-                  ...prev,
-                  includeAudio: e.target.checked
-                }))}
-                disabled={!midiState?.midiData}
-                className="mr-2"
-              />
-              <label htmlFor="include-audio" className={`text-sm ${!midiState?.midiData ? 'text-gray-400' : ''}`}>
-                {midiState?.midiData ? 'Add MIDI audio to video' : 'Load MIDI file first'}
-              </label>
-            </div>
+          <div className="text-sm text-gray-600">
+            {midiState?.midiData ? (
+              <span>✅ MIDI file loaded - audio export available</span>
+            ) : (
+              <span>⚠️ Load a MIDI file to enable audio export</span>
+            )}
           </div>
         </div>
 
-        {/* Virtual Recorder */}
-        <VirtualCanvasRecorder
-          originalCanvasRef={canvasRef}
-          onRenderFrame={handleRenderFrame}
-          duration={recordingSettings.duration}
-          speedMultiplier={recordingSettings.speedMultiplier}
-          targetFrameRate={recordingSettings.targetFrameRate}
-          includeAudio={recordingSettings.includeAudio}
-          midiData={midiState?.midiData}
-          onRecordingStart={handleRecordingStart}
-          onRecordingStop={handleRecordingStop}
-          onProgress={handleProgress}
-        />
+        <div className="mt-3 text-xs text-gray-500">
+          Click to open export settings with preview, aspect ratio options, and zoom controls.
+        </div>
       </div>
 
       {/* Info */}
@@ -237,6 +196,39 @@ export default function VirtualRecordingExample({
           </p>
         )}
       </div>
+
+      {/* VirtualCanvasRecorder - only shown when recording */}
+      {isRecording && (
+        <VirtualCanvasRecorder
+          originalCanvasRef={canvasRef}
+          onRenderFrame={handleRenderFrame}
+          duration={recordingSettings.duration}
+          speedMultiplier={recordingSettings.speedMultiplier}
+          targetFrameRate={recordingSettings.targetFrameRate}
+          includeAudio={recordingSettings.includeAudio}
+          aspectRatio={recordingSettings.aspectRatio}
+          targetWidth={recordingSettings.targetWidth}
+          zoom={recordingSettings.zoom}
+          midiData={midiState?.midiData}
+          onRecordingStart={handleRecordingStart}
+          onRecordingStop={(blob) => {
+            handleRecordingStop(blob);
+            setIsRecording(false);
+          }}
+          onProgress={handleProgress}
+        />
+      )}
+
+      {/* Export Video Modal */}
+      <ExportVideoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onExport={handleExportSettings}
+        originalCanvasRef={canvasRef}
+        midiData={midiState?.midiData}
+        mode={mode}
+        chordType={chordType}
+      />
     </div>
   );
 } 

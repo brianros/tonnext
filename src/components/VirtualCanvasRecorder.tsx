@@ -18,6 +18,12 @@ interface VirtualCanvasRecorderProps {
   includeAudio?: boolean;
   // MIDI data for audio synthesis during recording
   midiData?: any;
+  // Aspect ratio for the output video ('original', '16:9', '9:16', '4:3', '1:1')
+  aspectRatio?: string;
+  // Target width for the output video (height will be calculated based on aspect ratio)
+  targetWidth?: number;
+  // Zoom level for the output video (0.5 = 50%, 2.0 = 200%)
+  zoom?: number;
   onRecordingStart?: () => void;
   onRecordingStop?: (blob: Blob) => void;
   onProgress?: (progress: number) => void;
@@ -31,6 +37,9 @@ export default function VirtualCanvasRecorder({
   targetFrameRate = 30,
   includeAudio = false,
   midiData,
+  aspectRatio = 'original',
+  targetWidth = 1920,
+  zoom = 1.0,
   onRecordingStart,
   onRecordingStop,
   onProgress
@@ -77,15 +86,56 @@ export default function VirtualCanvasRecorder({
     };
   }, [includeAudio, midiData]);
 
+  // Helper function to calculate dimensions based on aspect ratio
+  const calculateDimensions = useCallback((originalWidth: number, originalHeight: number) => {
+    let width: number;
+    let height: number;
+    
+    switch (aspectRatio) {
+      case '16:9':
+        width = targetWidth;
+        height = Math.round(targetWidth * (9 / 16));
+        break;
+      case '9:16':
+        width = targetWidth;
+        height = Math.round(targetWidth * (16 / 9));
+        break;
+      case '4:3':
+        width = targetWidth;
+        height = Math.round(targetWidth * (3 / 4));
+        break;
+      case '1:1':
+        width = targetWidth;
+        height = targetWidth;
+        break;
+      case 'original':
+      default:
+        // Keep original aspect ratio but scale to target width
+        const scale = targetWidth / originalWidth;
+        width = targetWidth;
+        height = Math.round(originalHeight * scale);
+        break;
+    }
+    
+    return { width, height };
+  }, [aspectRatio, targetWidth]);
+
   const startVirtualRecording = useCallback(async () => {
     if (!originalCanvasRef.current || !virtualCanvasRef.current || !isSupported) return;
 
     const originalCanvas = originalCanvasRef.current;
     const virtualCanvas = virtualCanvasRef.current;
     
-    // Set virtual canvas to same dimensions as original
-    virtualCanvas.width = originalCanvas.width;
-    virtualCanvas.height = originalCanvas.height;
+    // Calculate dimensions based on aspect ratio
+    const { width: targetCanvasWidth, height: targetCanvasHeight } = calculateDimensions(
+      originalCanvas.width, 
+      originalCanvas.height
+    );
+    
+    // Set virtual canvas to target dimensions with extra width for border nodes
+    const extraWidth = Math.max(100, targetCanvasWidth * 0.1); // Add 10% or at least 100px
+    virtualCanvas.width = targetCanvasWidth + extraWidth;
+    virtualCanvas.height = targetCanvasHeight;
     
     // Get the virtual canvas context
     const virtualCtx = virtualCanvas.getContext('2d');
@@ -255,6 +305,10 @@ export default function VirtualCanvasRecorder({
     isSupported,
     includeAudio,
     midiData,
+    aspectRatio,
+    targetWidth,
+    zoom,
+    calculateDimensions,
     initializeAudio,
     onRecordingStart,
     onRecordingStop,
@@ -366,6 +420,9 @@ export default function VirtualCanvasRecorder({
         <div>Duration: {duration}s</div>
         <div>Speed: {speedMultiplier}x</div>
         <div>Frame rate: {targetFrameRate}fps</div>
+        <div>Aspect ratio: {aspectRatio}</div>
+        <div>Target width: {targetWidth}px</div>
+        <div>Zoom: {Math.round(zoom * 100)}%</div>
         <div>Estimated recording time: {(duration / speedMultiplier).toFixed(1)}s</div>
         {includeAudio && (
           <div className="text-green-600">🎵 Audio will be included in recording</div>

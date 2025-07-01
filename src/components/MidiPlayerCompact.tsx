@@ -3,8 +3,10 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
-import { createVirtualTonnetz } from './VirtualTonnetz';
-import AutomatedVideoExport from './AutomatedVideoExport';
+import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
+import ExportVideoModal from './ExportVideoModal';
+import VirtualCanvasRecorder from './VirtualCanvasRecorder';
+import * as Tone from 'tone';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -38,7 +40,19 @@ export default function MidiPlayerCompact({
   
   // Track if test MIDI has been loaded
   const [testMidiLoaded, setTestMidiLoaded] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Recording settings and state
+  const [recordingSettings, setRecordingSettings] = useState({
+    duration: 30,
+    speedMultiplier: 1,
+    targetFrameRate: 30,
+    includeAudio: false,
+    aspectRatio: 'original' as string,
+    targetWidth: 1920,
+    zoom: 1.0
+  });
+  const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
   
   // Get shared state from context
   const [playerState, setPlayerState] = useState<{
@@ -162,6 +176,16 @@ export default function MidiPlayerCompact({
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-set duration from MIDI if available
+  React.useEffect(() => {
+    if (playerState?.midiData && playerState.duration > 0) {
+      setRecordingSettings(prev => ({
+        ...prev,
+        duration: playerState.duration
+      }));
+    }
+  }, [playerState?.midiData, playerState?.duration]);
+
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && (file.type === 'audio/midi' || file.name.endsWith('.mid')) && playerFunctions) {
@@ -225,10 +249,193 @@ export default function MidiPlayerCompact({
     link.click();
   }, [canvasRef]);
 
+  // Callback to render a frame at a specific time for video recording
+  const handleRenderFrame = useCallback((canvas: HTMLCanvasElement, time: number) => {
+    // Initialize VirtualTonnetz if not already done
+    if (!virtualTonnetzRef.current) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Calculate density based on zoom (higher zoom = lower density = nodes closer together)
+        const baseDensity = 20;
+        const density = Math.round(baseDensity / recordingSettings.zoom);
+        virtualTonnetzRef.current = new VirtualTonnetz(canvas, ctx, { 
+          mode, 
+          chordType,
+          density 
+        });
+      }
+    }
+    
+    // Update the virtual tonnetz with the current time
+    if (virtualTonnetzRef.current && playerState?.midiData) {
+      virtualTonnetzRef.current.update(time, playerState.midiData);
+    }
+  }, [recordingSettings.zoom, mode, chordType, playerState?.midiData]);
+
+  // Remove isRecording and VirtualCanvasRecorder overlay state
+  // Add a function to programmatically trigger the virtual canvas export
+  const triggerVirtualExport = useCallback(async (settings: any) => {
+    // Create a hidden canvas
+    const hiddenCanvas = document.createElement('canvas');
+    hiddenCanvas.style.position = 'fixed';
+    hiddenCanvas.style.left = '-9999px';
+    hiddenCanvas.style.top = '-9999px';
+    document.body.appendChild(hiddenCanvas);
+
+    // Calculate dimensions based on aspect ratio
+    const originalCanvas = canvasRef.current;
+    if (!originalCanvas) return;
+    let width = settings.targetWidth;
+    let height = settings.targetWidth;
+    switch (settings.aspectRatio) {
+      case '16:9':
+        // Landscape: width = targetWidth, height calculated
+        width = settings.targetWidth;
+        height = Math.round(settings.targetWidth * 9 / 16);
+        break;
+      case '9:16':
+        // Portrait: height = targetWidth, width calculated
+        height = settings.targetWidth;
+        width = Math.round(settings.targetWidth * 9 / 16);
+        break;
+      case '4:3':
+        width = settings.targetWidth;
+        height = Math.round(settings.targetWidth * 3 / 4);
+        break;
+      case '1:1':
+        width = settings.targetWidth;
+        height = settings.targetWidth;
+        break;
+      case 'original':
+      default:
+        // Keep original aspect ratio but scale to target width
+        const scale = settings.targetWidth / originalCanvas.width;
+        width = settings.targetWidth;
+        height = Math.round(originalCanvas.height * scale);
+        break;
+    }
+    hiddenCanvas.width = width;
+    hiddenCanvas.height = height;
+
+    const ctx = hiddenCanvas.getContext('2d');
+    if (!ctx || !originalCanvas) {
+      document.body.removeChild(hiddenCanvas);
+      return;
+    }
+
+    // Prepare for recording
+    const videoStream = hiddenCanvas.captureStream(settings.targetFrameRate);
+    let finalStream: MediaStream = videoStream;
+    let synth: Tone.PolySynth | null = null;
+    let audioDest: MediaStreamAudioDestinationNode | null = null;
+    let scheduled = false;
+    const midiData = settings.midiData || playerState?.midiData;
+
+    if (settings.includeAudio && midiData) {
+      await Tone.start();
+      synth = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth });
+      synth.disconnect();
+      audioDest = Tone.Destination.context.createMediaStreamDestination();
+      synth.connect(audioDest);
+      synth.set({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
+      });
+      Tone.Transport.cancel();
+      midiData.tracks.forEach((track: any) => {
+        track.notes.forEach((note: any) => {
+          if (note.time < settings.duration) {
+            Tone.Transport.schedule((time) => {
+              synth?.triggerAttack(note.note, time, note.velocity);
+            }, note.time);
+            Tone.Transport.schedule((time) => {
+              synth?.triggerRelease(note.note, time);
+            }, note.time + note.duration);
+          }
+        });
+      });
+      Tone.Transport.bpm.value = midiData.tempo || 120;
+      finalStream = new MediaStream([
+        ...videoStream.getTracks(),
+        ...audioDest.stream.getTracks()
+      ]);
+      scheduled = true;
+    }
+
+    const mimeTypes = [
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm',
+      'video/mp4'
+    ];
+    let selectedMimeType = '';
+    for (const mimeType of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        selectedMimeType = mimeType;
+        break;
+      }
+    }
+    if (!selectedMimeType) {
+      document.body.removeChild(hiddenCanvas);
+      return;
+    }
+    const mediaRecorder = new MediaRecorder(finalStream, { mimeType: selectedMimeType });
+    const chunks: Blob[] = [];
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: selectedMimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `virtual-recording-${Date.now()}${settings.includeAudio ? '-with-audio' : ''}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(hiddenCanvas);
+      if (scheduled) {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        synth?.dispose();
+      }
+    };
+    mediaRecorder.start();
+
+    // --- Use VirtualTonnetz for rendering frames ---
+    const density = Math.round(20 / settings.zoom);
+    const virtualTonnetz = new VirtualTonnetz(hiddenCanvas, ctx, {
+      mode: settings.mode || mode,
+      chordType: settings.chordType || chordType,
+      density
+    });
+
+    const totalFrames = Math.ceil((settings.duration * settings.targetFrameRate));
+    let frame = 0;
+    const timeStep = settings.duration / totalFrames;
+    function renderNextFrame() {
+      const simulationTime = frame * timeStep;
+      if (virtualTonnetz && midiData) {
+        virtualTonnetz.update(simulationTime, midiData);
+      }
+      frame++;
+      if (frame < totalFrames) {
+        setTimeout(renderNextFrame, 1000 / settings.targetFrameRate);
+      } else {
+        mediaRecorder.stop();
+      }
+    }
+    if (scheduled) {
+      Tone.Transport.start();
+    }
+    renderNextFrame();
+  }, [canvasRef, mode, chordType, playerState?.midiData]);
+
   return (
     <>
       {/* Recording Modal Overlay */}
-      {isRecording && (
+      {/* {isRecording && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -252,7 +459,7 @@ export default function MidiPlayerCompact({
             </div>
           </div>
         </div>
-      )}
+      )} */}
       
       <div className="midi-player-compact" style={{
         display: 'flex',
@@ -366,18 +573,61 @@ export default function MidiPlayerCompact({
             >
               📷 PNG
             </button>
-            {/* Automated Video Export replaces the old Export Video button */}
-            <div style={{ minWidth: 220 }}>
-              <AutomatedVideoExport
-                mode={mode}
-                chordType={chordType}
-                canvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
-              />
-            </div>
+            {/* Export Video Button */}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="blend-btn midi-theme-btn"
+              style={{
+                fontSize: '0.8rem',
+                padding: '0.3em 0.6em',
+                borderRadius: 0,
+                transition: 'background 0.2s, color 0.2s',
+                cursor: 'pointer',
+                flexShrink: 0,
+                backgroundColor: '#2196F3',
+                color: 'white'
+              }}
+              title="Export video with settings"
+            >
+              🎬 Export Video
+            </button>
           </div>
         </div>
       )}
     </div>
+
+    {/* Export Video Modal */}
+    <ExportVideoModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onExport={(settings) => {
+        setIsModalOpen(false);
+        triggerVirtualExport(settings);
+      }}
+      originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
+      midiData={playerState?.midiData}
+      mode={mode}
+      chordType={chordType}
+    />
+
+    {/* VirtualCanvasRecorder - only shown when recording */}
+    {/* {isRecording && (
+      <VirtualCanvasRecorder
+        originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
+        onRenderFrame={handleRenderFrame}
+        duration={recordingSettings.duration}
+        speedMultiplier={recordingSettings.speedMultiplier}
+        targetFrameRate={recordingSettings.targetFrameRate}
+        includeAudio={recordingSettings.includeAudio}
+        aspectRatio={recordingSettings.aspectRatio}
+        targetWidth={recordingSettings.targetWidth}
+        zoom={recordingSettings.zoom}
+        midiData={playerState?.midiData}
+        onRecordingStart={handleRecordingStart}
+        onRecordingStop={handleRecordingStop}
+        onProgress={handleProgress}
+      />
+    )} */}
     </>
   );
 } 

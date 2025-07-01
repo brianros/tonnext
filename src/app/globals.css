@@ -399,7 +399,7 @@ canvas {
   width: 40px;
   height: 40px;
   font-size: 1.5rem;
-  border-radius: 50%;
+  border-radius: 12px;
   margin-left: 8px;
 }
 .export-modal-content {
@@ -432,7 +432,6 @@ canvas {
   justify-content: center;
   background: rgba(0,0,0,0.10);
   border-radius: 12px;
-  margin: 8px 0;
 }
 .export-modal-preview-canvas {
   background: #D4D7CB;
@@ -473,7 +472,7 @@ canvas {
   gap: 8px;
 }
 .export-modal-aspect-btn {
-  padding: 10px;
+  padding: 6px 10px;
   border: 1px solid var(--color-highlight);
   border-radius: 8px;
   background: transparent;
@@ -619,4 +618,16 @@ canvas {
   border: 2px solid #e7b6a3;
   box-shadow: 0 0 2px rgba(0,0,0,0.10);
   cursor: pointer;
+}
+
+.export-modal-quality-group .export-modal-aspect-btn {
+  padding: 6px 10px;
+}
+.export-modal-footer .blend-btn {
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }

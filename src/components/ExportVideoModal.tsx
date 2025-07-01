@@ -32,6 +32,34 @@ const ASPECT_RATIOS = [
   { value: '4:5', label: 'Social (4:5)', icon: <RectangleHorizontal size={20} /> },
 ];
 
+const QUALITY_PRESETS: Record<string, { label: string; width: number; height: number; }[]> = {
+  '16:9': [
+    { label: 'Low', width: 854, height: 480 },
+    { label: 'Medium', width: 1280, height: 720 },
+    { label: 'High', width: 1920, height: 1080 },
+  ],
+  '9:16': [
+    { label: 'Low', width: 480, height: 854 },
+    { label: 'Medium', width: 720, height: 1280 },
+    { label: 'High', width: 1080, height: 1920 },
+  ],
+  '4:3': [
+    { label: 'Low', width: 640, height: 480 },
+    { label: 'Medium', width: 960, height: 720 },
+    { label: 'High', width: 1440, height: 1080 },
+  ],
+  '1:1': [
+    { label: 'Low', width: 480, height: 480 },
+    { label: 'Medium', width: 720, height: 720 },
+    { label: 'High', width: 1080, height: 1080 },
+  ],
+  '4:5': [
+    { label: 'Low', width: 480, height: 600 },
+    { label: 'Medium', width: 720, height: 900 },
+    { label: 'High', width: 1080, height: 1350 },
+  ],
+};
+
 export default function ExportVideoModal({
   isOpen,
   onClose,
@@ -54,10 +82,12 @@ export default function ExportVideoModal({
     zoom: 1.0
   });
 
+  const [quality, setQuality] = useState('High');
+
   // Calculate preview dimensions based on aspect ratio
   const calculatePreviewDimensions = useCallback((aspectRatio: string, zoom: number) => {
-    const maxPreviewWidth = 400;
-    const maxPreviewHeight = 300;
+    const maxPreviewWidth = 450;
+    const maxPreviewHeight = 350;
     
     let width: number;
     let height: number;
@@ -144,6 +174,16 @@ export default function ExportVideoModal({
     }
   }, [isOpen, updatePreview]);
 
+  // Ensure aspect ratio is always a valid key for QUALITY_PRESETS
+  const validAspectRatios = Object.keys(QUALITY_PRESETS);
+  const aspectKey = validAspectRatios.includes(settings.aspectRatio) ? settings.aspectRatio : '16:9';
+
+  // Update targetWidth and aspect ratio height when quality or aspect ratio changes
+  useEffect(() => {
+    const preset = QUALITY_PRESETS[aspectKey]?.find(q => q.label === quality) || QUALITY_PRESETS['16:9'][2];
+    setSettings(prev => ({ ...prev, targetWidth: preset.width }));
+  }, [quality, aspectKey]);
+
   const handleExport = () => {
     onExport(settings);
     onClose();
@@ -154,74 +194,95 @@ export default function ExportVideoModal({
   return (
     <div className="export-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="export-modal-outer" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', paddingTop: '24px', paddingBottom: '24px' }}>
-        <div className="export-modal" style={{ position: 'relative', paddingTop: '32px', paddingLeft: '32px', paddingRight: '32px' }}>
+        <div className="export-modal" style={{ position: 'relative', paddingTop: '48px', width: '100%' }}>
           <button
             onClick={onClose}
             className="export-modal-btn export-modal-close"
             title="Close"
-            style={{ position: 'absolute', top: 12, right: 18, zIndex: 2 }}
+            style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, borderRadius: 12 }}
           >
             ×
           </button>
-          <div className="export-modal-content" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '340px', gap: '48px' }}>
-            <div className="export-modal-preview-col">
-              <h3 className="export-modal-preview-title">Preview</h3>
-              <div className="export-modal-preview-area" style={{ width: '260px', height: '260px' }}>
-                <canvas
-                  ref={previewCanvasRef}
-                  className="export-modal-preview-canvas"
-                  style={{ maxWidth: '90%', maxHeight: '90%' }}
-                />
-              </div>
-              <div className="export-modal-zoom" style={{ width: '100%', marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="2.0"
-                  step="0.1"
-                  value={settings.zoom}
-                  onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
-                  className="export-modal-zoom-slider"
-                  style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '173px', background: '#D4D7CB', borderRadius: '2px' }}
-                />
-              </div>
-            </div>
-            <div className="export-modal-controls" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: '60px' }}>
-              <div className="export-modal-aspect">
-                <div className="export-modal-aspect-list">
-                  {ASPECT_RATIOS.map((ratio) => (
-                    <button
-                      key={ratio.value}
-                      onClick={() => setSettings(prev => ({ ...prev, aspectRatio: ratio.value }))}
-                      className={`export-modal-aspect-btn${settings.aspectRatio === ratio.value ? ' selected' : ''}`}
-                    >
-                      <div className="export-modal-aspect-icon">{ratio.icon}</div>
-                      <div className="export-modal-aspect-label">{ratio.label}</div>
-                    </button>
-                  ))}
+          <div className="export-modal-content" style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', minHeight: '340px', gap: '48px', paddingLeft: '32px', paddingRight: '32px' }}>
+            <div className="export-modal-preview-col" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '48px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
+                  <div className="export-modal-preview-area" style={{ width: '280px', height: '280px' }}>
+                    <canvas
+                      ref={previewCanvasRef}
+                      className="export-modal-preview-canvas"
+                      style={{ maxWidth: '90%', maxHeight: '90%' }}
+                    />
+                  </div>
+                  <div className="export-modal-zoom" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Zoom</label>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="2.0"
+                      step="0.1"
+                      value={settings.zoom}
+                      onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                      className="export-modal-zoom-slider"
+                      style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '200px', background: '#D4D7CB', borderRadius: '2px' }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="export-modal-audio">
-                <input
-                  type="checkbox"
-                  id="include-audio"
-                  checked={settings.includeAudio}
-                  onChange={(e) => setSettings(prev => ({ ...prev, includeAudio: e.target.checked }))}
-                  disabled={!midiData}
-                  className="export-modal-audio-checkbox"
-                  style={{ accentColor: 'var(--color-accent)' }}
-                />
-                <label htmlFor="include-audio" className={`export-modal-audio-label${!midiData ? ' disabled' : ''}`}>
-                  Include MIDI audio {!midiData && '(Load MIDI file first)'}
-                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
+                  <div className="export-modal-right-group" style={{ width: '180px', height: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '18px' }}>
+                    <div className="export-modal-aspect">
+                      <div className="export-modal-aspect-list">
+                        {ASPECT_RATIOS.map((ratio) => (
+                          <button
+                            key={ratio.value}
+                            onClick={() => setSettings(prev => ({ ...prev, aspectRatio: ratio.value }))}
+                            className={`export-modal-aspect-btn${settings.aspectRatio === ratio.value ? ' selected' : ''}`}
+                          >
+                            <div className="export-modal-aspect-icon">{ratio.icon}</div>
+                            <div className="export-modal-aspect-label">{ratio.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="export-modal-quality-group" style={{ width: '100%', marginTop: '8px', display: 'flex', gap: '8px' }}>
+                      {QUALITY_PRESETS[aspectKey]?.map((q: { label: string; width: number; height: number; }) => (
+                        <button
+                          key={q.label}
+                          onClick={() => setQuality(q.label)}
+                          className={`export-modal-aspect-btn${quality === q.label ? ' selected' : ''}`}
+                          style={{ flex: 1, textAlign: 'center' }}
+                        >
+                          {q.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="export-modal-audio" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Audio</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id="include-audio"
+                        checked={settings.includeAudio}
+                        onChange={(e) => setSettings(prev => ({ ...prev, includeAudio: e.target.checked }))}
+                        disabled={!midiData}
+                        className="export-modal-audio-checkbox"
+                        style={{ accentColor: 'var(--color-accent)' }}
+                      />
+                      <label htmlFor="include-audio" className={`export-modal-audio-label${!midiData ? ' disabled' : ''}`} style={{ fontSize: '0.85rem' }}>
+                        Include MIDI audio {!midiData && '(Load MIDI file first)'}
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="export-modal-footer" style={{ marginTop: 0 }}>
+          <div className="export-modal-footer" style={{ marginTop: 0, padding: 0, width: '100%' }}>
             <button
               onClick={handleExport}
               className="blend-btn"
-              style={{ minWidth: 140 }}
+              style={{ width: '100%', padding: 0 }}
             >
               Export Video
             </button>

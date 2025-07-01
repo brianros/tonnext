@@ -844,39 +844,45 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 
 /* Instrument selector dropdown styles */
 .instrument-selector-dropdown {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  min-width: 200px;
+  box-shadow: none !important;
+  /* Scrollbar styling */
+}
+.instrument-selector-dropdown::-webkit-scrollbar {
+  width: 8px;
   background: var(--color-main);
-  color: var(--color-highlight);
-  border: 2px solid var(--color-accent);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  z-index: 50;
-  margin-bottom: 8px;
 }
-
-.instrument-selector-dropdown button {
-  width: 100%;
-  text-align: left;
-  padding: 8px 12px;
-  background: transparent;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  font-size: 0.9rem;
-}
-
-.instrument-selector-dropdown button:hover,
-.instrument-selector-dropdown button.selected {
+.instrument-selector-dropdown::-webkit-scrollbar-thumb {
   background: var(--color-highlight);
-  color: var(--color-main);
+  border-radius: 0;
+}
+.instrument-selector-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+.instrument-selector-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-highlight) var(--color-main);
+}
+.instrument-selector-dropdown button {
+  border: none !important;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--color-main);
+  color: #fff;
+  transition: background 0.2s, color 0.2s;
+  height: auto !important;
+  padding: 0.15em 0.7em !important;
+  min-height: 0 !important;
+  line-height: 1.2;
+  border-bottom: none !important;
+}
+.instrument-selector-dropdown button[aria-selected="true"],
+.instrument-selector-dropdown button:hover,
+.instrument-selector-dropdown button:active,
+.instrument-selector-dropdown button.selected {
+  background: var(--color-highlight) !important;
+  color: var(--color-main) !important;
 }
 
-.instrument-selector-dropdown .instrument-category {
-  font-size: 0.75rem;
-  color: var(--color-accent);
-  margin-top: 2px;
-}
+

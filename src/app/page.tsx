@@ -10,6 +10,7 @@ import CustomPaletteModal, { Palette } from '@/components/CustomPaletteModal';
 import LoadingLogo from '@/components/LoadingLogo';
 import Tour from '@/components/Tour';
 import InstrumentSelector, { Instrument } from '@/components/InstrumentSelector';
+import { Piano } from 'lucide-react';
 // import Controls from '@/components/Controls'; // No longer used
 import React from 'react';
 
@@ -142,6 +143,7 @@ function HomeContent() {
     id: 'piano',
     name: 'Piano',
     category: 'Keys',
+    icon: Piano,
     toneType: 'synth',
     toneOptions: { oscillator: { type: 'triangle' }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 } }
   });
@@ -340,24 +342,26 @@ function HomeContent() {
           ref={btnRef}
           className="blend-btn"
           style={{
-            width: 'auto',
+            width: '200px',
             height: '64px',
             fontSize: 'clamp(1rem, 2vw, 1.6rem)',
             textTransform: 'uppercase',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: 'space-between',
             background: open ? 'var(--color-highlight)' : undefined,
             color: open ? 'var(--color-main)' : undefined,
             outline: open ? '2px solid var(--color-highlight)' : undefined,
+            paddingLeft: 16,
+            paddingRight: 16,
           }}
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen(o => !o)}
           tabIndex={0}
         >
-          <span style={{ flex: 1, textAlign: 'left' }}>{selectedLabel || 'Select Chord'}</span>
-          <span style={{ marginLeft: 8, fontSize: '1.2rem', lineHeight: 1 }}>▲</span>
+          <span style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center' }}>{selectedLabel || 'Select Chord'}</span>
+          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>▲</span>
         </button>
         {open && (
           <div
@@ -692,14 +696,14 @@ function HomeContent() {
         {/* Sleek Footer with Controls */}
         <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls">
           <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full px-4">
-            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
-            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
-            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-            <ChordDropdown value={chordType} onChange={setChordType} />
             <InstrumentSelector 
               selectedInstrument={selectedInstrument} 
               onInstrumentChange={handleInstrumentChange} 
             />
+            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
+            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
+            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
+            <ChordDropdown value={chordType} onChange={setChordType} />
           </div>
         </footer>
 

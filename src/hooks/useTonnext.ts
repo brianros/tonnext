@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
 import { useMidiContext } from '@/contexts/MidiContext';
 import type { Instrument } from '@/components/InstrumentSelector';
+import { Piano } from 'lucide-react';
 
 // Constants
 const TONE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -113,6 +114,7 @@ export function useTonnext(options: UseTonnextOptions) {
     // Initialize audio context if needed
     await Tone.start();
     
+    // Apply instrument settings
     if (synthRef.current && instrument.toneOptions) {
       console.log('Updating useTonnext synth to:', instrument.name);
       synthRef.current.set(instrument.toneOptions);
@@ -413,6 +415,7 @@ export function useTonnext(options: UseTonnextOptions) {
         id: 'piano',
         name: 'Piano',
         category: 'Keys',
+        icon: Piano,
         toneType: 'synth',
         toneOptions: {
           oscillator: { type: 'triangle' },

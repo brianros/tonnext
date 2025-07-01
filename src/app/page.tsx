@@ -151,6 +151,7 @@ function HomeContent() {
 
   const [logoTooltipOpen, setLogoTooltipOpen] = useState(false);
   const logoTooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [titleHovered, setTitleHovered] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000); // back to normal
@@ -286,39 +287,93 @@ function HomeContent() {
                 onMouseEnter={() => {
                   if (logoTooltipTimeout.current) clearTimeout(logoTooltipTimeout.current);
                   setLogoTooltipOpen(true);
+                  setTitleHovered(true);
                 }}
                 onMouseLeave={() => {
                   logoTooltipTimeout.current = setTimeout(() => setLogoTooltipOpen(false), 200);
+                  setTitleHovered(false);
                 }}
                 onTouchStart={() => setLogoTooltipOpen(v => !v)}
                 tabIndex={0}
                 aria-label="Tonnetz Acknowledgements"
               >
-                <h1 className="blend-btn tonnext-title" style={{margin: 0, padding: 0, height: '64px', textTransform: 'none', alignItems: 'center'}} >Tonnext</h1>
-                <span 
-                  className="tonnext-logo" 
-                  style={{height: 'clamp(28px, 8vw, 40px)', width: 'clamp(28px, 8vw, 40px)', position: 'relative', marginLeft: 8}}
-                >
-                  <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="62,22 106,102 18,102" fill="white" />
-                    <circle cx="62" cy="22" r="12" fill="var(--color-accent)" />
-                    <circle cx="106" cy="102" r="12" fill="var(--color-accent)" />
-                    <circle cx="18" cy="102" r="12" fill="var(--color-accent)" />
-                  </svg>
-                </span>
+                <div style={{ position: 'relative', width: '116px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <h1 
+                    className="blend-btn tonnext-title" 
+                    style={{
+                      margin: 0, 
+                      padding: '0 1rem', 
+                      height: '64px', 
+                      width: '116px',
+                      textTransform: 'none', 
+                      alignItems: 'center',
+                      display: 'flex',
+                      transition: 'opacity 0.5s',
+                      opacity: titleHovered ? 0 : 1,
+                      pointerEvents: titleHovered ? 'none' : 'auto',
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      zIndex: 1,
+                      justifyContent: 'center',
+                    }}
+                  >
+                    Ton
+                    <span id="tonnext-second-n" style={{ position: 'relative', display: 'inline-block' }}>n</span>ext
+                  </h1>
+                  <span 
+                    className="tonnext-logo" 
+                    style={{
+                      height: '48px',
+                      width: '48px',
+                      position: 'absolute',
+                      transition: 'opacity 0.5s',
+                      opacity: titleHovered ? 1 : 0,
+                      pointerEvents: titleHovered ? 'auto' : 'none',
+                      zIndex: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      left: '0',
+                      top: '0',
+                      // The following will be set dynamically in useEffect
+                    }}
+                    ref={el => {
+                      if (el && titleHovered) {
+                        const nSpan = document.getElementById('tonnext-second-n');
+                        if (nSpan) {
+                          const nRect = nSpan.getBoundingClientRect();
+                          const parentRect = el.parentElement?.getBoundingClientRect();
+                          if (parentRect) {
+                            const offsetLeft = nRect.left - parentRect.left + nRect.width / 2 - 24; // 24 = logo radius
+                            el.style.left = `${offsetLeft}px`;
+                            el.style.top = `${nRect.top - parentRect.top + nRect.height / 2 - 24}px`;
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <polygon points="62,18 110,102 14,102" fill="none" stroke="var(--color-accent)" stroke-width="3" />
+                      <circle cx="62" cy="18" r="12" fill="var(--color-accent)" />
+                      <circle cx="110" cy="102" r="12" fill="var(--color-accent)" />
+                      <circle cx="14" cy="102" r="12" fill="var(--color-accent)" />
+                    </svg>
+                  </span>
+                </div>
                 {logoTooltipOpen && (
                   <div
                     ref={el => {
                       if (el) {
-                        // Ensure tooltip stays within viewport
                         const rect = el.getBoundingClientRect();
                         const vw = window.innerWidth;
                         if (rect.left < 8) {
-                          el.style.left = '8px';
+                          el.style.left = '0';
+                          el.style.right = 'auto';
                           el.style.transform = 'none';
                         } else if (rect.right > vw - 8) {
+                          el.style.right = '0';
                           el.style.left = 'auto';
-                          el.style.right = '8px';
                           el.style.transform = 'none';
                         } else {
                           el.style.left = '50%';
@@ -351,6 +406,7 @@ function HomeContent() {
                       textAlign: 'left',
                       transition: 'box-shadow 0.2s',
                       overflowWrap: 'break-word',
+                      transform: 'translateX(-50%)',
                     }}
                   >
                     <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
@@ -390,8 +446,9 @@ function HomeContent() {
                   aria-haspopup="true"
                   aria-expanded={appearanceDropdown}
                   data-tour="appearance"
+                  style={{ width: '120px', height: '64px' }}
                 >
-                  Appearance
+                  Theme
                 </button>
                 {appearanceDropdown && (
                   <div
@@ -463,6 +520,7 @@ function HomeContent() {
                 onClick={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
                 className="blend-btn"
                 title="Start guided tour (Ctrl+T)"
+                style={{ width: '120px', height: '64px' }}
               >
                 Tour
               </button>

@@ -553,7 +553,7 @@ export default function MidiPlayerCompact({
         className="blend-btn"
         style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '64px' }}
       >
-        Load MIDI
+        Load
       </button>
       {/* Example Song button removed */}
 
@@ -647,7 +647,7 @@ export default function MidiPlayerCompact({
                 disabled={isExporting && !showCancel}
                 className="blend-btn"
                 style={{
-                  fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+                  fontSize: 'clamp(1rem, 2vw, 1.6rem)',
                   padding: '0.5em 0',
                   borderRadius: 0,
                   flexShrink: 0,
@@ -669,7 +669,7 @@ export default function MidiPlayerCompact({
                   ? 'Cancel'
                   : isExporting
                     ? <>Exporting {exportProgress.toFixed(0)}%</>
-                    : 'EXPORT TO VIDEO'}
+                    : 'Export'}
               </button>
             </div>
         </div>

@@ -598,7 +598,7 @@ export default function MidiPlayerCompact({
             {/* Centered non-button controls */}
             <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
               {/* Progress Bar */}
-              <div style={{ width: '120px', marginLeft: 8, flexShrink: 0 }}>
+              <div style={{ width: '120px', marginLeft: 8, flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
                 <input
                   type="range"
                   className="midi-progress-bar"
@@ -618,14 +618,15 @@ export default function MidiPlayerCompact({
                   }}
                 />
               </div>
-              {/* Time Display */}
-              <span style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0 }}>
-                {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
-              </span>
-              {/* File Name */}
-              <span style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0 }}>
-                {playerState.fileName}
-              </span>
+              {/* Time Display and Filename */}
+              <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                <span style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                  {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
+                </span>
+                <span style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                  {playerState.fileName}
+                </span>
+              </div>
             </div>
             {/* Export Video Button */}
             <div

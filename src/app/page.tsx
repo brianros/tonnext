@@ -304,7 +304,7 @@ function HomeContent() {
 
     return (
       <div
-        style={{ position: 'relative', flex: '2 1 0', minWidth: 120 }}
+        style={{ position: 'relative' }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
       >
@@ -312,9 +312,7 @@ function HomeContent() {
           ref={btnRef}
           className="blend-btn"
           style={{
-            minWidth: 120,
-            maxWidth: 400,
-            width: '100%',
+            width: 'auto',
             height: '64px',
             fontSize: 'clamp(1rem, 2vw, 1.6rem)',
             textTransform: 'uppercase',
@@ -665,10 +663,10 @@ function HomeContent() {
 
         {/* Sleek Footer with Controls */}
         <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls">
-          <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full">
-            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('note')}>Note</button>
-            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('chord')}>Chord</button>
-            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
+          <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full px-4">
+            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
+            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
+            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
             <ChordDropdown value={chordType} onChange={setChordType} />
           </div>
         </footer>

@@ -190,6 +190,11 @@ html, body {
   box-shadow: none !important;
 }
 
+/* Remove min-width constraints from footer buttons */
+footer .blend-btn {
+  min-width: 0 !important;
+}
+
 .chord-select {
   appearance: none;
   -webkit-appearance: none;
@@ -206,8 +211,7 @@ html, body {
   font-size: clamp(1rem, 2vw, 1.6rem);
   letter-spacing: 0.01em;
   height: 56px;
-  min-width: 120px;
-  max-width: 220px;
+  width: auto;
   cursor: pointer;
   display: inline-block;
   vertical-align: middle;

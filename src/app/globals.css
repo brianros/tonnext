@@ -269,7 +269,7 @@ footer {
   right: 0;
   z-index: 40;
   max-width: 100vw;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Footer container with max width */
@@ -277,6 +277,7 @@ footer > div {
   max-width: 95vw;
   margin: 0 auto;
   position: relative;
+  overflow: visible;
 }
 
 /* Main content area - account for fixed header and footer */
@@ -284,6 +285,7 @@ footer > div {
   padding-top: var(--header-footer-height);
   padding-bottom: var(--header-footer-height);
   min-height: calc(100vh - var(--header-footer-height) - var(--header-footer-height));
+  overflow: visible;
 }
 
 /* Tonnext title/logo container */
@@ -789,4 +791,49 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 /* The parent div is the clickable area for the logo/title */
 .flex.items-center.space-x-4.flex-shrink-0 > div:hover .tonnext-logo {
   animation: tonnext-logo-spin 16s linear infinite;
+}
+
+/* Custom chord dropdown styles */
+.custom-chord-dropdown {
+  box-shadow: none !important;
+  /* Scrollbar styling */
+}
+.custom-chord-dropdown::-webkit-scrollbar {
+  width: 8px;
+  background: var(--color-main);
+}
+.custom-chord-dropdown::-webkit-scrollbar-thumb {
+  background: var(--color-highlight);
+  border-radius: 0;
+}
+.custom-chord-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+.custom-chord-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-highlight) var(--color-main);
+}
+.custom-chord-dropdown .blend-btn.chord-option {
+  border: none !important;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--color-main);
+  color: #fff;
+  transition: background 0.2s, color 0.2s;
+  height: auto !important;
+  padding: 0.15em 0.7em !important;
+  min-height: 0 !important;
+  line-height: 1.2;
+  border-bottom: none !important;
+}
+.custom-chord-dropdown .blend-btn.chord-option[aria-selected="true"],
+.custom-chord-dropdown .blend-btn.chord-option:hover,
+.custom-chord-dropdown .blend-btn.chord-option:active {
+  background: var(--color-highlight) !important;
+  color: var(--color-main) !important;
+}
+.custom-chord-dropdown .chord-group-header {
+  border-bottom: none !important;
 }

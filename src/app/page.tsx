@@ -10,6 +10,7 @@ import CustomPaletteModal, { Palette } from '@/components/CustomPaletteModal';
 import LoadingLogo from '@/components/LoadingLogo';
 import Tour from '@/components/Tour';
 // import Controls from '@/components/Controls'; // No longer used
+import React from 'react';
 
 const CHORD_TYPES = [
   { value: 'major', label: 'Major' },
@@ -126,8 +127,6 @@ function HomeContent() {
   const [appearanceDropdown, setAppearanceDropdown] = useState(false);
   const appearanceBtnRef = useRef<HTMLButtonElement>(null);
   const dropdownTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [chordDropdownOpen, setChordDropdownOpen] = useState(false);
-  const chordDropdownRef = useRef<HTMLDivElement>(null);
   const [customPaletteOpen, setCustomPaletteOpen] = useState(false);
   const [customPalette, setCustomPalette] = useState<Palette>({
     main: '#DA4C2B',
@@ -212,28 +211,6 @@ function HomeContent() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isTourOpen, loading, tonnextDropdownOpen]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const button = chordDropdownRef.current;
-      const dropdown = document.querySelector('[data-tour="chord-selector"] > div[style]');
-      if (
-        button &&
-        !button.contains(event.target as Node) &&
-        dropdown &&
-        !dropdown.contains(event.target as Node)
-      ) {
-        setChordDropdownOpen(false);
-      }
-    }
-    if (chordDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [chordDropdownOpen]);
-
   // Handler to apply a palette preset by name (delegates to Settings logic)
   const handleApplyPreset = (name: string) => {
     // Find the preset in Settings.tsx (must keep in sync)
@@ -280,6 +257,153 @@ function HomeContent() {
     window.addEventListener('resize', setVh);
     return () => window.removeEventListener('resize', setVh);
   }, []);
+
+  function ChordDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const [open, setOpen] = useState(false);
+    const btnRef = useRef<HTMLButtonElement | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+    const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined);
+
+    // Set menu width to match button width when open
+    useEffect(() => {
+      if (open && btnRef.current) {
+        setMenuWidth(btnRef.current.offsetWidth);
+      }
+    }, [open]);
+
+    // Close on outside click
+    useEffect(() => {
+      function handle(e: MouseEvent) {
+        if (
+          !btnRef.current?.contains(e.target as Node) &&
+          !menuRef.current?.contains(e.target as Node)
+        ) {
+          setOpen(false);
+        }
+      }
+      if (open) document.addEventListener('mousedown', handle);
+      return () => document.removeEventListener('mousedown', handle);
+    }, [open]);
+
+    // Keyboard navigation
+    useEffect(() => {
+      function handle(e: KeyboardEvent) {
+        if (!open) return;
+        if (e.key === 'Escape') setOpen(false);
+      }
+      if (open) document.addEventListener('keydown', handle);
+      return () => document.removeEventListener('keydown', handle);
+    }, [open]);
+
+    // Find selected label
+    let selectedLabel = '';
+    for (const group of CHORD_GROUPS) {
+      const found = group.options.find(opt => opt.value === value);
+      if (found) selectedLabel = found.label;
+    }
+
+    return (
+      <div
+        style={{ position: 'relative', flex: '2 1 0', minWidth: 120 }}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <button
+          ref={btnRef}
+          className="blend-btn"
+          style={{
+            minWidth: 120,
+            maxWidth: 400,
+            width: '100%',
+            height: '64px',
+            fontSize: 'clamp(1rem, 2vw, 1.6rem)',
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            background: open ? 'var(--color-highlight)' : undefined,
+            color: open ? 'var(--color-main)' : undefined,
+            outline: open ? '2px solid var(--color-highlight)' : undefined,
+          }}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen(o => !o)}
+          tabIndex={0}
+        >
+          <span style={{ flex: 1, textAlign: 'left' }}>{selectedLabel || 'Select Chord'}</span>
+          <span style={{ marginLeft: 8, fontSize: '1.2rem', lineHeight: 1 }}>▲</span>
+        </button>
+        {open && (
+          <div
+            ref={menuRef}
+            className="custom-chord-dropdown"
+            style={{
+              position: 'absolute',
+              left: 0,
+              bottom: '100%',
+              zIndex: 1000,
+              background: 'var(--color-main)',
+              color: '#fff',
+              minWidth: menuWidth ? menuWidth : '100%',
+              maxWidth: menuWidth ? menuWidth : '100%',
+              width: menuWidth ? menuWidth : '100%',
+              border: 'none',
+              borderRadius: 0,
+              marginBottom: 0,
+              boxShadow: 'none',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              maxHeight: 500,
+              overflowY: 'auto',
+              padding: 0,
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 0,
+              boxSizing: 'border-box',
+            }}
+            role="listbox"
+          >
+            {CHORD_GROUPS.map(group => (
+              <React.Fragment key={group.label}>
+                <div className="chord-group-header" style={{ gridColumn: '1 / span 2', padding: '0.3em 1em', fontWeight: 'bold', color: 'var(--color-accent)', background: 'rgba(0,0,0,0.08)', border: 'none', fontSize: '0.95em' }}>{group.label}</div>
+                {group.options.map(opt => (
+                  <div
+                    key={opt.value}
+                    role="option"
+                    aria-selected={value === opt.value}
+                    tabIndex={0}
+                    onClick={() => { onChange(opt.value); setOpen(false); }}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { onChange(opt.value); setOpen(false); }}}
+                    style={{
+                      padding: '2px 0.7em',
+                      cursor: 'pointer',
+                      background: value === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
+                      color: value === opt.value ? 'var(--color-main)' : '#fff',
+                      border: 'none',
+                      transition: 'background 0.2s, color 0.2s',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      fontSize: '0.85rem',
+                      minHeight: undefined,
+                    }}
+                    className="blend-btn chord-option"
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-highlight)'; e.currentTarget.style.color = 'var(--color-main)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = value === opt.value ? 'var(--color-highlight)' : 'var(--color-main)'; e.currentTarget.style.color = value === opt.value ? 'var(--color-main)' : '#fff'; }}
+                  >
+                    {opt.label}
+                  </div>
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -545,120 +669,7 @@ function HomeContent() {
             <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('note')}>Note</button>
             <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('chord')}>Chord</button>
             <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} style={{flex: '1 1 0', minWidth: 80}} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-            <div style={{ position: 'relative', display: 'inline-block', flex: '2 1 0', minWidth: 120 }} data-tour="chord-selector">
-              <button
-                ref={chordDropdownRef}
-                className={`blend-btn${chordDropdownOpen ? ' active' : ''}`}
-                style={{
-                  minWidth: 120,
-                  maxWidth: 400,
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  verticalAlign: 'middle',
-                  lineHeight: 1,
-                  height: '64px',
-                }}
-                onClick={() => setChordDropdownOpen((open) => !open)}
-                type="button"
-              >
-                <span
-                  style={{
-                    flex: '1 1 auto',
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                    lineHeight: 1,
-                    textAlign: 'left'
-                  }}
-                >
-                  {CHORD_TYPES.find(opt => opt.value === chordType)?.label || 'Select Chord'}
-                </span>
-                <span
-                  style={{
-                    flex: '0 0 auto',
-                    marginLeft: 8,
-                    fontSize: '1.2rem',
-                    lineHeight: 1,
-                    alignSelf: 'center'
-                  }}
-                >
-                  ▲
-                </span>
-              </button>
-              {chordDropdownOpen && (
-                <div
-                  onMouseEnter={() => setChordDropdownOpen(true)}
-                  onMouseLeave={() => setChordDropdownOpen(false)}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    bottom: '100%',
-                    top: 'auto',
-                    zIndex: 100,
-                    background: 'var(--color-main)',
-                    color: '#fff',
-                    minWidth: 120,
-                    maxWidth: 400,
-                    width: '100%',
-                    border: '1px solid var(--color-highlight)',
-                    borderRadius: 6,
-                    marginBottom: 4,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    fontSize: '0.90rem',
-                    fontWeight: 'bold',
-                    textTransform: 'uppercase',
-                    maxHeight: 330,
-                    overflowY: 'auto',
-                  }}
-                >
-                  {CHORD_GROUPS.map(group => (
-                    <div key={group.label}>
-                      <div style={{
-                        padding: '0.3em 1em',
-                        fontSize: '0.95em',
-                        fontWeight: 'bold',
-                        color: 'var(--color-accent)',
-                        background: 'rgba(0,0,0,0.08)',
-                        borderBottom: '1px solid var(--color-highlight)',
-                      }}>{group.label}</div>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '0px',
-                      }}>
-                        {group.options.map(opt => (
-                          <div
-                            key={opt.value}
-                            onClick={() => { setChordType(opt.value); setChordDropdownOpen(false); }}
-                            style={{
-                              padding: '0.4em 1em',
-                              cursor: 'pointer',
-                              background: chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
-                              color: chordType === opt.value ? 'var(--color-main)' : '#fff',
-                              borderBottom: '1px solid var(--color-highlight)',
-                              transition: 'background 0.2s, color 0.2s',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              width: '100%',
-                              boxSizing: 'border-box',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-highlight)', e.currentTarget.style.color = 'var(--color-main)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = chordType === opt.value ? 'var(--color-highlight)' : 'var(--color-main)', e.currentTarget.style.color = chordType === opt.value ? 'var(--color-main)' : '#fff')}
-                          >
-                            {opt.label}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ChordDropdown value={chordType} onChange={setChordType} />
           </div>
         </footer>
 

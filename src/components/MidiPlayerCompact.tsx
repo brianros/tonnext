@@ -8,6 +8,7 @@ import ExportVideoModal from './ExportVideoModal';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
 import { Play, Pause, Square, Video, FolderUp, FileDown } from 'lucide-react';
+import fixWebmDuration from 'webm-duration-fix';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -433,10 +434,11 @@ export default function MidiPlayerCompact({
         chunks.push(event.data);
       }
     };
-    mediaRecorder.onstop = () => {
+    mediaRecorder.onstop = async () => {
       if (!wasCancelled.current) {
-        const blob = new Blob(chunks, { type: selectedMimeType });
-        const url = URL.createObjectURL(blob);
+        // Use webm-duration-fix to correct the duration metadata
+        const fixedBlob = await fixWebmDuration(new Blob(chunks, { type: selectedMimeType }), settings.duration * 1000);
+        const url = URL.createObjectURL(fixedBlob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `virtual-recording-${Date.now()}${settings.includeAudio ? '-with-audio' : ''}.webm`;

@@ -3,6 +3,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Square, Video, Music } from 'lucide-react';
 import * as Tone from 'tone';
+import fixWebmDuration from 'webm-duration-fix';
 
 interface VirtualCanvasRecorderProps {
   // Original canvas ref for getting dimensions and context
@@ -201,12 +202,13 @@ export default function VirtualCanvasRecorder({
         }
       };
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: selectedMimeType });
-        onRecordingStop?.(blob);
+      mediaRecorder.onstop = async () => {
+        // Use webm-duration-fix to correct the duration metadata
+        const fixedBlob = await fixWebmDuration(new Blob(chunks, { type: selectedMimeType }), duration * 1000);
+        onRecordingStop?.(fixedBlob);
         
         // Auto-download the video
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(fixedBlob);
         const a = document.createElement('a');
         a.href = url;
         const audioSuffix = includeAudio ? '-with-audio' : '';

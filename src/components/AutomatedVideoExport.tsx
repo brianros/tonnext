@@ -6,6 +6,7 @@ import * as Tone from 'tone';
 import { useMidiContext } from '@/contexts/MidiContext';
 import { useTonnext } from '@/hooks/useTonnext';
 import { VirtualTonnetz } from './VirtualTonnetz';
+import fixWebmDuration from 'webm-duration-fix';
 
 interface AutomatedVideoExportProps {
   mode: 'note' | 'chord' | 'arpeggio';
@@ -120,10 +121,12 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunks.push(event.data);
       };
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         if (chunks.length > 0) {
-          const blob = new Blob(chunks, { type: selectedMimeType });
-          const url = URL.createObjectURL(blob);
+          // Use webm-duration-fix to correct the duration metadata
+          const duration = midiState.duration;
+          const fixedBlob = await fixWebmDuration(new Blob(chunks, { type: selectedMimeType }), duration * 1000);
+          const url = URL.createObjectURL(fixedBlob);
           const a = document.createElement('a');
           a.href = url;
           a.download = `tonnext-export-${Date.now()}.webm`;

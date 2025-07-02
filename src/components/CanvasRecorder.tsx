@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useCallback } from 'react';
 import { Square, Video } from 'lucide-react';
+import fixWebmDuration from 'webm-duration-fix';
 
 interface CanvasRecorderProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -64,14 +65,13 @@ export default function CanvasRecorder({
         }
       };
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { 
-          type: selectedMimeType 
-        });
-        onRecordingStop?.(blob);
+      mediaRecorder.onstop = async () => {
+        // Use webm-duration-fix to correct the duration metadata
+        const fixedBlob = await fixWebmDuration(new Blob(chunksRef.current, { type: selectedMimeType }), 0);
+        onRecordingStop?.(fixedBlob);
         
         // Auto-download the video
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(fixedBlob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `canvas-recording-${Date.now()}.webm`;

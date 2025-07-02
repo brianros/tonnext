@@ -663,8 +663,12 @@ footer > div {
     min-width: 28px !important;
   }
   
-  /* Hide progress bar on mobile */
+  /* Hide progress bar and its container on mobile */
   .midi-player-compact .midi-progress-bar {
+    display: none !important;
+  }
+  
+  .midi-player-compact .midi-progress-bar-container {
     display: none !important;
   }
   
@@ -1540,6 +1544,10 @@ input[type="range"].midi-progress-bar::-ms-thumb,
     font-size: clamp(0.8rem, 1.4vw, 1rem) !important;
   }
   .midi-player-compact .midi-progress-bar {
+    display: none !important;
+  }
+  
+  .midi-player-compact .midi-progress-bar-container {
     display: none !important;
   }
   

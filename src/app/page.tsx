@@ -449,12 +449,21 @@ function HomeContent() {
         flexDirection: 'column',
       }}>
         {/* Sleek Header */}
-        <header className="" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
-          <div className="max-w-7xl mx-auto flex items-center h-full justify-between relative">
+        <header className="responsive-header" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
+          <div className="header-container">
             {/* Tonnext logo/title container */}
             <div className="flex items-center space-x-4 flex-shrink-0">
+              {/* Mobile logo (only visible on mobile) */}
+              <div className="tonnext-mobile-logo">
+                <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="62,18 110,102 14,102" fill="none" stroke="var(--color-accent)" stroke-width="3" />
+                  <circle cx="62" cy="18" r="12" fill="var(--color-accent)" />
+                  <circle cx="110" cy="102" r="12" fill="var(--color-accent)" />
+                  <circle cx="14" cy="102" r="12" fill="var(--color-accent)" />
+                </svg>
+              </div>
               <div
-                style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '64px', minWidth: '148px', cursor: 'pointer', padding: 0 }}
+                className="tonnext-title-container"
                 onMouseEnter={() => {
                   setTonnextDropdownOpen(true);
                   setTitleHovered(true);
@@ -471,7 +480,7 @@ function HomeContent() {
                 tabIndex={0}
                 aria-label="Tonnetz Acknowledgements"
               >
-                <div style={{ position: 'relative', width: '116px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}>
+                <div className="tonnext-title-wrapper">
                   <h1 
                     className="blend-btn tonnext-title" 
                     style={{
@@ -576,11 +585,11 @@ function HomeContent() {
               </div>
             </div>
             {/* MIDI player container as sibling */}
-            <div className="midi-controller-container flex-shrink-0" style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
+            <div className="midi-controller-container flex-shrink-0">
               <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
             </div>
             {/* Other header buttons */}
-            <div className="flex space-x-2 items-center flex-shrink-0">
+            <div className="header-buttons flex items-center flex-shrink-0">
               <div
                 className="relative"
                 onMouseEnter={() => {
@@ -594,13 +603,16 @@ function HomeContent() {
               >
                 <button
                   ref={appearanceBtnRef}
-                  className="blend-btn"
+                  className="blend-btn header-btn theme-btn"
                   aria-haspopup="true"
                   aria-expanded={appearanceDropdown}
                   data-tour="appearance"
-                  style={{ width: '120px', height: '64px' }}
+                  title="Theme Settings"
                 >
-                  Theme
+                  <span className="theme-text">Theme</span>
+                  <svg className="theme-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                  </svg>
                 </button>
                 {appearanceDropdown && (
                   <div
@@ -670,11 +682,14 @@ function HomeContent() {
               </div>
               <button 
                 onClick={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
-                className="blend-btn"
+                className="blend-btn header-btn tour-btn"
                 title="Start guided tour (Ctrl+T)"
-                style={{ width: '120px', height: '64px' }}
               >
-                Tour
+                <span className="tour-text">Tour</span>
+                <svg className="tour-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+                </svg>
               </button>
             </div>
           </div>

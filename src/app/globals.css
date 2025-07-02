@@ -15,6 +15,25 @@
   --vh: 1vh; /* Will be set by JS for mobile viewport fix */
 }
 
+/* Mobile header height adjustments */
+@media (max-width: 639px) {
+  :root {
+    --header-footer-height: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --header-footer-height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --header-footer-height: 40px;
+  }
+}
+
 body {
   color: #fff;
   background: var(--color-main);
@@ -256,6 +275,9 @@ header {
   z-index: 40;
   max-width: 100vw;
   overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Header container with max width */
@@ -263,6 +285,67 @@ header > div {
   max-width: 95vw;
   margin: 0 auto;
   position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive header classes */
+.responsive-header {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.header-container {
+  max-width: 7xl;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+}
+
+.tonnext-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 64px;
+  min-width: 148px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tonnext-title-wrapper {
+  position: relative;
+  width: 116px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.header-buttons {
+  gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-btn {
+  width: 120px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Footer Layout Styles */
@@ -274,6 +357,9 @@ footer {
   z-index: 40;
   max-width: 100vw;
   overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Footer container with max width */
@@ -282,6 +368,10 @@ footer > div {
   margin: 0 auto;
   position: relative;
   overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 /* Main content area - account for fixed header and footer */
@@ -295,6 +385,8 @@ footer > div {
 /* Tonnext title/logo container */
 .tonnext-title {
   display: flex;
+  align-items: center;
+  justify-content: center;
   max-width: 20vw;
   overflow: hidden;
 }
@@ -351,45 +443,537 @@ footer > div {
   max-width: 15vw !important;
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 639px) {
+/* Enhanced responsive breakpoints for header */
+@media (max-width: 1024px) {
+  /* Large tablets and small laptops */
+  header > div {
+    max-width: 96vw;
+  }
+  
   .tonnext-title {
-    display: none !important;
-  }
-  .tonnext-logo {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    max-width: 15vw;
-    min-width: 40px;
+    max-width: 18vw;
   }
   
-  /* Adjust header and footer containers for mobile */
-  header > div,
-  footer > div {
-    max-width: 98vw;
+  .midi-player-compact .song-title {
+    max-width: 18vw !important;
   }
   
-  /* Reduce song title width on mobile */
+  /* Reduce button widths slightly */
+  .blend-btn {
+    padding: 0.4em 1.2em;
+    font-size: clamp(0.9rem, 1.8vw, 1.4rem);
+  }
+  
+  .header-btn {
+    width: 110px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Tablets */
+  header > div {
+    max-width: 97vw;
+  }
+  
+  .tonnext-title {
+    max-width: 16vw;
+  }
+  
   .midi-player-compact .song-title {
     max-width: 20vw !important;
+  }
+  
+  /* Adjust button sizing for tablets */
+  .blend-btn {
+    padding: 0.35em 1em;
+    font-size: clamp(0.85rem, 1.6vw, 1.2rem);
+    min-width: 80px;
+  }
+  
+  .header-btn {
+    width: 100px;
+    height: 56px;
+  }
+  
+  /* Reduce spacing between header elements */
+  .header-buttons {
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Mobile landscape and large phones */
+  /* Mobile header styling */
+  header {
+    height: 48px !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .responsive-header {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .header-container {
+    height: 48px !important;
+    gap: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Hide the Tonnext logo/title container on mobile */
+  .tonnext-title-container {
+    display: none !important;
+  }
+  
+  /* Show the new mobile logo */
+  .tonnext-mobile-logo {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: var(--header-footer-height) !important;
+    width: var(--header-footer-height) !important;
+    min-width: var(--header-footer-height) !important;
+    min-height: var(--header-footer-height) !important;
+    max-width: var(--header-footer-height) !important;
+    max-height: var(--header-footer-height) !important;
+    flex: 0 0 var(--header-footer-height) !important;
+  }
+  
+  /* All header icon containers same size */
+  header .header-btn,
+  header .blend-btn,
+  header .theme-btn,
+  header .tour-btn {
+    width: var(--header-footer-height) !important;
+    height: var(--header-footer-height) !important;
+    min-width: var(--header-footer-height) !important;
+    min-height: var(--header-footer-height) !important;
+    max-width: var(--header-footer-height) !important;
+    max-height: var(--header-footer-height) !important;
+    flex: 0 0 var(--header-footer-height) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Compact title container */
+  .tonnext-title-container {
+    height: 48px !important;
+    min-width: 80px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-title-wrapper {
+    width: 80px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-title {
+    font-size: 0.9rem !important;
+    width: 80px !important;
+    height: 48px !important;
+    padding: 0 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-logo {
+    height: 32px !important;
+    width: 32px !important;
+  }
+  
+  /* Compact MIDI player */
+  .midi-controller-container {
+    height: 48px !important;
+    flex: 1 !important;
+    max-width: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .midi-player-compact {
+    height: var(--header-footer-height) !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    width: auto !important;
+  }
+  
+  .midi-player-compact .blend-btn {
+    height: 100% !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .midi-player-compact button {
+    height: 100% !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .midi-player-compact .midi-progress-bar-container,
+  .midi-player-compact .midi-progress-bar {
+    height: 100% !important;
+    min-height: unset !important;
+    max-height: unset !important;
+  }
+  
+  .midi-player-compact .song-title {
+    font-size: 0.8rem !important;
+    max-width: 120px !important;
+  }
+  
+  .midi-player-compact .midi-time {
+    font-size: 0.75rem !important;
+    min-width: 28px !important;
+  }
+  
+  /* Hide progress bar on mobile */
+  .midi-player-compact .midi-progress-bar {
+    display: none !important;
+  }
+  
+  /* Compact header buttons */
+  .header-buttons {
+    gap: 0.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Show only icons on mobile */
+  .theme-text, .tour-text {
+    display: none !important;
+  }
+  
+  .theme-icon, .tour-icon {
+    display: inline !important;
+    width: 60% !important;
+    height: 60% !important;
+  }
+  
+  /* Adjust main content padding */
+  .main-content {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+  
+  /* Mobile footer styling */
+  footer {
+    height: 48px !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  footer > div {
+    max-width: 98vw;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0 0.5rem !important;
+    height: 48px !important;
+  }
+  
+  /* Compact footer buttons */
+  footer .blend-btn {
+    font-size: 0.8rem !important;
+    padding: 0.3em 0.8em !important;
   }
 }
 
 @media (max-width: 480px) {
+  /* Small phones */
+  /* Even more compact mobile header */
+  header {
+    height: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .responsive-header {
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .header-container {
+    height: 44px !important;
+    gap: 0.4rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Smaller title container */
+  .tonnext-title-container {
+    height: 44px !important;
+    min-width: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-title-wrapper {
+    width: 70px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-title {
+    font-size: 0.8rem !important;
+    width: 70px !important;
+    height: 44px !important;
+    padding: 0 0.4rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
   .tonnext-logo {
-    max-width: 12vw;
-    min-width: 36px;
+    height: 28px !important;
+    width: 28px !important;
+  }
+  
+  /* Smaller MIDI player */
+  .midi-controller-container {
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .midi-player-compact {
+    height: 44px !important;
+    gap: 0.2rem !important;
+    font-size: 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  
+  .midi-player-compact button,
+  .midi-player-compact .blend-btn {
+    font-size: 0.8rem !important;
+    padding: 0.25em 0.6em !important;
   }
   
   .midi-player-compact .song-title {
-    max-width: 25vw !important;
+    font-size: 0.75rem !important;
+    max-width: 100px !important;
   }
   
-  /* Further adjust containers for very small screens */
-  header > div,
+  .midi-player-compact .midi-time {
+    font-size: 0.7rem !important;
+    min-width: 24px !important;
+  }
+  
+
+  
+  /* Adjust main content padding */
+  .main-content {
+    padding-top: 44px !important;
+    padding-bottom: 44px !important;
+  }
+  
+  /* Smaller mobile footer */
+  footer {
+    height: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
   footer > div {
     max-width: 99vw;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.4rem !important;
+    padding: 0 0.4rem !important;
+    height: 44px !important;
+  }
+  
+  /* Smaller footer buttons */
+  footer .blend-btn {
+    font-size: 0.75rem !important;
+    padding: 0.25em 0.6em !important;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Very small phones */
+  /* Ultra compact mobile header */
+  header {
+    height: 40px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .responsive-header {
+    padding-left: 0.3rem !important;
+    padding-right: 0.3rem !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .header-container {
+    height: 40px !important;
+    gap: 0.3rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Minimal title container */
+  .tonnext-title-container {
+    height: 40px !important;
+    min-width: 60px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-title-wrapper {
+    width: 60px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-title {
+    font-size: 0.7rem !important;
+    width: 60px !important;
+    height: 40px !important;
+    padding: 0 0.3rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .tonnext-logo {
+    height: 24px !important;
+    width: 24px !important;
+  }
+  
+  /* Minimal MIDI player */
+  .midi-controller-container {
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .midi-player-compact {
+    height: 40px !important;
+    gap: 0.15rem !important;
+    font-size: 0.7rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  
+  .midi-player-compact button,
+  .midi-player-compact .blend-btn {
+    font-size: 0.75rem !important;
+    padding: 0.2em 0.5em !important;
+  }
+  
+  .midi-player-compact .song-title {
+    font-size: 0.7rem !important;
+    max-width: 80px !important;
+  }
+  
+  .midi-player-compact .midi-time {
+    font-size: 0.65rem !important;
+    min-width: 20px !important;
+  }
+  
+
+  
+  /* Adjust main content padding */
+  .main-content {
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+  
+  /* Minimal mobile footer */
+  footer {
+    height: 40px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  footer > div {
+    max-width: 99vw;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.3rem !important;
+    padding: 0 0.3rem !important;
+    height: 40px !important;
+  }
+  
+  /* Minimal footer buttons */
+  footer .blend-btn {
+    font-size: 0.7rem !important;
+    padding: 0.2em 0.5em !important;
   }
 }
 
@@ -883,6 +1467,199 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 .instrument-selector-dropdown button.selected {
   background: var(--color-highlight) !important;
   color: var(--color-main) !important;
+}
+
+.midi-controller-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  flex: 1;
+}
+
+/* Header button icon/text responsive styles */
+.theme-text, .tour-text {
+  display: inline;
+}
+.theme-icon, .tour-icon {
+  display: none;
+  vertical-align: middle;
+}
+
+/* Load/Export button text/icon responsive styles */
+.load-text, .export-text {
+  display: inline;
+}
+.load-icon, .export-icon {
+  display: none;
+}
+
+/* Icon sizing for mobile - ensure square aspect ratio and full height */
+.load-icon, .export-icon, .theme-icon, .tour-icon, .playback-icon, .midi-player-compact svg {
+  width: calc(var(--header-footer-height) * 0.5) !important;
+  height: calc(var(--header-footer-height) * 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto;
+}
+
+/* Player icons (Play, Pause, Square) - 60% of container size */
+.midi-player-compact svg {
+  width: 60% !important;
+  height: 60% !important;
+  max-width: 60% !important;
+  max-height: 60% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto;
+}
+
+@media (max-width: 639px) {
+  .theme-text, .tour-text {
+    display: none !important;
+  }
+  .theme-icon, .tour-icon {
+    display: inline !important;
+  }
+  .load-text, .export-text {
+    display: none !important;
+  }
+  .load-icon, .export-icon {
+    display: inline !important;
+  }
+  .midi-time-display {
+    display: none !important;
+  }
+  .song-title {
+    max-width: 80px !important;
+  }
+  .header-btn {
+    padding: 0.3em 0.8em !important;
+    font-size: clamp(0.8rem, 1.4vw, 1rem) !important;
+  }
+  .midi-player-compact .midi-progress-bar {
+    display: none !important;
+  }
+  
+
+}
+
+
+
+/* Square button style for all buttons */
+.blend-btn, .header-btn, .midi-player-compact .blend-btn, footer .blend-btn {
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0.5em 1.5em !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  background: var(--color-main) !important;
+  color: #fff !important;
+  border: none !important;
+  transition: background 0.2s, color 0.2s;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Mobile button adjustments */
+@media (max-width: 639px) {
+  .blend-btn, .header-btn, .midi-player-compact .blend-btn, footer .blend-btn {
+    padding: 0.3em 0.8em !important;
+    font-size: clamp(0.8rem, 1.4vw, 1rem) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .blend-btn, .header-btn, .midi-player-compact .blend-btn, footer .blend-btn {
+    padding: 0.25em 0.6em !important;
+    font-size: clamp(0.75rem, 1.2vw, 0.9rem) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .blend-btn, .header-btn, .midi-player-compact .blend-btn, footer .blend-btn {
+    padding: 0.2em 0.5em !important;
+    font-size: clamp(0.7rem, 1vw, 0.8rem) !important;
+  }
+}
+
+.blend-btn:hover, .blend-btn:focus, .header-btn:hover, .header-btn:focus, .midi-player-compact .blend-btn:hover, .midi-player-compact .blend-btn:focus, footer .blend-btn:hover, footer .blend-btn:focus {
+  background: var(--color-highlight) !important;
+  color: var(--color-main) !important;
+  outline: none !important;
+}
+
+/* Icon sizing for header and player - 50% of container, centered */
+.load-icon, .export-icon, .theme-icon, .tour-icon, .midi-player-compact svg {
+  width: calc(var(--header-footer-height) * 0.5) !important;
+  height: calc(var(--header-footer-height) * 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto;
+}
+
+header > *, .header-btn, .blend-btn, .header-buttons, header > div {
+  vertical-align: middle !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Ensure all flex containers in header are centered */
+header .flex {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure all direct children of header containers are centered */
+.header-container > * {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Specific centering for title container flex wrapper */
+.flex.items-center.space-x-4.flex-shrink-0 {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Footer centering styles */
+footer .flex {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+footer .max-w-7xl {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* Ensure footer buttons are centered */
+footer .blend-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (min-width: 640px) {
+  .tonnext-mobile-logo {
+    display: none !important;
+  }
 }
 
 

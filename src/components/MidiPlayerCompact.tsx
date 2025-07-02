@@ -7,7 +7,7 @@ import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
-import { Play, Pause, Square, Video } from 'lucide-react';
+import { Play, Pause, Square, Video, FolderUp, FileDown } from 'lucide-react';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -605,9 +605,10 @@ export default function MidiPlayerCompact({
         <button
           onClick={handleUploadClick}
           className="blend-btn"
-          style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '100%' }}
+          style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '100%', display: 'flex', alignItems: 'center', gap: '0.5em' }}
         >
-          Load
+          <FolderUp className="load-icon" />
+          <span className="load-text">Load</span>
         </button>
         {/* Playback Controls and Export Button */}
         {playerState?.midiData && (
@@ -616,10 +617,6 @@ export default function MidiPlayerCompact({
               onClick={handlePlayPause}
               className="blend-btn"
               style={{
-                width: '64px',
-                height: '100%',
-                fontSize: '1rem',
-                padding: 0,
                 borderRadius: 0,
                 flexShrink: 0,
                 display: 'flex',
@@ -628,16 +625,12 @@ export default function MidiPlayerCompact({
                 boxSizing: 'border-box',
               }}
             >
-              {playerState.isPlaying ? <Pause size={20} /> : <Play size={20} />}
+              {playerState.isPlaying ? <Pause className="playback-icon" /> : <Play className="playback-icon" />}
             </button>
             <button
               onClick={handleStop}
               className="blend-btn"
               style={{
-                width: '64px',
-                height: '100%',
-                fontSize: '1rem',
-                padding: 0,
                 borderRadius: 0,
                 flexShrink: 0,
                 display: 'flex',
@@ -646,12 +639,12 @@ export default function MidiPlayerCompact({
                 boxSizing: 'border-box',
               }}
             >
-              <Square size={20} />
+              <Square className="playback-icon" />
             </button>
             {/* Centered non-button controls */}
             <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-              {/* Progress Bar */}
-              <div style={{ width: '120px', marginLeft: 8, flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
+              {/* Progress Bar (visible on desktop, hidden on mobile via CSS) */}
+              <div className="midi-progress-bar-container" style={{ width: '120px', marginLeft: 8, flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
                 <input
                   type="range"
                   className="midi-progress-bar"
@@ -673,7 +666,7 @@ export default function MidiPlayerCompact({
               </div>
               {/* Time Display and Filename */}
               <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                <span style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                <span className="midi-time-display" style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
                   {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
                 </span>
                 <span className="song-title" style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
@@ -716,6 +709,10 @@ export default function MidiPlayerCompact({
                   position: 'relative',
                   zIndex: 1,
                   height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5em',
                 }}
                 title={isExporting && showCancel ? 'Cancel export' : isExporting ? 'Exporting video...' : 'Export video with settings'}
               >
@@ -727,7 +724,7 @@ export default function MidiPlayerCompact({
                   ? 'Cancel'
                   : isExporting
                     ? <>Exporting {exportProgress.toFixed(0)}%</>
-                    : 'Export'}
+                    : <><FileDown className="export-icon" /><span className="export-text">Export</span></>}
               </button>
             </div>
           </>

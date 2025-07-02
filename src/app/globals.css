@@ -1662,4 +1662,30 @@ footer .blend-btn {
   }
 }
 
+/* Hide on mobile utility */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+.tonnext-mobile-logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: var(--header-footer-height) !important;
+  width: var(--header-footer-height) !important;
+  min-width: var(--header-footer-height) !important;
+  min-height: var(--header-footer-height) !important;
+  max-width: var(--header-footer-height) !important;
+  max-height: var(--header-footer-height) !important;
+  flex: 0 0 var(--header-footer-height) !important;
+}
+
+.tonnext-mobile-logo svg,
+.tonnext-logo svg {
+  height: 50% !important;
+  width: 50% !important;
+}
+
 

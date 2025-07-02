@@ -453,17 +453,46 @@ function HomeContent() {
           <div className="header-container">
             {/* Tonnext logo/title container */}
             <div className="flex items-center space-x-4 flex-shrink-0">
-              {/* Mobile logo (only visible on mobile) */}
-              <div className="tonnext-mobile-logo">
+              {/* Mobile logo (only visible on mobile, now with tooltip) */}
+              <div
+                className="tonnext-mobile-logo"
+                onClick={() => {
+                  if (window.innerWidth <= 768) setTonnextDropdownOpen(v => !v);
+                }}
+                style={{ position: 'relative', cursor: 'pointer' }}
+                aria-label="Tonnetz Acknowledgements"
+              >
                 <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <polygon points="62,18 110,102 14,102" fill="none" stroke="var(--color-accent)" stroke-width="3" />
                   <circle cx="62" cy="18" r="12" fill="var(--color-accent)" />
                   <circle cx="110" cy="102" r="12" fill="var(--color-accent)" />
                   <circle cx="14" cy="102" r="12" fill="var(--color-accent)" />
                 </svg>
+                {/* Tooltip for mobile logo */}
+                {tonnextDropdownOpen && window.innerWidth <= 768 && (
+                  <div
+                    className="tonnext-dropdown"
+                    style={{ position: 'absolute', top: '110%', left: 0, zIndex: 1000 }}
+                    onMouseLeave={() => setTonnextDropdownOpen(false)}
+                  >
+                    <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
+                    <div style={{marginBottom: 8, color: 'var(--color-highlight)'}}>
+                      Tonnext is an interactive tool for exploring music and harmony through geometric visualization.
+                    </div>
+                    <div style={{marginBottom: 8}}>
+                      <span style={{fontWeight: 500}}>Tonnetz</span> is a geometric system for visualizing tonal relationships in music. <a href="https://en.wikipedia.org/wiki/Tonnetz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>Learn more</a>.
+                    </div>
+                    <div style={{marginBottom: 6}}>
+                      Visualization based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>tonnetz-viz</a> by cifkao.
+                    </div>
+                    <div style={{fontSize: '0.95em', color: 'var(--color-highlight)'}}>Brian Rosenfeld - 2025</div>
+                    <div style={{fontSize: '0.95em', color: 'var(--color-accent)'}}><a href="https://mirari.ar" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>mīrārī</a></div>
+                  </div>
+                )}
               </div>
+              {/* Desktop title/logo button, hidden on mobile */}
               <div
-                className="tonnext-title-container"
+                className="tonnext-title-container hide-on-mobile"
                 onMouseEnter={() => {
                   setTonnextDropdownOpen(true);
                   setTitleHovered(true);
@@ -543,7 +572,8 @@ function HomeContent() {
                     </svg>
                   </span>
                 </div>
-                {tonnextDropdownOpen && (
+                {/* Tooltip for desktop only */}
+                {tonnextDropdownOpen && window.innerWidth > 768 && (
                   <div
                     className="tonnext-dropdown"
                     onMouseEnter={() => {

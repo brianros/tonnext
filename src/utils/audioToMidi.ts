@@ -1,27 +1,98 @@
 import { BasicPitch, noteFramesToTime, addPitchBendsToNoteEvents, outputToNotesPoly } from '@spotify/basic-pitch';
 import { Midi } from '@tonejs/midi';
+import { getAudioToMidiWorker, AudioToMidiWorker, ConversionProgress } from './audioToMidiWorker';
 
 export interface AudioToMidiOptions {
   onsetThreshold?: number;
   frameThreshold?: number;
   minimumNoteDuration?: number;
+  maxPolyphony?: number;
+}
+
+/**
+ * Limit the number of simultaneous notes to prevent polyphony issues
+ * @param notes Array of notes from BasicPitch
+ * @param maxPolyphony Maximum number of simultaneous notes allowed
+ * @returns Filtered array of notes with limited polyphony
+ */
+function limitPolyphony(notes: any[], maxPolyphony: number): any[] {
+  if (notes.length === 0) return notes;
+  
+  // Sort notes by start time
+  const sortedNotes = [...notes].sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
+  const limitedNotes: any[] = [];
+  const activeNotes: any[] = [];
+  
+  for (const note of sortedNotes) {
+    // Remove notes that have ended before this note starts
+    const currentTime = note.startTimeSeconds;
+    const stillActive = activeNotes.filter(n => n.startTimeSeconds + n.durationSeconds > currentTime);
+    
+    // If we're at max polyphony, remove the oldest note
+    if (stillActive.length >= maxPolyphony) {
+      // Sort by start time and remove the oldest
+      stillActive.sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
+      stillActive.shift(); // Remove oldest note
+    }
+    
+    // Add the new note
+    stillActive.push(note);
+    activeNotes.length = 0;
+    activeNotes.push(...stillActive);
+    
+    // Add to limited notes
+    limitedNotes.push(note);
+  }
+  
+  return limitedNotes;
 }
 
 export async function convertAudioToMidi(
   audioFile: File,
-  options: AudioToMidiOptions = {}
+  options: AudioToMidiOptions = {},
+  onProgress?: (progress: ConversionProgress) => void
+): Promise<Blob> {
+  // Try to use Web Worker first
+  if (AudioToMidiWorker.isSupported()) {
+    try {
+      console.log('Using Web Worker for audio-to-MIDI conversion');
+      const worker = getAudioToMidiWorker();
+      return await worker.convertAudioToMidi(audioFile, options, onProgress);
+    } catch (error) {
+      console.warn('Web Worker failed, falling back to main thread:', error);
+      // Fall back to main thread implementation
+    }
+  }
+
+  // Fallback to main thread implementation
+  console.log('Using main thread for audio-to-MIDI conversion');
+  return convertAudioToMidiMainThread(audioFile, options, onProgress);
+}
+
+/**
+ * Main thread implementation (fallback)
+ */
+async function convertAudioToMidiMainThread(
+  audioFile: File,
+  options: AudioToMidiOptions = {},
+  onProgress?: (progress: ConversionProgress) => void
 ): Promise<Blob> {
   const {
     onsetThreshold = 0.35,
     frameThreshold = 0.35,
-    minimumNoteDuration = 5
+    minimumNoteDuration = 5,
+    maxPolyphony = 4
   } = options;
 
   try {
+    onProgress?.({ progress: 5, message: 'Reading audio file...' });
+    
     // Read the audio file
     const arrayBuffer = await audioFile.arrayBuffer();
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+
+    onProgress?.({ progress: 15, message: 'Preprocessing audio...' });
 
     // Convert to mono if needed
     if (audioBuffer.numberOfChannels > 1) {
@@ -41,6 +112,8 @@ export async function convertAudioToMidi(
 
     // Resample to 22050 Hz if needed (required by Basic Pitch)
     if (audioBuffer.sampleRate !== 22050) {
+      onProgress?.({ progress: 25, message: 'Resampling audio...' });
+      
       const offlineCtx = new OfflineAudioContext(
         audioBuffer.numberOfChannels,
         Math.ceil(audioBuffer.duration * 22050),
@@ -53,6 +126,8 @@ export async function convertAudioToMidi(
       audioBuffer = await offlineCtx.startRendering();
     }
 
+    onProgress?.({ progress: 30, message: 'Loading BasicPitch model...' });
+
     // Initialize Basic Pitch model
     // @ts-ignore
     const basicPitch = new BasicPitch('/model/model.json');
@@ -60,6 +135,8 @@ export async function convertAudioToMidi(
     const frames: number[][] = [];
     const onsets: number[][] = [];
     const contours: number[][] = [];
+
+    onProgress?.({ progress: 40, message: 'Analyzing audio with BasicPitch...' });
 
     // Process the audio
     await basicPitch.evaluateModel(
@@ -69,23 +146,44 @@ export async function convertAudioToMidi(
         onsets.push(...o);
         contours.push(...c);
       },
-      () => {}
+      (progress: number) => {
+        // Map BasicPitch progress (0-1) to our progress range (40-70)
+        const mappedProgress = 40 + (progress * 30);
+        onProgress?.({ 
+          progress: Math.round(mappedProgress), 
+          message: `Processing audio... ${Math.round(progress * 100)}%` 
+        });
+      }
     );
 
-    // Convert frames to notes
+    onProgress?.({ progress: 75, message: 'Converting to notes...' });
+
+    // Convert frames to notes with reduced polyphony (2 instead of default)
     const notes = noteFramesToTime(
       addPitchBendsToNoteEvents(
         contours,
-        outputToNotesPoly(frames, onsets, onsetThreshold, frameThreshold, minimumNoteDuration)
+        outputToNotesPoly(frames, onsets, onsetThreshold, frameThreshold, 2)
       )
     );
 
+    // Limit polyphony to prevent too many simultaneous notes
+    const limitedNotes = limitPolyphony(notes, maxPolyphony);
+    
+    // Debug logging
+    console.log('Original notes count:', notes.length);
+    console.log('Limited notes count:', limitedNotes.length);
+    console.log('Polyphony reduction:', notes.length - limitedNotes.length, 'notes removed');
+
+    onProgress?.({ progress: 85, message: 'Validating notes...' });
+
     // Sanitize and validate notes
-    const correctedNotes = sanitizeNotes(notes);
+    const correctedNotes = sanitizeNotes(limitedNotes);
     const validationError = validateNotes(correctedNotes);
     if (validationError) {
       throw new Error(`Validation error: ${validationError}`);
     }
+
+    onProgress?.({ progress: 90, message: 'Generating MIDI file...' });
 
     // Generate MIDI file
     const midi = new Midi();
@@ -115,6 +213,8 @@ export async function convertAudioToMidi(
         });
       }
     });
+
+    onProgress?.({ progress: 100, message: 'Conversion complete!' });
 
     // Return MIDI blob
     return new Blob([midi.toArray()], { type: 'audio/midi' });

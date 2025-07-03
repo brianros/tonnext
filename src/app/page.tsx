@@ -155,10 +155,10 @@ function HomeContent() {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
 
-  // Loading overlay demo state
-  const [loading, setLoading] = useState(true);
+  // Loading overlay demo state (disabled)
+  const [loading, setLoading] = useState(false);
   const [spinLoadingLogo, setSpinLoadingLogo] = useState(false);
-  const [showLoadingLogo, setShowLoadingLogo] = useState(true);
+  const [showLoadingLogo, setShowLoadingLogo] = useState(false);
 
   const [logoTooltipOpen, setLogoTooltipOpen] = useState(false);
   const logoTooltipTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -167,27 +167,29 @@ function HomeContent() {
   // Add state for dropdown
   const [tonnextDropdownOpen, setTonnextDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000); // back to normal
-    return () => clearTimeout(timer);
-  }, []);
+  // Loading delay disabled
+  // useEffect(() => {
+  //   const timer = setTimeout(() => setLoading(false), 2000); // back to normal
+  //   return () => clearTimeout(timer);
+  // }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      setSpinLoadingLogo(true);
-    }
-  }, [loading]);
+  // Spin loading logo effect disabled
+  // useEffect(() => {
+  //   if (!loading) {
+  //     setSpinLoadingLogo(true);
+  //   }
+  // }, [loading]);
 
-  // Launch tour on first load (after logo is gone)
-  useEffect(() => {
-    if (!showLoadingLogo && !localStorage.getItem('tonnext-visited')) {
-      setTimeout(() => {
-        setTourStep(0);
-        setIsTourOpen(true);
-        localStorage.setItem('tonnext-visited', 'true');
-      }, 300);
-    }
-  }, [showLoadingLogo]);
+  // Launch tour on first load (after logo is gone) - disabled
+  // useEffect(() => {
+  //   if (!showLoadingLogo && !localStorage.getItem('tonnext-visited')) {
+  //     setTimeout(() => {
+  //       setTourStep(0);
+  //       setIsTourOpen(true);
+  //       localStorage.setItem('tonnext-visited', 'true');
+  //     }, 300);
+  //   }
+  // }, [showLoadingLogo]);
 
   const handleLoadingLogoFinish = () => {
     setShowLoadingLogo(false);
@@ -755,7 +757,10 @@ function HomeContent() {
         {/* Settings Panel */}
         {isSettingsOpen && (
           <div className="bg-gray-800 border-b border-gray-700 p-4">
-            <Settings onClose={() => setIsSettingsOpen(false)} />
+            <Settings 
+              onClose={() => setIsSettingsOpen(false)} 
+              onStartTour={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
+            />
           </div>
         )}
 

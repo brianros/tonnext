@@ -49,7 +49,7 @@ export function useTonnext(options: UseTonnextOptions) {
   const polySynthRef = useRef<Tone.PolySynth | null>(null);
   
   // Get MIDI context for instrument settings
-  const { getSelectedInstrument, getMidiPlayerFunctions } = useMidiContext();
+  const { getSelectedInstrument, getMidiPlayerFunctions, isMuted } = useMidiContext();
   
   // State
   // Initialize density with a safe default for SSR
@@ -108,6 +108,31 @@ export function useTonnext(options: UseTonnextOptions) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, unit: 0 });
 
   const audioStartedRef = useRef(false);
+
+  // Helper functions to trigger synth only when not muted
+  const triggerSynthAttackRelease = useCallback((note: string, duration: number, time?: number, velocity?: number) => {
+    if (!isMuted && synthRef.current) {
+      synthRef.current.triggerAttackRelease(note, duration, time, velocity);
+    }
+  }, [isMuted]);
+
+  const triggerPolySynthAttackRelease = useCallback((notes: string | string[], duration: number, time?: number, velocity?: number) => {
+    if (!isMuted && polySynthRef.current) {
+      polySynthRef.current.triggerAttackRelease(notes, duration, time, velocity);
+    }
+  }, [isMuted]);
+
+  const triggerSynthAttack = useCallback((note: string) => {
+    if (!isMuted && synthRef.current) {
+      synthRef.current.triggerAttack(note);
+    }
+  }, [isMuted]);
+
+  const triggerSynthRelease = useCallback((note: string) => {
+    if (!isMuted && synthRef.current) {
+      synthRef.current.triggerRelease(note);
+    }
+  }, [isMuted]);
 
   // Function to update synths with selected instrument settings
   const updateSynthsWithInstrument = useCallback(async (instrument: Instrument) => {
@@ -479,12 +504,8 @@ export function useTonnext(options: UseTonnextOptions) {
       await Tone.start();
       audioStartedRef.current = true;
       // Warm up synths to prevent first-note stutter
-      if (synthRef.current) {
-        synthRef.current.triggerAttackRelease('C4', 0.01, undefined, 0.001);
-      }
-      if (polySynthRef.current) {
-        polySynthRef.current.triggerAttackRelease(['C4', 'E4', 'G4'], 0.01, undefined, 0.001);
-      }
+      triggerSynthAttackRelease('C4', 0.01, undefined, 0.001);
+      triggerPolySynthAttackRelease(['C4', 'E4', 'G4'], 0.01, undefined, 0.001);
     }
     if(nodesRef.current.length===0) return;
     const radius = dimensions.unit/5;
@@ -555,7 +576,7 @@ export function useTonnext(options: UseTonnextOptions) {
       if (synthRef.current) {
         const note = TONE_NAMES[clickedTone] + '4';
         console.log('useTonnext: Playing note with current synth settings:', note);
-        synthRef.current.triggerAttackRelease(note, 0.3);
+        triggerSynthAttackRelease(note, 0.3);
       }
       setTimeout(() => {
         activeRef.current[clickedTone] = false;
@@ -571,7 +592,7 @@ export function useTonnext(options: UseTonnextOptions) {
       notesIdx.forEach(i => { activeRef.current[i] = true; });
       draw(true);
       console.log('useTonnext: Playing chord with current polySynth settings:', notes);
-      polySynthRef.current.triggerAttackRelease(notes, 0.5);
+      triggerPolySynthAttackRelease(notes, 0.5);
       setTimeout(() => {
         notesIdx.forEach(i => { activeRef.current[i] = false; });
         draw(true);
@@ -594,13 +615,13 @@ export function useTonnext(options: UseTonnextOptions) {
         arpeggioTimeoutsRef.current.push(setTimeout(() => {
           activeRef.current[idx] = true;
           draw(true);
-          polySynthRef.current!.triggerAttackRelease(TONE_NAMES[idx] + '4', arpeggioStep / 1000); // duration in seconds
+          triggerPolySynthAttackRelease(TONE_NAMES[idx] + '4', arpeggioStep / 1000); // duration in seconds
         }, step * arpeggioStep));
       });
       // After arpeggio, add a pause (double the previous pause)
       const arpeggioPause = arpeggioStep * 2; // ms (double the previous pause)
       arpeggioTimeoutsRef.current.push(setTimeout(() => {
-        polySynthRef.current!.triggerAttackRelease(notes, (arpeggioStep * 3) / 1000); // chord duration = step * 3
+        triggerPolySynthAttackRelease(notes, (arpeggioStep * 3) / 1000); // chord duration = step * 3
       }, notesIdx.length * arpeggioStep + arpeggioPause));
       // After full chord, clear highlights
       arpeggioTimeoutsRef.current.push(setTimeout(() => {
@@ -608,7 +629,7 @@ export function useTonnext(options: UseTonnextOptions) {
         draw(true);
       }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3));
     }
-  }, [drawGrid,dimensions,options,synthRef,polySynthRef,activeRef,arpeggioTimeoutsRef]);
+  }, [drawGrid,dimensions,options,synthRef,polySynthRef,activeRef,arpeggioTimeoutsRef,triggerSynthAttackRelease,triggerPolySynthAttackRelease]);
 
   const handleMouseMove = useCallback((x: number, y: number) => {
     if (canvasRef.current) {
@@ -639,17 +660,15 @@ export function useTonnext(options: UseTonnextOptions) {
     if (synthRef.current) {
       const note = TONE_NAMES[pitch % 12];
       const octave = Math.floor(pitch / 12) + 4;
-      synthRef.current.triggerAttack(note + octave);
+      triggerSynthAttack(note + octave);
     }
-  }, [synthRef]);
+  }, [triggerSynthAttack]);
 
   const noteOff = useCallback((channel: number, pitch: number) => {
-    if (synthRef.current) {
-      const note = TONE_NAMES[pitch % 12];
-      const octave = Math.floor(pitch / 12) + 4;
-      synthRef.current.triggerRelease(note + octave);
-    }
-  }, [synthRef]);
+    const note = TONE_NAMES[pitch % 12];
+    const octave = Math.floor(pitch / 12) + 4;
+    triggerSynthRelease(note + octave);
+  }, [triggerSynthRelease]);
 
   // Function to update highlights without rebuilding the grid
   const updateHighlights = useCallback(() => {

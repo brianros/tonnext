@@ -2,18 +2,67 @@
 import React, { useState } from 'react';
 import { BasicPitch, noteFramesToTime, addPitchBendsToNoteEvents, outputToNotesPoly } from '@spotify/basic-pitch';
 
+/**
+ * Limit the number of simultaneous notes to prevent polyphony issues
+ * @param notes Array of notes from BasicPitch
+ * @param maxPolyphony Maximum number of simultaneous notes allowed
+ * @returns Filtered array of notes with limited polyphony
+ */
+function limitPolyphony(notes: any[], maxPolyphony: number): any[] {
+  if (notes.length === 0) return notes;
+  
+  // Sort notes by start time
+  const sortedNotes = [...notes].sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
+  const limitedNotes: any[] = [];
+  const activeNotes: any[] = [];
+  
+  for (const note of sortedNotes) {
+    // Remove notes that have ended before this note starts
+    const currentTime = note.startTimeSeconds;
+    const stillActive = activeNotes.filter(n => n.startTimeSeconds + n.durationSeconds > currentTime);
+    
+    // If we're at max polyphony, remove the oldest note
+    if (stillActive.length >= maxPolyphony) {
+      // Sort by start time and remove the oldest
+      stillActive.sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
+      stillActive.shift(); // Remove oldest note
+    }
+    
+    // Add the new note
+    stillActive.push(note);
+    activeNotes.length = 0;
+    activeNotes.push(...stillActive);
+    
+    // Add to limited notes
+    limitedNotes.push(note);
+  }
+  
+  return limitedNotes;
+}
+
 const AudioToMidi: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [isConverting, setIsConverting] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setStatus(null);
+    setProgress(0);
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    setIsConverting(true);
     setStatus('Processing...');
+    setProgress(5);
+    
     try {
       const arrayBuffer = await file.arrayBuffer();
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      
+      setProgress(15);
+      setStatus('Preprocessing audio...');
+      
       // Convert to mono if needed
       if (audioBuffer.numberOfChannels > 1) {
         const length = audioBuffer.length;
@@ -29,6 +78,10 @@ const AudioToMidi: React.FC = () => {
         }
         audioBuffer = monoBuffer;
       }
+      
+      setProgress(25);
+      setStatus('Resampling audio...');
+      
       // Resample if needed
       if (audioBuffer.sampleRate !== 22050) {
         const offlineCtx = new OfflineAudioContext(
@@ -42,11 +95,19 @@ const AudioToMidi: React.FC = () => {
         bufferSource.start(0);
         audioBuffer = await offlineCtx.startRendering();
       }
+      
+      setProgress(30);
+      setStatus('Loading BasicPitch model...');
+      
       // @ts-ignore
       const basicPitch = new BasicPitch('/model/model.json');
       const frames: number[][] = [];
       const onsets: number[][] = [];
       const contours: number[][] = [];
+      
+      setProgress(40);
+      setStatus('Analyzing audio with BasicPitch...');
+      
       await basicPitch.evaluateModel(
         audioBuffer,
         (f: number[][], o: number[][], c: number[][]) => {
@@ -54,14 +115,33 @@ const AudioToMidi: React.FC = () => {
           onsets.push(...o);
           contours.push(...c);
         },
-        () => {}
+        (progress: number) => {
+          // Map BasicPitch progress (0-1) to our progress range (40-70)
+          const mappedProgress = 40 + (progress * 30);
+          setProgress(Math.round(mappedProgress));
+          setStatus(`Processing audio... ${Math.round(progress * 100)}%`);
+        }
       );
+      
+      setProgress(75);
+      setStatus('Converting to notes...');
+      
       const notes = noteFramesToTime(
         addPitchBendsToNoteEvents(
           contours,
-          outputToNotesPoly(frames, onsets, 0.35, 0.35, 5)
+          outputToNotesPoly(frames, onsets, 0.35, 0.35, 2)
         )
       );
+      
+      setProgress(85);
+      setStatus('Limiting polyphony...');
+      
+      // Limit polyphony to prevent too many simultaneous notes (reduced to 4)
+      const limitedNotes = limitPolyphony(notes, 4);
+      
+      setProgress(90);
+      setStatus('Validating notes...');
+      
       // Correction step: clamp and sanitize notes
       const correctNotes = (notesArr: any[]): any[] => {
         return notesArr
@@ -88,7 +168,8 @@ const AudioToMidi: React.FC = () => {
           })
           .filter(Boolean);
       };
-      const correctedNotes = correctNotes(notes);
+      const correctedNotes = correctNotes(limitedNotes);
+      
       // Validation step
       const validateNotes = (notesArr: any[]): string | null => {
         if (!Array.isArray(notesArr)) return 'Notes result is not an array.';
@@ -109,8 +190,13 @@ const AudioToMidi: React.FC = () => {
       const validationError = validateNotes(correctedNotes);
       if (validationError) {
         setStatus('Validation error: ' + validationError);
+        setIsConverting(false);
         return;
       }
+      
+      setProgress(95);
+      setStatus('Generating MIDI file...');
+      
       // Generate MIDI file
       const { Midi } = await import('@tonejs/midi');
       const midi = new Midi();
@@ -136,6 +222,10 @@ const AudioToMidi: React.FC = () => {
           });
         }
       });
+      
+      setProgress(100);
+      setStatus('Downloading MIDI file...');
+      
       const midiBlob = new Blob([midi.toArray()], { type: 'audio/midi' });
       const midiUrl = URL.createObjectURL(midiBlob);
       const a = document.createElement('a');
@@ -144,9 +234,12 @@ const AudioToMidi: React.FC = () => {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      
       setStatus('MIDI file downloaded!');
+      setIsConverting(false);
     } catch (err: any) {
       setStatus('Error: ' + (err.message || 'Unknown error'));
+      setIsConverting(false);
     }
   };
 
@@ -157,7 +250,32 @@ const AudioToMidi: React.FC = () => {
         accept="audio/*,.mp3,.wav,.ogg,.flac"
         onChange={handleFileChange}
       />
-      {status && <div>{status}</div>}
+      {status && (
+        <div style={{ marginTop: '1rem' }}>
+          <div>{status}</div>
+          {isConverting && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <div style={{
+                width: '100%',
+                height: '8px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '4px',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${progress}%`,
+                  height: '100%',
+                  backgroundColor: '#3b82f6',
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+              <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.25rem' }}>
+                {progress.toFixed(0)}% complete
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -7,9 +7,10 @@ import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
-import { Play, Pause, Square, Video, FolderUp, FileDown, Loader2 } from 'lucide-react';
+import { Play, Pause, Square, Video, FolderUp, FileDown, Loader2, Volume2, VolumeX } from 'lucide-react';
 import fixWebmDuration from 'webm-duration-fix';
 import { convertAudioToMidi, isAudioFile } from '@/utils/audioToMidi';
+import { getAudioToMidiWorker } from '@/utils/audioToMidiWorker';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -33,7 +34,7 @@ export default function MidiPlayerCompact({
   chordType
 }: MidiPlayerCompactProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { getCanvasCallbacks, getMidiPlayerState, getMidiPlayerFunctions } = useMidiContext();
+  const { getCanvasCallbacks, getMidiPlayerState, getMidiPlayerFunctions, isMuted, toggleMute } = useMidiContext();
   
   // Get current density from the main canvas
   const [currentDensity, setCurrentDensity] = useState(20);
@@ -50,6 +51,7 @@ export default function MidiPlayerCompact({
   // Audio to MIDI conversion state
   const [isConverting, setIsConverting] = useState(false);
   const [conversionStatus, setConversionStatus] = useState<string | null>(null);
+  const [conversionProgress, setConversionProgress] = useState(0);
   
   // Export progress tracking
   const [isExporting, setIsExporting] = useState(false);
@@ -218,6 +220,7 @@ export default function MidiPlayerCompact({
 
     playerFunctions.stopPlayback();
     setConversionStatus(null);
+    setConversionProgress(0);
 
     // Check if it's a MIDI file
     if (file.type === 'audio/midi' || file.name.endsWith('.mid')) {
@@ -229,18 +232,26 @@ export default function MidiPlayerCompact({
     if (isAudioFile(file)) {
       setIsConverting(true);
       setConversionStatus('Converting audio to MIDI...');
+      setConversionProgress(0);
       
       try {
-        const midiBlob = await convertAudioToMidi(file);
+        const midiBlob = await convertAudioToMidi(file, {}, (progress) => {
+          setConversionProgress(progress.progress);
+          setConversionStatus(progress.message);
+        });
+        
         const midiFile = new File([midiBlob], `${file.name.replace(/\.[^/.]+$/, '')}.mid`, {
           type: 'audio/midi'
         });
         
         setConversionStatus('Conversion complete! Loading MIDI...');
+        setConversionProgress(100);
         await playerFunctions.parseMidiFile(midiFile);
         setConversionStatus(null);
+        setConversionProgress(0);
       } catch (error) {
         setConversionStatus(`Conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setConversionProgress(0);
       } finally {
         setIsConverting(false);
       }
@@ -309,7 +320,15 @@ export default function MidiPlayerCompact({
     setShowCancel(false);
   }, [isExporting]);
 
-
+  const handleCancelConversion = useCallback(() => {
+    if (isConverting) {
+      const worker = getAudioToMidiWorker();
+      worker.cancel();
+      setIsConverting(false);
+      setConversionStatus('Conversion cancelled');
+      setConversionProgress(0);
+    }
+  }, [isConverting]);
 
   // Callback to render a frame at a specific time for video recording
   const handleRenderFrame = useCallback((canvas: HTMLCanvasElement, time: number) => {
@@ -408,7 +427,7 @@ export default function MidiPlayerCompact({
 
     if (settings.includeAudio && midiData) {
       await Tone.start();
-      synth = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth });
+      synth = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth });
       synth.disconnect();
       audioDest = Tone.Destination.context.createMediaStreamDestination();
       synth.connect(audioDest);
@@ -421,10 +440,14 @@ export default function MidiPlayerCompact({
         track.notes.forEach((note: any) => {
           if (note.time < settings.duration) {
             Tone.Transport.schedule((time) => {
-              synth?.triggerAttack(note.note, time, note.velocity);
+              if (!isMuted && synth) {
+                synth.triggerAttack(note.note, time, note.velocity);
+              }
             }, note.time);
             Tone.Transport.schedule((time) => {
-              synth?.triggerRelease(note.note, time);
+              if (!isMuted && synth) {
+                synth.triggerRelease(note.note, time);
+              }
             }, note.time + note.duration);
           }
         });
@@ -689,6 +712,21 @@ export default function MidiPlayerCompact({
             >
               <Square className="playback-icon" />
             </button>
+            <button
+              onClick={toggleMute}
+              className="blend-btn"
+              style={{
+                borderRadius: 0,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box',
+              }}
+              title={isMuted ? 'Unmute synthesizer' : 'Mute synthesizer'}
+            >
+              {isMuted ? <VolumeX className="playback-icon" /> : <Volume2 className="playback-icon" />}
+            </button>
             {/* Centered non-button controls */}
             <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
               {/* Progress Bar (visible on desktop, hidden on mobile via CSS) */}
@@ -779,25 +817,6 @@ export default function MidiPlayerCompact({
         )}
       </div>
 
-      {/* Conversion Status */}
-      {conversionStatus && (
-        <div style={{ 
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          fontSize: '0.9rem', 
-          padding: '0.5rem',
-          borderRadius: '4px',
-          background: conversionStatus.includes('failed') ? 'rgba(255, 0, 0, 0.9)' : 'rgba(0, 255, 0, 0.9)',
-          color: 'white',
-          zIndex: 1000,
-          maxWidth: '300px',
-          wordWrap: 'break-word'
-        }}>
-          {conversionStatus}
-        </div>
-      )}
-
       {/* Export Video Modal */}
       <ExportVideoModal
         isOpen={isModalOpen}
@@ -830,6 +849,75 @@ export default function MidiPlayerCompact({
           onProgress={handleProgress}
         />
       )} */}
+
+      {/* Conversion Progress Overlay */}
+      {isConverting && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '2rem',
+            borderRadius: '12px',
+            textAlign: 'center',
+            maxWidth: '400px',
+            width: '90%',
+          }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <Loader2 className="animate-spin" style={{ fontSize: '2rem', marginBottom: '0.5rem' }} />
+              <h3 style={{ margin: '0.5rem 0', fontSize: '1.2rem' }}>Converting Audio to MIDI</h3>
+              <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', opacity: 0.8 }}>{conversionStatus}</p>
+            </div>
+            
+            {/* Progress Bar */}
+            <div style={{
+              width: '100%',
+              height: '8px',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              marginBottom: '1rem',
+            }}>
+              <div style={{
+                width: `${conversionProgress}%`,
+                height: '100%',
+                backgroundColor: '#3b82f6',
+                transition: 'width 0.3s ease',
+              }} />
+            </div>
+            
+            <div style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '1rem' }}>
+              {conversionProgress.toFixed(0)}% complete
+            </div>
+            
+            <button
+              onClick={handleCancelConversion}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              Cancel Conversion
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Export Progress Overlay */}
     </>
   );
 } 

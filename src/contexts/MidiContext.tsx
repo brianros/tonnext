@@ -66,6 +66,10 @@ interface MidiContextType {
   // Instrument state
   setSelectedInstrument: (instrument: Instrument) => void;
   getSelectedInstrument: () => Instrument | null;
+  // Mute state
+  isMuted: boolean;
+  toggleMute: () => void;
+  setMuted: (muted: boolean) => void;
 }
 
 const MidiContext = createContext<MidiContextType | null>(null);
@@ -103,6 +107,9 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
   } | null>(null);
 
   const selectedInstrumentRef = useRef<Instrument | null>(null);
+  
+  // Mute state
+  const [isMuted, setIsMuted] = React.useState(false);
 
   const setCanvasCallbacks = (callbacks: typeof canvasCallbacksRef.current) => {
     canvasCallbacksRef.current = callbacks;
@@ -136,6 +143,14 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
     return selectedInstrumentRef.current;
   };
 
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
+  };
+
+  const setMuted = (muted: boolean) => {
+    setIsMuted(muted);
+  };
+
   return (
     <MidiContext.Provider value={{ 
       setCanvasCallbacks, 
@@ -145,7 +160,10 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
       setMidiPlayerFunctions,
       getMidiPlayerFunctions,
       setSelectedInstrument,
-      getSelectedInstrument
+      getSelectedInstrument,
+      isMuted,
+      toggleMute,
+      setMuted
     }}>
       {children}
     </MidiContext.Provider>

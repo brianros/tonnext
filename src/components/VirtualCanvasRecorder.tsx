@@ -4,6 +4,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Square, Video, Music } from 'lucide-react';
 import * as Tone from 'tone';
 import fixWebmDuration from 'webm-duration-fix';
+import { useMidiContext } from '@/contexts/MidiContext';
 
 interface VirtualCanvasRecorderProps {
   // Original canvas ref for getting dimensions and context
@@ -57,6 +58,9 @@ export default function VirtualCanvasRecorder({
   const audioSynthRef = useRef<Tone.PolySynth | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
 
+  // Get mute state from MIDI context
+  const { isMuted } = useMidiContext();
+
   // Check if MediaRecorder is supported
   useEffect(() => {
     setIsSupported(!!window.MediaRecorder);
@@ -69,7 +73,7 @@ export default function VirtualCanvasRecorder({
     await Tone.start();
     
     // Create a synth for recording
-    const synth = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth }).toDestination();
+    const synth = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
     synth.set({
       oscillator: { type: 'triangle' },
       envelope: {
@@ -245,11 +249,15 @@ export default function VirtualCanvasRecorder({
             // Only schedule notes within the recording duration
             if (note.time < duration) {
               Tone.Transport.schedule((time) => {
-                audioSynthRef.current?.triggerAttack(note.note, time, note.velocity);
+                if (!isMuted && audioSynthRef.current) {
+                  audioSynthRef.current.triggerAttack(note.note, time, note.velocity);
+                }
               }, note.time);
 
               Tone.Transport.schedule((time) => {
-                audioSynthRef.current?.triggerRelease(note.note, time);
+                if (!isMuted && audioSynthRef.current) {
+                  audioSynthRef.current.triggerRelease(note.note, time);
+                }
               }, note.time + note.duration);
             }
           });

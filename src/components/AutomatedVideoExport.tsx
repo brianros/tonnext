@@ -21,7 +21,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
   chordType,
   canvasRef,
 }) => {
-  const { getMidiPlayerState } = useMidiContext();
+  const { getMidiPlayerState, isMuted } = useMidiContext();
   const midiState = getMidiPlayerState();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -84,7 +84,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       // Prepare audio synth and MediaStreamDestination
       await Tone.start();
       if (audioSynthRef.current) audioSynthRef.current.dispose();
-      const synth = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth });
+      const synth = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth });
       synth.set({
         oscillator: { type: 'triangle' },
         envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 },
@@ -146,11 +146,15 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       midiState.midiData.tracks.forEach((track: any) => {
         track.notes.forEach((note: any) => {
           Tone.Transport.schedule((time) => {
-            audioSynthRef.current?.triggerAttack(note.note, time, note.velocity);
+            if (!isMuted && audioSynthRef.current) {
+              audioSynthRef.current.triggerAttack(note.note, time, note.velocity);
+            }
             handleMidiNoteStart(note);
           }, note.time);
           Tone.Transport.schedule((time) => {
-            audioSynthRef.current?.triggerRelease(note.note, time);
+            if (!isMuted && audioSynthRef.current) {
+              audioSynthRef.current.triggerRelease(note.note, time);
+            }
             handleMidiNoteEnd(note);
           }, note.time + note.duration);
         });

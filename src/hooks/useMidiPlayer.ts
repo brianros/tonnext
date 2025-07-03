@@ -41,7 +41,7 @@ export function useMidiPlayer() {
   const [midiData, setMidiData] = useState<MidiData | null>(null);
   const [fileName, setFileName] = useState<string>('');
   
-  const { setMidiPlayerState, setMidiPlayerFunctions, getSelectedInstrument } = useMidiContext();
+  const { setMidiPlayerState, setMidiPlayerFunctions, getSelectedInstrument, isMuted } = useMidiContext();
   
   const synthRef = useRef<Tone.PolySynth | null>(null);
   const currentNotesRef = useRef<Set<number>>(new Set());
@@ -82,6 +82,32 @@ export function useMidiPlayer() {
       }
     };
   }, []);
+
+  // Helper function to trigger synth notes only when not muted
+  const triggerSynthAttack = useCallback((note: string, time: number, velocity: number) => {
+    if (synthRef.current) {
+      synthRef.current.triggerAttack(note, time, velocity);
+    }
+  }, []);
+
+  const triggerSynthRelease = useCallback((note: string, time: number) => {
+    if (synthRef.current) {
+      synthRef.current.triggerRelease(note, time);
+    }
+  }, []);
+
+  const releaseAllSynthNotes = useCallback(() => {
+    if (synthRef.current) {
+      synthRef.current.releaseAll();
+    }
+  }, []);
+
+  // Effect to control synth volume based on mute state
+  useEffect(() => {
+    if (synthRef.current) {
+      synthRef.current.volume.value = isMuted ? -Infinity : 0; // -Infinity = mute, 0 = normal volume
+    }
+  }, [isMuted]);
 
   const parseMidiFile = useCallback(async (file: File): Promise<MidiData | null> => {
     try {
@@ -168,9 +194,9 @@ export function useMidiPlayer() {
     // Initialize audio context if needed
     await Tone.start();
     
-    // Initialize synth
+    // Initialize synth with increased polyphony
     if (!synthRef.current) {
-      synthRef.current = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth }).toDestination();
+      synthRef.current = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
     }
 
     // Update synth with selected instrument settings
@@ -232,14 +258,14 @@ export function useMidiPlayer() {
           // Schedule note start
           Tone.Transport.schedule((time) => {
             currentNotesRef.current.add(note.midi);
-            synthRef.current?.triggerAttack(note.note, time, note.velocity);
+            triggerSynthAttack(note.note, time, note.velocity);
             onNoteStartRef.current(note);
           }, note.time);
 
           // Schedule note end
           Tone.Transport.schedule((time) => {
             currentNotesRef.current.delete(note.midi);
-            synthRef.current?.triggerRelease(note.note, time);
+            triggerSynthRelease(note.note, time);
             onNoteEndRef.current(note);
           }, note.time + note.duration);
 
@@ -284,9 +310,7 @@ export function useMidiPlayer() {
         setIsPlaying(false);
         Tone.Transport.stop();
         Tone.Transport.cancel();
-        if (synthRef.current) {
-          synthRef.current.releaseAll();
-        }
+        releaseAllSynthNotes();
         currentNotesRef.current.clear();
         setCurrentTime(0);
       }
@@ -295,7 +319,7 @@ export function useMidiPlayer() {
     // Start the update loop immediately
     console.log('Starting time update loop');
     updateTime();
-  }, [midiData, duration]);
+  }, [midiData, duration, releaseAllSynthNotes]);
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false);
@@ -312,9 +336,7 @@ export function useMidiPlayer() {
     scheduleIdsRef.current.clear();
     
     // Stop all playing notes
-    if (synthRef.current) {
-      synthRef.current.releaseAll();
-    }
+    releaseAllSynthNotes();
     // Call canvas note/chord end callbacks to clear highlights
     currentNotesRef.current.forEach(midi => {
       onNoteEndRef.current({
@@ -329,7 +351,7 @@ export function useMidiPlayer() {
     onChordEndRef.current({ notes: [], time: 0, duration: 0 });
     currentNotesRef.current.clear();
     setCurrentTime(0);
-  }, []);
+  }, [releaseAllSynthNotes]);
 
   const pausePlayback = useCallback(() => {
     setIsPlaying(false);
@@ -342,11 +364,9 @@ export function useMidiPlayer() {
     }
     
     // Silence all currently playing notes
-    if (synthRef.current) {
-      synthRef.current.releaseAll();
-    }
+    releaseAllSynthNotes();
     currentNotesRef.current.clear();
-  }, []);
+  }, [releaseAllSynthNotes]);
 
   const seekTo = useCallback((time: number) => {
     if (!midiData) return;
@@ -362,9 +382,7 @@ export function useMidiPlayer() {
     }
     
     // Stop all playing notes
-    if (synthRef.current) {
-      synthRef.current.releaseAll();
-    }
+    releaseAllSynthNotes();
     currentNotesRef.current.clear();
     
     // Clear all schedules
@@ -389,14 +407,14 @@ export function useMidiPlayer() {
             // Schedule note start
             Tone.Transport.schedule((time) => {
               currentNotesRef.current.add(note.midi);
-              synthRef.current?.triggerAttack(note.note, time, note.velocity);
+              triggerSynthAttack(note.note, time, note.velocity);
               onNoteStartRef.current(note);
             }, note.time);
 
             // Schedule note end
             Tone.Transport.schedule((time) => {
               currentNotesRef.current.delete(note.midi);
-              synthRef.current?.triggerRelease(note.note, time);
+              triggerSynthRelease(note.note, time);
               onNoteEndRef.current(note);
             }, note.time + note.duration);
 
@@ -437,9 +455,7 @@ export function useMidiPlayer() {
           setIsPlaying(false);
           Tone.Transport.stop();
           Tone.Transport.cancel();
-          if (synthRef.current) {
-            synthRef.current.releaseAll();
-          }
+          releaseAllSynthNotes();
           currentNotesRef.current.clear();
           setCurrentTime(0);
         }
@@ -447,7 +463,7 @@ export function useMidiPlayer() {
 
       updateTime();
     }
-  }, [midiData, duration]);
+  }, [midiData, duration, releaseAllSynthNotes]);
 
   const setNoteCallbacks = useCallback((callbacks: {
     onNoteStart?: (note: MidiNote) => void;
@@ -465,9 +481,9 @@ export function useMidiPlayer() {
     // Initialize audio context if needed
     await Tone.start();
     
-    // Initialize synth if it doesn't exist
+    // Initialize synth if it doesn't exist with increased polyphony
     if (!synthRef.current) {
-      synthRef.current = new Tone.PolySynth({ maxPolyphony: 32, voice: Tone.Synth }).toDestination();
+      synthRef.current = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
     }
     
     // Apply instrument settings

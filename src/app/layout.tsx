@@ -1,26 +1,42 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { MidiProvider } from "@/contexts/MidiContext";
+import { terminateAudioToMidiWorker } from "@/utils/audioToMidiWorker";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tonnext | Music Visualization",
-  description: "Tonnext is a web-based music visualizer that creates beautiful tonal network visualizations.",
+  title: "Tonnext - Interactive Tonnetz Visualization",
+  description: "Explore musical relationships through interactive Tonnetz visualizations with MIDI playback",
   keywords: "tonnext, online, visualizer, visualization, generator",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Cleanup Web Worker on page unload
+              window.addEventListener('beforeunload', function() {
+                // This will be handled by the cleanup function
+              });
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
-        <div className="min-h-screen bg-gray-900 text-white">
-          {children}
-        </div>
+        <MidiProvider>
+          <div className="min-h-screen bg-gray-900 text-white">
+            {children}
+          </div>
+        </MidiProvider>
       </body>
     </html>
   );

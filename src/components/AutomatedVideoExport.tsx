@@ -29,7 +29,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
   const virtualCanvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioSynthRef = useRef<Tone.PolySynth | null>(null);
-  const animationFrameRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const animationFrameRef = useRef<number | null>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
 
   const {
@@ -168,7 +168,22 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       let frameCount = 0;
       const frameInterval = 1000 / FPS;
       
+      const startTime = performance.now();
+      
       const renderFrame = () => {
+        const currentTime = performance.now();
+        const elapsedTime = currentTime - startTime;
+        const expectedFrame = Math.floor(elapsedTime / frameInterval);
+        
+        // Render all frames that should have been rendered by now
+        while (frameCount <= expectedFrame && frameCount < totalFrames) {
+          const currentTime = (frameCount / FPS);
+          if (virtualTonnetzRef.current) {
+            virtualTonnetzRef.current.update(currentTime, midiState.midiData);
+          }
+          frameCount++;
+        }
+        
         if (frameCount >= totalFrames) {
           // Force a final frame render with requestAnimationFrame before stopping
           const finalTime = duration;
@@ -184,12 +199,9 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
           });
           return;
         }
-        const currentTime = (frameCount / FPS);
-        if (virtualTonnetzRef.current) {
-          virtualTonnetzRef.current.update(currentTime, midiState.midiData);
-        }
-        frameCount++;
-        animationFrameRef.current = setTimeout(renderFrame, frameInterval);
+        
+        // Use requestAnimationFrame for better performance and to avoid throttling
+        animationFrameRef.current = requestAnimationFrame(renderFrame);
       };
       renderFrame();
     } catch (error) {
@@ -204,7 +216,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
 
   React.useEffect(() => {
     return () => {
-      if (animationFrameRef.current) clearTimeout(animationFrameRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (audioSynthRef.current) audioSynthRef.current.dispose();
     };
   }, []);

@@ -69,10 +69,11 @@ export function useMidiPlayer() {
         duration,
         midiData,
         fileName,
-        isOriginalAudio
+        isOriginalAudio,
+        originalAudioBuffer
       });
     }
-  }, [isPlaying, currentTime, duration, midiData, fileName, isOriginalAudio, setMidiPlayerState]);
+  }, [isPlaying, currentTime, duration, midiData, fileName, isOriginalAudio, originalAudioBuffer, setMidiPlayerState]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -622,6 +623,7 @@ export function useMidiPlayer() {
     midiData,
     fileName,
     isOriginalAudio,
+    originalAudioBuffer,
     
     parseMidiFile,
     parseAudioFile,

@@ -25,6 +25,7 @@ interface MidiContextType {
     midiData: MidiData | null;
     fileName: string;
     isOriginalAudio?: boolean;
+    originalAudioBuffer?: AudioBuffer | null;
   }) => void;
   getMidiPlayerState: () => {
     isPlaying: boolean;
@@ -33,6 +34,7 @@ interface MidiContextType {
     midiData: MidiData | null;
     fileName: string;
     isOriginalAudio?: boolean;
+    originalAudioBuffer?: AudioBuffer | null;
   } | null;
   // MIDI Player functions
   setMidiPlayerFunctions: (functions: {

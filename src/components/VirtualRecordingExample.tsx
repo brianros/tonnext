@@ -185,7 +185,10 @@ export default function VirtualRecordingExample({
           <li>Records the virtual canvas to create a time-lapse video</li>
           <li>Automatically downloads the video when complete</li>
           {recordingSettings.includeAudio && midiState?.midiData && (
-            <li className="text-green-600"><Music size={16} /> MIDI audio will be synthesized and included in the video</li>
+            <li className="text-green-600">
+              <Music size={16} /> 
+              {midiState?.isOriginalAudio ? 'Original audio will be included in the video' : 'MIDI audio will be synthesized and included in the video'}
+            </li>
           )}
         </ul>
         <p className="mt-2">
@@ -211,6 +214,8 @@ export default function VirtualRecordingExample({
           targetWidth={recordingSettings.targetWidth}
           zoom={recordingSettings.zoom}
           midiData={midiState?.midiData}
+          originalAudioBuffer={midiState?.originalAudioBuffer}
+          isOriginalAudio={midiState?.isOriginalAudio}
           onRecordingStart={handleRecordingStart}
           onRecordingStop={(blob) => {
             handleRecordingStop(blob);

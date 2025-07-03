@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { VirtualTonnetz } from './VirtualTonnetz';
 import { Monitor, Smartphone, Tv, Square, RectangleHorizontal } from 'lucide-react';
+import { useMidiContext } from '@/contexts/MidiContext';
 
 interface ExportVideoModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ interface ExportVideoModalProps {
 
 interface ExportSettings {
   duration: number;
+  startTime: number;
+  endTime: number;
   speedMultiplier: number;
   targetFrameRate: number;
   includeAudio: boolean;
@@ -71,9 +74,13 @@ export default function ExportVideoModal({
 }: ExportVideoModalProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
+  const { getMidiPlayerState } = useMidiContext();
+  const playerState = getMidiPlayerState();
   
   const [settings, setSettings] = useState<ExportSettings>({
     duration: midiData?.duration || 30,
+    startTime: 0,
+    endTime: midiData?.duration || 30,
     speedMultiplier: 1,
     targetFrameRate: 30,
     includeAudio: false,
@@ -163,7 +170,11 @@ export default function ExportVideoModal({
   // Update settings when MIDI data changes
   useEffect(() => {
     if (midiData?.duration) {
-      setSettings(prev => ({ ...prev, duration: midiData.duration }));
+      setSettings(prev => ({ 
+        ...prev, 
+        duration: midiData.duration,
+        endTime: midiData.duration 
+      }));
     }
   }, [midiData?.duration]);
 
@@ -227,6 +238,47 @@ export default function ExportVideoModal({
                       style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '200px', background: '#D4D7CB', borderRadius: '2px' }}
                     />
                   </div>
+                  <div className="export-modal-time-range" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Time Range</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '200px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#aaa' }}>
+                        <span>Start: {settings.startTime.toFixed(1)}s</span>
+                        <span>End: {settings.endTime.toFixed(1)}s</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max={settings.duration}
+                        step="0.1"
+                        value={settings.startTime}
+                        onChange={(e) => {
+                          const newStartTime = parseFloat(e.target.value);
+                          setSettings(prev => ({ 
+                            ...prev, 
+                            startTime: newStartTime,
+                            endTime: Math.max(newStartTime + 1, prev.endTime)
+                          }));
+                        }}
+                        style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '100%', background: '#D4D7CB', borderRadius: '2px' }}
+                      />
+                      <input
+                        type="range"
+                        min="0"
+                        max={settings.duration}
+                        step="0.1"
+                        value={settings.endTime}
+                        onChange={(e) => {
+                          const newEndTime = parseFloat(e.target.value);
+                          setSettings(prev => ({ 
+                            ...prev, 
+                            endTime: newEndTime,
+                            startTime: Math.min(newEndTime - 1, prev.startTime)
+                          }));
+                        }}
+                        style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '100%', background: '#D4D7CB', borderRadius: '2px' }}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
                   <div className="export-modal-right-group" style={{ width: '180px', height: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '18px' }}>
@@ -270,9 +322,14 @@ export default function ExportVideoModal({
                         style={{ accentColor: 'var(--color-accent)' }}
                       />
                       <label htmlFor="include-audio" className={`export-modal-audio-label${!midiData ? ' disabled' : ''}`} style={{ fontSize: '0.85rem' }}>
-                        Include MIDI audio {!midiData && '(Load MIDI file first)'}
+                        Include audio {!midiData && '(Load MIDI file first)'}
                       </label>
                     </div>
+                    {settings.includeAudio && midiData && (
+                      <div style={{ fontSize: '0.75rem', color: '#aaa', textAlign: 'center', maxWidth: '150px' }}>
+                        {playerState?.isOriginalAudio ? 'Original audio will be used' : 'Synthesized MIDI audio will be used'}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

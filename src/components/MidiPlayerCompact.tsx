@@ -70,7 +70,7 @@ export default function MidiPlayerCompact({
   });
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const animationFrameRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const animationFrameRef = useRef<number | null>(null);
   const wasCancelled = useRef(false);
   const exportBtnRef = useRef<HTMLButtonElement | null>(null);
   
@@ -82,6 +82,7 @@ export default function MidiPlayerCompact({
     midiData: MidiData | null;
     fileName: string;
     isOriginalAudio?: boolean;
+    originalAudioBuffer?: AudioBuffer | null;
   } | null>(null);
 
   // Get shared functions from context
@@ -444,39 +445,68 @@ export default function MidiPlayerCompact({
     let scheduled = false;
     const midiData = settings.midiData || playerState?.midiData;
 
-    if (settings.includeAudio && midiData) {
-      await Tone.start();
-      synth = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth });
-      synth.disconnect();
-      audioDest = Tone.Destination.context.createMediaStreamDestination();
-      synth.connect(audioDest);
-      synth.set({
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
-      });
-      Tone.Transport.cancel();
-      midiData.tracks.forEach((track: any) => {
-        track.notes.forEach((note: any) => {
-          if (note.time < settings.duration) {
-            Tone.Transport.schedule((time) => {
-              if (!isMuted && synth) {
-                synth.triggerAttack(note.note, time, note.velocity);
-              }
-            }, note.time);
-            Tone.Transport.schedule((time) => {
-              if (!isMuted && synth) {
-                synth.triggerRelease(note.note, time);
-              }
-            }, note.time + note.duration);
-          }
+    // Helper function to create audio stream from AudioBuffer with time range
+    const createAudioStreamFromBuffer = (audioBuffer: AudioBuffer, startTime: number, endTime: number): MediaStream => {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      
+      const dest = audioContext.createMediaStreamDestination();
+      source.connect(dest);
+      
+      // Start the audio source at the specified start time
+      source.start(0, startTime, endTime - startTime);
+      
+      return dest.stream;
+    };
+
+    if (settings.includeAudio) {
+      // Check if we have original audio available
+      if (playerState?.isOriginalAudio && playerState?.originalAudioBuffer) {
+        console.log('Using original audio for export');
+        const originalAudioStream = createAudioStreamFromBuffer(playerState.originalAudioBuffer, settings.startTime, settings.endTime);
+        finalStream = new MediaStream([
+          ...videoStream.getTracks(),
+          ...originalAudioStream.getTracks()
+        ]);
+      } else if (midiData) {
+        // Fallback to synthesized MIDI audio
+        console.log('Using synthesized MIDI audio for export');
+        await Tone.start();
+        synth = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth });
+        synth.disconnect();
+        audioDest = Tone.Destination.context.createMediaStreamDestination();
+        synth.connect(audioDest);
+        synth.set({
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
         });
-      });
-      Tone.Transport.bpm.value = midiData.tempo || 120;
-      finalStream = new MediaStream([
-        ...videoStream.getTracks(),
-        ...audioDest.stream.getTracks()
-      ]);
-      scheduled = true;
+        Tone.Transport.cancel();
+        midiData.tracks.forEach((track: any) => {
+          track.notes.forEach((note: any) => {
+            // Only schedule notes that fall within the export time range
+            if (note.time >= settings.startTime && note.time < settings.endTime) {
+              const adjustedTime = note.time - settings.startTime;
+              Tone.Transport.schedule((time) => {
+                if (!isMuted && synth) {
+                  synth.triggerAttack(note.note, time, note.velocity);
+                }
+              }, adjustedTime);
+              Tone.Transport.schedule((time) => {
+                if (!isMuted && synth) {
+                  synth.triggerRelease(note.note, time);
+                }
+              }, adjustedTime + note.duration);
+            }
+          });
+        });
+        Tone.Transport.bpm.value = midiData.tempo || 120;
+        finalStream = new MediaStream([
+          ...videoStream.getTracks(),
+          ...audioDest.stream.getTracks()
+        ]);
+        scheduled = true;
+      }
     }
 
     const mimeTypes = [
@@ -500,7 +530,7 @@ export default function MidiPlayerCompact({
       setShowCancel(false);
       mediaRecorderRef.current = null;
       if (animationFrameRef.current) {
-        clearTimeout(animationFrameRef.current);
+        cancelAnimationFrame(animationFrameRef.current);
       }
       return;
     }
@@ -515,11 +545,13 @@ export default function MidiPlayerCompact({
     mediaRecorder.onstop = async () => {
       if (!wasCancelled.current) {
         // Use webm-duration-fix to correct the duration metadata
-        const fixedBlob = await fixWebmDuration(new Blob(chunks, { type: selectedMimeType }), settings.duration * 1000);
+        const exportDuration = settings.endTime - settings.startTime;
+        const fixedBlob = await fixWebmDuration(new Blob(chunks, { type: selectedMimeType }), exportDuration * 1000);
         const url = URL.createObjectURL(fixedBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `virtual-recording-${Date.now()}${settings.includeAudio ? '-with-audio' : ''}.webm`;
+        const audioType = playerState?.isOriginalAudio ? '-original-audio' : settings.includeAudio ? '-with-audio' : '';
+        a.download = `virtual-recording-${Date.now()}${audioType}.webm`;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -555,69 +587,87 @@ export default function MidiPlayerCompact({
       watermarkImg.onerror = reject;
     });
 
-    const totalFrames = Math.ceil((settings.duration * settings.targetFrameRate));
+    // Use a more robust timing mechanism that doesn't get throttled by the browser
+    const exportDuration = settings.endTime - settings.startTime;
+    const totalFrames = Math.ceil((exportDuration * settings.targetFrameRate));
     let frame = 0;
-    const timeStep = settings.duration / totalFrames;
+    const timeStep = exportDuration / totalFrames;
+    const startTime = performance.now();
+    const frameInterval = 1000 / settings.targetFrameRate;
+    
     function renderNextFrame() {
-      const simulationTime = frame * timeStep;
-      if (virtualTonnetz && midiData) {
-        virtualTonnetz.update(simulationTime, midiData);
-      }
-      // Draw watermark at bottom right
-      if (ctx && watermarkImg.complete) {
-        const margin = Math.round(hiddenCanvas.width * 0.03);
-        const extraMargin = Math.round(hiddenCanvas.width * 0.05); // 5% more inward
-        const logoSize = Math.round(hiddenCanvas.width * 0.08); // 8% of canvas width (square)
-        const logoX = hiddenCanvas.width - logoSize - margin - extraMargin;
-        const logoY = hiddenCanvas.height - logoSize - margin - extraMargin;
-        const cornerRadius = Math.round(logoSize * 0.25);
-        ctx.save();
-        ctx.globalAlpha = 0.85;
-        // Draw black rounded square behind the logo
-        ctx.beginPath();
-        ctx.moveTo(logoX + cornerRadius, logoY);
-        ctx.lineTo(logoX + logoSize - cornerRadius, logoY);
-        ctx.arcTo(logoX + logoSize, logoY, logoX + logoSize, logoY + cornerRadius, cornerRadius);
-        ctx.lineTo(logoX + logoSize, logoY + logoSize - cornerRadius);
-        ctx.arcTo(logoX + logoSize, logoY + logoSize, logoX + logoSize - cornerRadius, logoY + logoSize, cornerRadius);
-        ctx.lineTo(logoX + cornerRadius, logoY + logoSize);
-        ctx.arcTo(logoX, logoY + logoSize, logoX, logoY + logoSize - cornerRadius, cornerRadius);
-        ctx.lineTo(logoX, logoY + cornerRadius);
-        ctx.arcTo(logoX, logoY, logoX + cornerRadius, logoY, cornerRadius);
-        ctx.closePath();
-        ctx.fillStyle = 'black';
-        ctx.fill();
-        // Draw the watermark image centered in the square
-        // Fit image inside the square, maintaining aspect ratio
-        let drawW = logoSize, drawH = logoSize;
-        const aspect = watermarkImg.width / watermarkImg.height;
-        if (aspect > 1) {
-          drawH = logoSize / aspect;
-        } else {
-          drawW = logoSize * aspect;
+      const currentTime = performance.now();
+      const elapsedTime = currentTime - startTime;
+      const expectedFrame = Math.floor(elapsedTime / frameInterval);
+      
+      // Render all frames that should have been rendered by now
+      while (frame <= expectedFrame && frame < totalFrames) {
+        const simulationTime = settings.startTime + (frame * timeStep);
+        if (virtualTonnetz && midiData) {
+          virtualTonnetz.update(simulationTime, midiData);
         }
-        const drawX = logoX + (logoSize - drawW) / 2;
-        const drawY = logoY + (logoSize - drawH) / 2;
-        ctx.drawImage(
-          watermarkImg,
-          drawX,
-          drawY,
-          drawW,
-          drawH
-        );
-        ctx.globalAlpha = 1.0;
-        ctx.restore();
+        
+        // Draw watermark at bottom right
+        if (ctx && watermarkImg.complete) {
+          const margin = Math.round(hiddenCanvas.width * 0.03);
+          const extraMargin = Math.round(hiddenCanvas.width * 0.05); // 5% more inward
+          const logoSize = Math.round(hiddenCanvas.width * 0.08); // 8% of canvas width (square)
+          const logoX = hiddenCanvas.width - logoSize - margin - extraMargin;
+          const logoY = hiddenCanvas.height - logoSize - margin - extraMargin;
+          const cornerRadius = Math.round(logoSize * 0.25);
+          ctx.save();
+          ctx.globalAlpha = 0.85;
+          // Draw black rounded square behind the logo
+          ctx.beginPath();
+          ctx.moveTo(logoX + cornerRadius, logoY);
+          ctx.lineTo(logoX + logoSize - cornerRadius, logoY);
+          ctx.arcTo(logoX + logoSize, logoY, logoX + logoSize, logoY + cornerRadius, cornerRadius);
+          ctx.lineTo(logoX + logoSize, logoY + logoSize - cornerRadius);
+          ctx.arcTo(logoX + logoSize, logoY + logoSize, logoX + logoSize - cornerRadius, logoY + logoSize, cornerRadius);
+          ctx.lineTo(logoX + cornerRadius, logoY + logoSize);
+          ctx.arcTo(logoX, logoY + logoSize, logoX, logoY + logoSize - cornerRadius, cornerRadius);
+          ctx.lineTo(logoX, logoY + cornerRadius);
+          ctx.arcTo(logoX, logoY, logoX + cornerRadius, logoY, cornerRadius);
+          ctx.closePath();
+          ctx.fillStyle = 'black';
+          ctx.fill();
+          // Draw the watermark image centered in the square
+          // Fit image inside the square, maintaining aspect ratio
+          let drawW = logoSize, drawH = logoSize;
+          const aspect = watermarkImg.width / watermarkImg.height;
+          if (aspect > 1) {
+            drawH = logoSize / aspect;
+          } else {
+            drawW = logoSize * aspect;
+          }
+          const drawX = logoX + (logoSize - drawW) / 2;
+          const drawY = logoY + (logoSize - drawH) / 2;
+          ctx.drawImage(
+            watermarkImg,
+            drawX,
+            drawY,
+            drawW,
+            drawH
+          );
+          ctx.globalAlpha = 1.0;
+          ctx.restore();
+        }
+        
+        frame++;
       }
+      
       // Update progress
       const progress = (frame / totalFrames) * 100;
       setExportProgress(progress);
-      frame++;
+      
       if (frame < totalFrames) {
-        animationFrameRef.current = setTimeout(renderNextFrame, 1000 / settings.targetFrameRate);
+        // Use requestAnimationFrame for better performance and to avoid throttling
+        animationFrameRef.current = requestAnimationFrame(renderNextFrame);
       } else {
         mediaRecorder.stop();
       }
     }
+    
     if (scheduled) {
       Tone.Transport.start();
     }
@@ -630,7 +680,7 @@ export default function MidiPlayerCompact({
     setShowCancel(false);
     mediaRecorderRef.current = null;
     if (animationFrameRef.current) {
-      clearTimeout(animationFrameRef.current);
+      cancelAnimationFrame(animationFrameRef.current);
     }
   }
   }, [canvasRef, mode, chordType, playerState?.midiData]);

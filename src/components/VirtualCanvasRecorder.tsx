@@ -21,6 +21,10 @@ interface VirtualCanvasRecorderProps {
   includeAudio?: boolean;
   // MIDI data for audio synthesis during recording
   midiData?: any;
+  // Original audio buffer for recording (if available)
+  originalAudioBuffer?: AudioBuffer | null;
+  // Whether original audio should be used instead of synthesized MIDI
+  isOriginalAudio?: boolean;
   // Aspect ratio for the output video ('original', '16:9', '9:16', '4:3', '1:1')
   aspectRatio?: string;
   // Target width for the output video (height will be calculated based on aspect ratio)
@@ -40,6 +44,8 @@ export default function VirtualCanvasRecorder({
   targetFrameRate = 30,
   includeAudio = false,
   midiData,
+  originalAudioBuffer,
+  isOriginalAudio = false,
   aspectRatio = 'original',
   targetWidth = 1920,
   zoom = 1.0,
@@ -52,7 +58,7 @@ export default function VirtualCanvasRecorder({
   const [progress, setProgress] = useState(0);
   const virtualCanvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const animationFrameRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const animationFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const currentTimeRef = useRef<number>(0);
   const audioSynthRef = useRef<Tone.PolySynth | null>(null);
@@ -159,15 +165,43 @@ export default function VirtualCanvasRecorder({
 
     // Initialize audio if needed
     let finalStream = canvasStream;
-    if (includeAudio && midiData) {
-      try {
-        const audioSetup = await initializeAudio();
-        if (audioSetup) {
-          audioSynthRef.current = audioSetup.synth;
-          console.log('Audio synthesis enabled (visual recording only)');
+    
+    // Helper function to create audio stream from AudioBuffer
+    const createAudioStreamFromBuffer = (audioBuffer: AudioBuffer): MediaStream => {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      
+      const dest = audioContext.createMediaStreamDestination();
+      source.connect(dest);
+      
+      // Start the audio source
+      source.start(0);
+      
+      return dest.stream;
+    };
+
+    if (includeAudio) {
+      // Check if we have original audio available
+      if (isOriginalAudio && originalAudioBuffer) {
+        console.log('Using original audio for recording');
+        const originalAudioStream = createAudioStreamFromBuffer(originalAudioBuffer);
+        finalStream = new MediaStream([
+          ...canvasStream.getTracks(),
+          ...originalAudioStream.getTracks()
+        ]);
+      } else if (midiData) {
+        // Fallback to synthesized MIDI audio
+        console.log('Using synthesized MIDI audio for recording');
+        try {
+          const audioSetup = await initializeAudio();
+          if (audioSetup) {
+            audioSynthRef.current = audioSetup.synth;
+            console.log('Audio synthesis enabled (visual recording only)');
+          }
+        } catch (error) {
+          console.warn('Failed to initialize audio for recording:', error);
         }
-      } catch (error) {
-        console.warn('Failed to initialize audio for recording:', error);
       }
     }
 
@@ -215,8 +249,8 @@ export default function VirtualCanvasRecorder({
         const url = URL.createObjectURL(fixedBlob);
         const a = document.createElement('a');
         a.href = url;
-        const audioSuffix = includeAudio ? '-with-audio' : '';
-        a.download = `virtual-recording${audioSuffix}-${Date.now()}.webm`;
+        const audioType = isOriginalAudio ? '-original-audio' : includeAudio ? '-with-audio' : '';
+        a.download = `virtual-recording${audioType}-${Date.now()}.webm`;
         a.click();
         URL.revokeObjectURL(url);
         
@@ -282,23 +316,41 @@ export default function VirtualCanvasRecorder({
           return;
         }
 
-        // Calculate current simulation time
-        const simulationTime = (currentTimeRef.current / 1000); // Convert to seconds
+        const currentTime = performance.now();
+        const elapsedTime = currentTime - startTimeRef.current;
+        const expectedFrame = Math.floor(elapsedTime / frameInterval);
         
-        // Render the frame at this specific time
-        onRenderFrame(virtualCanvas, simulationTime);
+        // Render all frames that should have been rendered by now
+        while (frameCount <= expectedFrame && frameCount < totalFrames) {
+          // Calculate current simulation time
+          const simulationTime = (currentTimeRef.current / 1000); // Convert to seconds
+          
+          // Render the frame at this specific time
+          onRenderFrame(virtualCanvas, simulationTime);
+          
+          frameCount++;
+          currentTimeRef.current += timeStep;
+        }
         
         // Update progress
         const newProgress = (frameCount / totalFrames) * 100;
         setProgress(newProgress);
         onProgress?.(newProgress);
-        
-        frameCount++;
-        currentTimeRef.current += timeStep;
 
-        // Schedule next frame based on speed multiplier
-        const nextFrameDelay = frameInterval / speedMultiplier;
-        animationFrameRef.current = setTimeout(renderFrame, nextFrameDelay);
+        if (frameCount < totalFrames) {
+          // Use requestAnimationFrame for better performance and to avoid throttling
+          animationFrameRef.current = requestAnimationFrame(renderFrame);
+        } else {
+          mediaRecorder.stop();
+          setIsRecording(false);
+          setProgress(0);
+          
+          // Stop transport
+          if (includeAudio) {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+          }
+        }
       };
 
       // Start rendering
@@ -316,6 +368,8 @@ export default function VirtualCanvasRecorder({
     isSupported,
     includeAudio,
     midiData,
+    originalAudioBuffer,
+    isOriginalAudio,
     aspectRatio,
     targetWidth,
     zoom,
@@ -328,7 +382,7 @@ export default function VirtualCanvasRecorder({
 
   const stopRecording = useCallback(() => {
     if (animationFrameRef.current) {
-      clearTimeout(animationFrameRef.current);
+      cancelAnimationFrame(animationFrameRef.current);
     }
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -351,7 +405,7 @@ export default function VirtualCanvasRecorder({
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
-        clearTimeout(animationFrameRef.current);
+        cancelAnimationFrame(animationFrameRef.current);
       }
       if (audioSynthRef.current) {
         audioSynthRef.current.dispose();

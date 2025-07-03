@@ -40,6 +40,9 @@ export function useMidiPlayer() {
   const [duration, setDuration] = useState(0);
   const [midiData, setMidiData] = useState<MidiData | null>(null);
   const [fileName, setFileName] = useState<string>('');
+  const [originalAudioFile, setOriginalAudioFile] = useState<File | null>(null);
+  const [originalAudioBuffer, setOriginalAudioBuffer] = useState<AudioBuffer | null>(null);
+  const [isOriginalAudio, setIsOriginalAudio] = useState(false);
   
   const { setMidiPlayerState, setMidiPlayerFunctions, getSelectedInstrument, isMuted } = useMidiContext();
   
@@ -49,52 +52,59 @@ export function useMidiPlayer() {
   const isPlayingRef = useRef<boolean>(false);
   const scheduleIdsRef = useRef<Set<string>>(new Set());
   
-  // Callbacks for canvas integration
+  const originalAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const originalAudioContextRef = useRef<AudioContext | null>(null);
+  const audioStartTimeRef = useRef<number>(0);
+  
   const onNoteStartRef = useRef<(note: MidiNote) => void>(() => {});
   const onNoteEndRef = useRef<(note: MidiNote) => void>(() => {});
   const onChordStartRef = useRef<(chord: MidiChord) => void>(() => {});
   const onChordEndRef = useRef<(chord: MidiChord) => void>(() => {});
 
-  // Share state with context
   useEffect(() => {
-    // Only update context if we have meaningful state
     if (midiData || fileName || duration > 0) {
       setMidiPlayerState({
         isPlaying,
         currentTime,
         duration,
         midiData,
-        fileName
+        fileName,
+        isOriginalAudio
       });
     }
-  }, [isPlaying, currentTime, duration, midiData, fileName, setMidiPlayerState]);
+  }, [isPlaying, currentTime, duration, midiData, fileName, isOriginalAudio, setMidiPlayerState]);
 
-  // Update ref when state changes
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
-  // Cleanup animation frame on unmount
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      if (originalAudioSourceRef.current) {
+        originalAudioSourceRef.current.stop();
+        originalAudioSourceRef.current = null;
+      }
+      if (originalAudioContextRef.current) {
+        originalAudioContextRef.current.close();
+        originalAudioContextRef.current = null;
+      }
     };
   }, []);
 
-  // Helper function to trigger synth notes only when not muted
   const triggerSynthAttack = useCallback((note: string, time: number, velocity: number) => {
-    if (synthRef.current) {
+    if (synthRef.current && !isOriginalAudio) {
       synthRef.current.triggerAttack(note, time, velocity);
     }
-  }, []);
+  }, [isOriginalAudio]);
 
   const triggerSynthRelease = useCallback((note: string, time: number) => {
-    if (synthRef.current) {
+    if (synthRef.current && !isOriginalAudio) {
       synthRef.current.triggerRelease(note, time);
     }
-  }, []);
+  }, [isOriginalAudio]);
 
   const releaseAllSynthNotes = useCallback(() => {
     if (synthRef.current) {
@@ -102,12 +112,19 @@ export function useMidiPlayer() {
     }
   }, []);
 
-  // Effect to control synth volume based on mute state
   useEffect(() => {
     if (synthRef.current) {
-      synthRef.current.volume.value = isMuted ? -Infinity : 0; // -Infinity = mute, 0 = normal volume
+      const shouldMute = isMuted || isOriginalAudio;
+      synthRef.current.volume.value = shouldMute ? -Infinity : 0;
     }
-  }, [isMuted]);
+  }, [isMuted, isOriginalAudio]);
+
+  const loadOriginalAudio = useCallback(async (file: File): Promise<AudioBuffer> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    return audioBuffer;
+  }, []);
 
   const parseMidiFile = useCallback(async (file: File): Promise<MidiData | null> => {
     try {
@@ -138,12 +155,36 @@ export function useMidiPlayer() {
       setMidiData(data);
       setDuration(data.duration);
       setFileName(file.name);
+      setOriginalAudioFile(null);
+      setOriginalAudioBuffer(null);
+      setIsOriginalAudio(false);
       return data;
     } catch (error) {
       console.error('Error parsing MIDI file:', error);
       return null;
     }
   }, []);
+
+  const parseAudioFile = useCallback(async (file: File, midiData: MidiData): Promise<void> => {
+    try {
+      setOriginalAudioFile(file);
+      const audioBuffer = await loadOriginalAudio(file);
+      setOriginalAudioBuffer(audioBuffer);
+      setIsOriginalAudio(true);
+      
+      setDuration(audioBuffer.duration);
+      
+      const updatedMidiData = {
+        ...midiData,
+        duration: audioBuffer.duration
+      };
+      setMidiData(updatedMidiData);
+      setFileName(file.name);
+    } catch (error) {
+      console.error('Error loading original audio:', error);
+      setIsOriginalAudio(false);
+    }
+  }, [loadOriginalAudio]);
 
   const loadMidiFromUrl = useCallback(async (url: string, fileName: string): Promise<MidiData | null> => {
     try {
@@ -179,6 +220,9 @@ export function useMidiPlayer() {
       setMidiData(data);
       setDuration(data.duration);
       setFileName(fileName);
+      setOriginalAudioFile(null);
+      setOriginalAudioBuffer(null);
+      setIsOriginalAudio(false);
       return data;
     } catch (error) {
       console.error('Error loading MIDI file from URL:', error);
@@ -189,80 +233,99 @@ export function useMidiPlayer() {
   const startPlayback = useCallback(async () => {
     if (!midiData) return;
 
-    console.log('startPlayback called, isPlaying:', isPlaying, 'currentTime:', currentTime);
+    console.log('startPlayback called, isPlaying:', isPlaying, 'currentTime:', currentTime, 'isOriginalAudio:', isOriginalAudio);
 
-    // Initialize audio context if needed
     await Tone.start();
     
-    // Initialize synth with increased polyphony
-    if (!synthRef.current) {
+    if (!synthRef.current && !isOriginalAudio) {
       synthRef.current = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
     }
 
-    // Update synth with selected instrument settings
-    const selectedInstrument = getSelectedInstrument();
-    if (selectedInstrument && selectedInstrument.toneOptions) {
-      synthRef.current.set(selectedInstrument.toneOptions);
-    } else {
-      // Default piano settings
-      synthRef.current.set({
-        oscillator: { type: 'triangle' },
-        envelope: {
-          attack: 0.02,
-          decay: 0.1,
-          sustain: 0.3,
-          release: 1
-        }
-      });
+    if (!isOriginalAudio && synthRef.current) {
+      const selectedInstrument = getSelectedInstrument();
+      if (selectedInstrument && selectedInstrument.toneOptions) {
+        synthRef.current.set(selectedInstrument.toneOptions);
+      } else {
+        synthRef.current.set({
+          oscillator: { type: 'triangle' },
+          envelope: {
+            attack: 0.02,
+            decay: 0.1,
+            sustain: 0.3,
+            release: 1
+          }
+        });
+      }
     }
 
-    // If already playing, don't restart
     if (isPlaying) return;
 
     isPlayingRef.current = true;
     setIsPlaying(true);
     currentNotesRef.current.clear();
 
-    // Check if transport is paused (resume) or stopped (start fresh)
+    if (isOriginalAudio && originalAudioBuffer) {
+      console.log('Starting original audio playback');
+      
+      if (!originalAudioContextRef.current) {
+        originalAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      if (originalAudioSourceRef.current) {
+        originalAudioSourceRef.current.stop();
+      }
+      
+      originalAudioSourceRef.current = originalAudioContextRef.current.createBufferSource();
+      originalAudioSourceRef.current.buffer = originalAudioBuffer;
+      originalAudioSourceRef.current.connect(originalAudioContextRef.current.destination);
+      
+      // Track when we start the audio
+      audioStartTimeRef.current = originalAudioContextRef.current.currentTime - currentTime;
+      originalAudioSourceRef.current.start(0, currentTime);
+      
+      originalAudioSourceRef.current.onended = () => {
+        if (isPlayingRef.current) {
+          setIsPlaying(false);
+          setCurrentTime(0);
+          currentNotesRef.current.clear();
+        }
+      };
+      
+      if (originalAudioContextRef.current.state === 'suspended') {
+        await originalAudioContextRef.current.resume();
+      }
+    }
+
     if (Tone.Transport.state === 'paused') {
       console.log('Resuming from pause');
-      // Resume from current position
       Tone.Transport.start();
     } else {
       console.log('Starting fresh');
-      // Start fresh - clear all previous schedules
       Tone.Transport.cancel();
       scheduleIdsRef.current.clear();
 
-      // Set transport position to current time if we're not at the beginning
       if (currentTime > 0) {
         console.log('Setting transport position to:', currentTime);
-        // Use the transport start method with an offset
         Tone.Transport.start('+0', currentTime);
       } else {
         console.log('Starting transport normally');
-        // Start transport normally
         Tone.Transport.start();
       }
 
-      // Use Tone.js Transport for timing but schedule notes directly
       Tone.Transport.stop();
       Tone.Transport.bpm.value = midiData.tempo;
 
-      // Schedule all notes using Transport with unique IDs
       midiData.tracks.forEach((track, trackIndex) => {
         track.notes.forEach((note, noteIndex) => {
           const startId = `note-start-${trackIndex}-${noteIndex}`;
           const endId = `note-end-${trackIndex}-${noteIndex}`;
           
-          // Schedule note start
           Tone.Transport.schedule((time) => {
             currentNotesRef.current.add(note.midi);
             triggerSynthAttack(note.note, time, note.velocity);
             onNoteStartRef.current(note);
           }, note.time);
 
-          // Schedule note end
           Tone.Transport.schedule((time) => {
             currentNotesRef.current.delete(note.midi);
             triggerSynthRelease(note.note, time);
@@ -274,22 +337,27 @@ export function useMidiPlayer() {
         });
       });
 
-      // Start transport
       Tone.Transport.start();
     }
 
-    // Start the time update loop immediately
     const updateTime = () => {
       if (!isPlayingRef.current) {
         console.log('Time update stopped: not playing');
         return;
       }
       
-      const transportTime = Tone.Transport.seconds;
+      let transportTime: number;
+      
+      if (isOriginalAudio && originalAudioContextRef.current && originalAudioSourceRef.current) {
+        // Calculate elapsed time since audio started
+        transportTime = originalAudioContextRef.current.currentTime - audioStartTimeRef.current;
+      } else {
+        transportTime = Tone.Transport.seconds;
+      }
+      
       console.log('Time update:', transportTime, 'Duration:', duration, 'IsPlaying:', isPlayingRef.current);
       setCurrentTime(transportTime);
       
-      // Check for chords
       const currentChordNotes = Array.from(currentNotesRef.current);
       if (currentChordNotes.length > 1) {
         const chord: MidiChord = {
@@ -306,38 +374,43 @@ export function useMidiPlayer() {
       if (transportTime < duration) {
         animationFrameRef.current = requestAnimationFrame(updateTime);
       } else {
-        // Stop playback when we reach the end
         setIsPlaying(false);
         Tone.Transport.stop();
         Tone.Transport.cancel();
         releaseAllSynthNotes();
         currentNotesRef.current.clear();
         setCurrentTime(0);
+        
+        if (originalAudioSourceRef.current) {
+          originalAudioSourceRef.current.stop();
+          originalAudioSourceRef.current = null;
+        }
       }
     };
 
-    // Start the update loop immediately
     console.log('Starting time update loop');
     updateTime();
-  }, [midiData, duration, releaseAllSynthNotes]);
+  }, [midiData, duration, releaseAllSynthNotes, isOriginalAudio, originalAudioBuffer, currentTime, triggerSynthAttack, triggerSynthRelease]);
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false);
     Tone.Transport.stop();
     Tone.Transport.cancel();
     
-    // Clean up animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
     
-    // Clear all schedules
     scheduleIdsRef.current.clear();
     
-    // Stop all playing notes
     releaseAllSynthNotes();
-    // Call canvas note/chord end callbacks to clear highlights
+    
+    if (originalAudioSourceRef.current) {
+      originalAudioSourceRef.current.stop();
+      originalAudioSourceRef.current = null;
+    }
+    
     currentNotesRef.current.forEach(midi => {
       onNoteEndRef.current({
         note: Tone.Frequency(midi, 'midi').toNote(),
@@ -357,61 +430,76 @@ export function useMidiPlayer() {
     setIsPlaying(false);
     Tone.Transport.pause();
     
-    // Clean up animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
     
-    // Silence all currently playing notes
     releaseAllSynthNotes();
     currentNotesRef.current.clear();
+    
+    if (originalAudioSourceRef.current) {
+      originalAudioSourceRef.current.stop();
+      originalAudioSourceRef.current = null;
+    }
   }, [releaseAllSynthNotes]);
 
   const seekTo = useCallback((time: number) => {
     if (!midiData) return;
     
-    // Stop current playback
     Tone.Transport.stop();
     Tone.Transport.cancel();
     
-    // Clean up animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
     
-    // Stop all playing notes
     releaseAllSynthNotes();
     currentNotesRef.current.clear();
     
-    // Clear all schedules
+    if (originalAudioSourceRef.current) {
+      originalAudioSourceRef.current.stop();
+      originalAudioSourceRef.current = null;
+    }
+    
     scheduleIdsRef.current.clear();
     
-    // Update current time
     setCurrentTime(time);
     
-    // If we were playing, restart from the new position
     if (isPlayingRef.current) {
-      // Set transport position using the correct API
+      if (isOriginalAudio && originalAudioBuffer && originalAudioContextRef.current) {
+        originalAudioSourceRef.current = originalAudioContextRef.current.createBufferSource();
+        originalAudioSourceRef.current.buffer = originalAudioBuffer;
+        originalAudioSourceRef.current.connect(originalAudioContextRef.current.destination);
+        
+        // Track when we start the audio
+        audioStartTimeRef.current = originalAudioContextRef.current.currentTime - time;
+        originalAudioSourceRef.current.start(0, time);
+        
+        originalAudioSourceRef.current.onended = () => {
+          if (isPlayingRef.current) {
+            setIsPlaying(false);
+            setCurrentTime(0);
+            currentNotesRef.current.clear();
+          }
+        };
+      }
+      
       Tone.Transport.position = Tone.Time(time).toBarsBeatsSixteenths();
       
-      // Reschedule notes from the new position
       midiData.tracks.forEach((track, trackIndex) => {
         track.notes.forEach((note, noteIndex) => {
-          // Only schedule notes that start after the seek time
           if (note.time >= time) {
             const startId = `note-start-seek-${trackIndex}-${noteIndex}`;
             const endId = `note-end-seek-${trackIndex}-${noteIndex}`;
             
-            // Schedule note start
             Tone.Transport.schedule((time) => {
               currentNotesRef.current.add(note.midi);
               triggerSynthAttack(note.note, time, note.velocity);
               onNoteStartRef.current(note);
             }, note.time);
 
-            // Schedule note end
             Tone.Transport.schedule((time) => {
               currentNotesRef.current.delete(note.midi);
               triggerSynthRelease(note.note, time);
@@ -424,17 +512,22 @@ export function useMidiPlayer() {
         });
       });
       
-      // Start transport with offset
       Tone.Transport.start('+0', time);
       
-      // Restart the time update loop
       const updateTime = () => {
         if (!isPlayingRef.current) return;
         
-        const transportTime = Tone.Transport.seconds;
+        let transportTime: number;
+        
+        if (isOriginalAudio && originalAudioContextRef.current && originalAudioSourceRef.current) {
+          // Calculate elapsed time since audio started
+          transportTime = originalAudioContextRef.current.currentTime - audioStartTimeRef.current;
+        } else {
+          transportTime = Tone.Transport.seconds;
+        }
+        
         setCurrentTime(transportTime);
         
-        // Check for chords
         const currentChordNotes = Array.from(currentNotesRef.current);
         if (currentChordNotes.length > 1) {
           const chord: MidiChord = {
@@ -451,19 +544,23 @@ export function useMidiPlayer() {
         if (transportTime < duration) {
           animationFrameRef.current = requestAnimationFrame(updateTime);
         } else {
-          // Stop playback when we reach the end
           setIsPlaying(false);
           Tone.Transport.stop();
           Tone.Transport.cancel();
           releaseAllSynthNotes();
           currentNotesRef.current.clear();
           setCurrentTime(0);
+          
+          if (originalAudioSourceRef.current) {
+            originalAudioSourceRef.current.stop();
+            originalAudioSourceRef.current = null;
+          }
         }
       };
 
       updateTime();
     }
-  }, [midiData, duration, releaseAllSynthNotes]);
+  }, [midiData, duration, releaseAllSynthNotes, isOriginalAudio, originalAudioBuffer, triggerSynthAttack, triggerSynthRelease]);
 
   const setNoteCallbacks = useCallback((callbacks: {
     onNoteStart?: (note: MidiNote) => void;
@@ -478,15 +575,12 @@ export function useMidiPlayer() {
   }, []);
 
   const updateInstrument = useCallback(async (instrument: Instrument) => {
-    // Initialize audio context if needed
     await Tone.start();
     
-    // Initialize synth if it doesn't exist with increased polyphony
     if (!synthRef.current) {
       synthRef.current = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
     }
     
-    // Apply instrument settings
     if (instrument.toneOptions) {
       console.log('Updating instrument to:', instrument.name, instrument.toneOptions);
       synthRef.current.set(instrument.toneOptions);
@@ -495,6 +589,7 @@ export function useMidiPlayer() {
 
   const functions = useMemo(() => ({
     parseMidiFile,
+    parseAudioFile,
     loadMidiFromUrl,
     startPlayback,
     stopPlayback,
@@ -502,14 +597,12 @@ export function useMidiPlayer() {
     seekTo,
     setNoteCallbacks,
     updateInstrument,
-  }), [parseMidiFile, loadMidiFromUrl, startPlayback, stopPlayback, pausePlayback, seekTo, setNoteCallbacks, updateInstrument]);
+  }), [parseMidiFile, parseAudioFile, loadMidiFromUrl, startPlayback, stopPlayback, pausePlayback, seekTo, setNoteCallbacks, updateInstrument]);
 
-  // Share functions with context
   useEffect(() => {
     setMidiPlayerFunctions(functions);
   }, [setMidiPlayerFunctions, functions]);
 
-  // Apply initial instrument settings when synth is created
   useEffect(() => {
     const applyInitialInstrument = async () => {
       const selectedInstrument = getSelectedInstrument();
@@ -523,15 +616,15 @@ export function useMidiPlayer() {
   }, [getSelectedInstrument, updateInstrument]);
 
   return {
-    // State
     isPlaying,
     currentTime,
     duration,
     midiData,
     fileName,
+    isOriginalAudio,
     
-    // Actions
     parseMidiFile,
+    parseAudioFile,
     loadMidiFromUrl,
     startPlayback,
     stopPlayback,

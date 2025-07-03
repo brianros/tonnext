@@ -24,6 +24,7 @@ interface MidiContextType {
     duration: number;
     midiData: MidiData | null;
     fileName: string;
+    isOriginalAudio?: boolean;
   }) => void;
   getMidiPlayerState: () => {
     isPlaying: boolean;
@@ -31,10 +32,12 @@ interface MidiContextType {
     duration: number;
     midiData: MidiData | null;
     fileName: string;
+    isOriginalAudio?: boolean;
   } | null;
   // MIDI Player functions
   setMidiPlayerFunctions: (functions: {
     parseMidiFile: (file: File) => Promise<MidiData | null>;
+    parseAudioFile: (file: File, midiData: MidiData) => Promise<void>;
     loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;
@@ -50,6 +53,7 @@ interface MidiContextType {
   }) => void;
   getMidiPlayerFunctions: () => {
     parseMidiFile: (file: File) => Promise<MidiData | null>;
+    parseAudioFile: (file: File, midiData: MidiData) => Promise<void>;
     loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;
@@ -92,6 +96,7 @@ export function MidiProvider({ children }: { children: React.ReactNode }) {
 
   const midiPlayerFunctionsRef = useRef<{
     parseMidiFile: (file: File) => Promise<MidiData | null>;
+    parseAudioFile: (file: File, midiData: MidiData) => Promise<void>;
     loadMidiFromUrl: (url: string, fileName: string) => Promise<MidiData | null>;
     startPlayback: () => Promise<void>;
     stopPlayback: () => void;

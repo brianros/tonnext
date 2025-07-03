@@ -81,6 +81,7 @@ export default function MidiPlayerCompact({
     duration: number;
     midiData: MidiData | null;
     fileName: string;
+    isOriginalAudio?: boolean;
   } | null>(null);
 
   // Get shared functions from context
@@ -97,6 +98,7 @@ export default function MidiPlayerCompact({
       onChordStart?: (chord: MidiChord) => void;
       onChordEnd?: (chord: MidiChord) => void;
     }) => void;
+    parseAudioFile: (file: File, midiData: MidiData) => Promise<void>;
   } | null>(null);
 
   // Ensure we always have a valid canvas ref
@@ -231,10 +233,11 @@ export default function MidiPlayerCompact({
     // Check if it's an audio file that needs conversion
     if (isAudioFile(file)) {
       setIsConverting(true);
-      setConversionStatus('Converting audio to MIDI...');
+      setConversionStatus('Converting audio to MIDI for visualization...');
       setConversionProgress(0);
       
       try {
+        // Convert audio to MIDI for visualization only
         const midiBlob = await convertAudioToMidi(file, {}, (progress) => {
           setConversionProgress(progress.progress);
           setConversionStatus(progress.message);
@@ -244,11 +247,27 @@ export default function MidiPlayerCompact({
           type: 'audio/midi'
         });
         
-        setConversionStatus('Conversion complete! Loading MIDI...');
+        setConversionStatus('Loading MIDI for visualization...');
         setConversionProgress(100);
-        await playerFunctions.parseMidiFile(midiFile);
-        setConversionStatus(null);
+        
+        // Parse the MIDI file first to get the MIDI data
+        const midiData = await playerFunctions.parseMidiFile(midiFile);
+        
+        if (midiData) {
+          // Then load the original audio file for playback
+          setConversionStatus('Loading original audio for playback...');
+          await playerFunctions.parseAudioFile(file, midiData);
+          setConversionStatus('Ready! Original audio will be played with synchronized MIDI visualization.');
+        } else {
+          setConversionStatus('Failed to load MIDI data for visualization');
+        }
+        
         setConversionProgress(0);
+        
+        // Show a brief success message
+        setTimeout(() => {
+          setConversionStatus(null);
+        }, 2000);
       } catch (error) {
         setConversionStatus(`Conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         setConversionProgress(0);
@@ -757,6 +776,16 @@ export default function MidiPlayerCompact({
                 </span>
                 <span className="song-title" style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
                   {playerState.fileName}
+                  {playerState.isOriginalAudio && (
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      opacity: 0.6, 
+                      marginLeft: 4,
+                      fontStyle: 'italic'
+                    }}>
+                      (Original Audio)
+                    </span>
+                  )}
                 </span>
               </div>
             </div>

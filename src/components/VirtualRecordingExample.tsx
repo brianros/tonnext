@@ -26,7 +26,7 @@ export default function VirtualRecordingExample({
     duration: 30, // Will be updated from MIDI
     speedMultiplier: 1, // Fixed at 1x
     targetFrameRate: 30, // Fixed at 30fps
-    includeAudio: false,
+    includeAudio: true,
     aspectRatio: 'original',
     targetWidth: 1920, // Fixed at 1920px
     zoom: 1.0

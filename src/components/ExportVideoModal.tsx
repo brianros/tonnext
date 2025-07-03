@@ -63,6 +63,151 @@ const QUALITY_PRESETS: Record<string, { label: string; width: number; height: nu
   ],
 };
 
+// Dual range slider component
+interface DualRangeSliderProps {
+  min: number;
+  max: number;
+  step: number;
+  startValue: number;
+  endValue: number;
+  onStartChange: (value: number) => void;
+  onEndChange: (value: number) => void;
+  style?: React.CSSProperties;
+}
+
+function DualRangeSlider({ 
+  min, 
+  max, 
+  step, 
+  startValue, 
+  endValue, 
+  onStartChange, 
+  onEndChange, 
+  style 
+}: DualRangeSliderProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDraggingStart, setIsDraggingStart] = useState(false);
+  const [isDraggingEnd, setIsDraggingEnd] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent, isStart: boolean) => {
+    e.preventDefault();
+    if (isStart) {
+      setIsDraggingStart(true);
+    } else {
+      setIsDraggingEnd(true);
+    }
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!containerRef.current || (!isDraggingStart && !isDraggingEnd)) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const value = min + (max - min) * percentage;
+    const roundedValue = Math.round(value / step) * step;
+
+    if (isDraggingStart) {
+      const newStartValue = Math.min(roundedValue, endValue - step);
+      onStartChange(newStartValue);
+    } else if (isDraggingEnd) {
+      const newEndValue = Math.max(roundedValue, startValue + step);
+      onEndChange(newEndValue);
+    }
+  }, [isDraggingStart, isDraggingEnd, min, max, step, startValue, endValue, onStartChange, onEndChange]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDraggingStart(false);
+    setIsDraggingEnd(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDraggingStart || isDraggingEnd) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDraggingStart, isDraggingEnd, handleMouseMove, handleMouseUp]);
+
+  const startPercentage = ((startValue - min) / (max - min)) * 100;
+  const endPercentage = ((endValue - min) / (max - min)) * 100;
+
+  return (
+    <div 
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        ...style
+      }}
+    >
+      {/* Track background */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          height: '4px',
+          backgroundColor: '#D4D7CB',
+          borderRadius: '2px'
+        }}
+      />
+      
+      {/* Selected range */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `${startPercentage}%`,
+          right: `${100 - endPercentage}%`,
+          height: '4px',
+          backgroundColor: 'var(--color-accent)',
+          borderRadius: '2px'
+        }}
+      />
+      
+      {/* Start thumb */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `${startPercentage}%`,
+          transform: 'translateX(-50%)',
+          width: '14px',
+          height: '14px',
+          backgroundColor: '#e7b6a3',
+          border: '2px solid #e7b6a3',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          zIndex: 2
+        }}
+        onMouseDown={(e) => handleMouseDown(e, true)}
+      />
+      
+      {/* End thumb */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `${endPercentage}%`,
+          transform: 'translateX(-50%)',
+          width: '14px',
+          height: '14px',
+          backgroundColor: '#e7b6a3',
+          border: '2px solid #e7b6a3',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          zIndex: 2
+        }}
+        onMouseDown={(e) => handleMouseDown(e, false)}
+      />
+    </div>
+  );
+}
+
 export default function ExportVideoModal({
   isOpen,
   onClose,
@@ -83,8 +228,8 @@ export default function ExportVideoModal({
     endTime: midiData?.duration || 30,
     speedMultiplier: 1,
     targetFrameRate: 30,
-    includeAudio: false,
-    aspectRatio: 'original',
+    includeAudio: true,
+    aspectRatio: '16:9',
     targetWidth: 1920,
     zoom: 1.0
   });
@@ -245,37 +390,22 @@ export default function ExportVideoModal({
                         <span>Start: {settings.startTime.toFixed(1)}s</span>
                         <span>End: {settings.endTime.toFixed(1)}s</span>
                       </div>
-                      <input
-                        type="range"
-                        min="0"
+                      <DualRangeSlider
+                        min={0}
                         max={settings.duration}
-                        step="0.1"
-                        value={settings.startTime}
-                        onChange={(e) => {
-                          const newStartTime = parseFloat(e.target.value);
-                          setSettings(prev => ({ 
-                            ...prev, 
-                            startTime: newStartTime,
-                            endTime: Math.max(newStartTime + 1, prev.endTime)
-                          }));
-                        }}
-                        style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '100%', background: '#D4D7CB', borderRadius: '2px' }}
-                      />
-                      <input
-                        type="range"
-                        min="0"
-                        max={settings.duration}
-                        step="0.1"
-                        value={settings.endTime}
-                        onChange={(e) => {
-                          const newEndTime = parseFloat(e.target.value);
-                          setSettings(prev => ({ 
-                            ...prev, 
-                            endTime: newEndTime,
-                            startTime: Math.min(newEndTime - 1, prev.startTime)
-                          }));
-                        }}
-                        style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '100%', background: '#D4D7CB', borderRadius: '2px' }}
+                        step={0.1}
+                        startValue={settings.startTime}
+                        endValue={settings.endTime}
+                        onStartChange={(value) => setSettings(prev => ({ 
+                          ...prev, 
+                          startTime: value,
+                          endTime: Math.max(value + 1, prev.endTime)
+                        }))}
+                        onEndChange={(value) => setSettings(prev => ({ 
+                          ...prev, 
+                          endTime: value,
+                          startTime: Math.min(value - 1, prev.startTime)
+                        }))}
                       />
                     </div>
                   </div>
@@ -311,25 +441,13 @@ export default function ExportVideoModal({
                   </div>
                   <div className="export-modal-audio" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Audio</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input
-                        type="checkbox"
-                        id="include-audio"
-                        checked={settings.includeAudio}
-                        onChange={(e) => setSettings(prev => ({ ...prev, includeAudio: e.target.checked }))}
-                        disabled={!midiData}
-                        className="export-modal-audio-checkbox"
-                        style={{ accentColor: 'var(--color-accent)' }}
-                      />
-                      <label htmlFor="include-audio" className={`export-modal-audio-label${!midiData ? ' disabled' : ''}`} style={{ fontSize: '0.85rem' }}>
-                        Include audio {!midiData && '(Load MIDI file first)'}
-                      </label>
+                    <div style={{ fontSize: '0.75rem', color: '#aaa', textAlign: 'center', maxWidth: '150px' }}>
+                      {midiData ? (
+                        playerState?.isOriginalAudio ? 'Original audio will be used' : 'Synthesized MIDI audio will be used'
+                      ) : (
+                        'Load MIDI file to include audio'
+                      )}
                     </div>
-                    {settings.includeAudio && midiData && (
-                      <div style={{ fontSize: '0.75rem', color: '#aaa', textAlign: 'center', maxWidth: '150px' }}>
-                        {playerState?.isOriginalAudio ? 'Original audio will be used' : 'Synthesized MIDI audio will be used'}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

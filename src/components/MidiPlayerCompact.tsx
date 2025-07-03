@@ -63,7 +63,7 @@ export default function MidiPlayerCompact({
     duration: 30,
     speedMultiplier: 1,
     targetFrameRate: 30,
-    includeAudio: false,
+    includeAudio: true,
     aspectRatio: 'original' as string,
     targetWidth: 1920,
     zoom: 1.0
@@ -609,9 +609,11 @@ export default function MidiPlayerCompact({
         
         // Draw watermark at bottom right
         if (ctx && watermarkImg.complete) {
-          const margin = Math.round(hiddenCanvas.width * 0.03);
-          const extraMargin = Math.round(hiddenCanvas.width * 0.05); // 5% more inward
-          const logoSize = Math.round(hiddenCanvas.width * 0.08); // 8% of canvas width (square)
+          // Use the smaller dimension to calculate watermark size for consistent appearance across aspect ratios
+          const smallerDimension = Math.min(hiddenCanvas.width, hiddenCanvas.height);
+          const margin = Math.round(smallerDimension * 0.03);
+          const extraMargin = Math.round(smallerDimension * 0.05); // 5% more inward
+          const logoSize = Math.round(smallerDimension * 0.08); // 8% of smaller dimension (square)
           const logoX = hiddenCanvas.width - logoSize - margin - extraMargin;
           const logoY = hiddenCanvas.height - logoSize - margin - extraMargin;
           const cornerRadius = Math.round(logoSize * 0.25);

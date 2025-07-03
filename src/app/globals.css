@@ -1664,7 +1664,7 @@ footer .blend-btn {
   justify-content: center !important;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 769px) {
   .tonnext-mobile-logo {
     display: none !important;
   }

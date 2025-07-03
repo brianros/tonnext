@@ -42,7 +42,7 @@ export default function VirtualCanvasRecorder({
   duration,
   speedMultiplier,
   targetFrameRate = 30,
-  includeAudio = false,
+  includeAudio = true,
   midiData,
   originalAudioBuffer,
   isOriginalAudio = false,

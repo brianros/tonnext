@@ -7,8 +7,9 @@ import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
-import { Play, Pause, Square, Video, FolderUp, FileDown } from 'lucide-react';
+import { Play, Pause, Square, Video, FolderUp, FileDown, Loader2 } from 'lucide-react';
 import fixWebmDuration from 'webm-duration-fix';
+import { convertAudioToMidi, isAudioFile } from '@/utils/audioToMidi';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -45,6 +46,10 @@ export default function MidiPlayerCompact({
   // Track if test MIDI has been loaded
   const [testMidiLoaded, setTestMidiLoaded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Audio to MIDI conversion state
+  const [isConverting, setIsConverting] = useState(false);
+  const [conversionStatus, setConversionStatus] = useState<string | null>(null);
   
   // Export progress tracking
   const [isExporting, setIsExporting] = useState(false);
@@ -209,10 +214,41 @@ export default function MidiPlayerCompact({
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && (file.type === 'audio/midi' || file.name.endsWith('.mid')) && playerFunctions) {
-      playerFunctions.stopPlayback();
+    if (!file || !playerFunctions) return;
+
+    playerFunctions.stopPlayback();
+    setConversionStatus(null);
+
+    // Check if it's a MIDI file
+    if (file.type === 'audio/midi' || file.name.endsWith('.mid')) {
       await playerFunctions.parseMidiFile(file);
+      return;
     }
+
+    // Check if it's an audio file that needs conversion
+    if (isAudioFile(file)) {
+      setIsConverting(true);
+      setConversionStatus('Converting audio to MIDI...');
+      
+      try {
+        const midiBlob = await convertAudioToMidi(file);
+        const midiFile = new File([midiBlob], `${file.name.replace(/\.[^/.]+$/, '')}.mid`, {
+          type: 'audio/midi'
+        });
+        
+        setConversionStatus('Conversion complete! Loading MIDI...');
+        await playerFunctions.parseMidiFile(midiFile);
+        setConversionStatus(null);
+      } catch (error) {
+        setConversionStatus(`Conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsConverting(false);
+      }
+      return;
+    }
+
+    // Invalid file type
+    setConversionStatus('Please select a valid MIDI or audio file (MP3, WAV, OGG, FLAC, etc.)');
   }, [playerFunctions]);
 
   const handleUploadClick = useCallback(() => {
@@ -600,7 +636,7 @@ export default function MidiPlayerCompact({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".mid,audio/midi"
+          accept=".mid,audio/midi,audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.webm"
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
@@ -608,9 +644,19 @@ export default function MidiPlayerCompact({
           onClick={handleUploadClick}
           className="blend-btn"
           style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '100%', display: 'flex', alignItems: 'center', gap: '0.5em' }}
+          disabled={isConverting}
         >
-          <FolderUp className="load-icon" />
-          <span className="load-text">Load</span>
+          {isConverting ? (
+            <>
+              <Loader2 className="load-icon animate-spin" />
+              <span className="load-text">Converting...</span>
+            </>
+          ) : (
+            <>
+              <FolderUp className="load-icon" />
+              <span className="load-text">Load</span>
+            </>
+          )}
         </button>
         {/* Playback Controls and Export Button */}
         {playerState?.midiData && (
@@ -732,6 +778,25 @@ export default function MidiPlayerCompact({
           </>
         )}
       </div>
+
+      {/* Conversion Status */}
+      {conversionStatus && (
+        <div style={{ 
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          fontSize: '0.9rem', 
+          padding: '0.5rem',
+          borderRadius: '4px',
+          background: conversionStatus.includes('failed') ? 'rgba(255, 0, 0, 0.9)' : 'rgba(0, 255, 0, 0.9)',
+          color: 'white',
+          zIndex: 1000,
+          maxWidth: '300px',
+          wordWrap: 'break-word'
+        }}>
+          {conversionStatus}
+        </div>
+      )}
 
       {/* Export Video Modal */}
       <ExportVideoModal

@@ -347,6 +347,7 @@ export default function MidiPlayerCompact({
         return;
       }
       if ('status' in response && response.status === 'ok') {
+        const songTitle = response.result?.[0]?.title || 'YouTube Audio';
         setConversionStatus('Downloading audio from YouTube...');
         setConversionProgress(25);
         console.log('Set conversionStatus: Downloading audio from YouTube..., conversionProgress: 25');
@@ -370,7 +371,9 @@ export default function MidiPlayerCompact({
         }
 
         const audioBlob = await audioResponse.blob();
-        const audioFile = new File([audioBlob], 'youtube-audio.mp3', { type: 'audio/mpeg' });
+        // Sanitize the song title for file names
+        const safeTitle = songTitle.replace(/[^a-zA-Z0-9-_\. ]/g, '').replace(/\s+/g, '_');
+        const audioFile = new File([audioBlob], `${safeTitle || 'youtube-audio'}.mp3`, { type: 'audio/mpeg' });
 
         setConversionStatus('Converting audio to MIDI...');
         setConversionProgress(75);
@@ -383,7 +386,7 @@ export default function MidiPlayerCompact({
           console.log('Progress update:', progress);
         });
 
-        const midiFile = new File([midiBlob], 'youtube-audio.mid', { type: 'audio/midi' });
+        const midiFile = new File([midiBlob], `${safeTitle || 'youtube-audio'}.mid`, { type: 'audio/midi' });
 
         setConversionStatus('Loading MIDI for visualization...');
         setConversionProgress(100);
@@ -510,11 +513,11 @@ export default function MidiPlayerCompact({
 
   // Remove isRecording and VirtualCanvasRecorder overlay state
   // Add a function to programmatically trigger the virtual canvas export
-  const triggerVirtualExport = useCallback(async (settings: any) => {
+  const triggerVirtualExport = useCallback(async (settings: any, fileName: string | undefined) => {
     try {
-          // Set export state
-    setIsExporting(true);
-    setExportProgress(0);
+      // Set export state
+      setIsExporting(true);
+      setExportProgress(0);
       
       // Create a hidden canvas
       const hiddenCanvas = document.createElement('canvas');
@@ -686,7 +689,8 @@ export default function MidiPlayerCompact({
         const a = document.createElement('a');
         a.href = url;
         const audioType = playerState?.isOriginalAudio ? '-original-audio' : settings.includeAudio ? '-with-audio' : '';
-        a.download = `virtual-recording-${Date.now()}${audioType}.webm`;
+        const exportBase = settings.exportFileName || playerState?.fileName || 'virtual-recording';
+        a.download = `${exportBase}-${Date.now()}${audioType}.webm`;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -1039,12 +1043,13 @@ export default function MidiPlayerCompact({
         onClose={() => setIsModalOpen(false)}
         onExport={(settings) => {
           setIsModalOpen(false);
-          triggerVirtualExport(settings);
+          triggerVirtualExport(settings, playerState?.fileName);
         }}
         originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
         midiData={playerState?.midiData}
         mode={mode}
         chordType={chordType}
+        fileName={playerState?.fileName}
       />
 
       {/* Load Modal */}

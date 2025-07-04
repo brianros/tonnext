@@ -13,6 +13,7 @@ interface ExportVideoModalProps {
   midiData?: any;
   mode: 'note' | 'chord' | 'arpeggio';
   chordType: string;
+  fileName?: string;
 }
 
 interface ExportSettings {
@@ -25,6 +26,7 @@ interface ExportSettings {
   aspectRatio: string;
   targetWidth: number;
   zoom: number;
+  exportFileName: string;
 }
 
 const ASPECT_RATIOS = [
@@ -215,7 +217,8 @@ export default function ExportVideoModal({
   originalCanvasRef,
   midiData,
   mode,
-  chordType
+  chordType,
+  fileName
 }: ExportVideoModalProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
@@ -231,7 +234,8 @@ export default function ExportVideoModal({
     includeAudio: true,
     aspectRatio: '16:9',
     targetWidth: 1920,
-    zoom: 1.0
+    zoom: 1.0,
+    exportFileName: fileName || 'virtual-recording'
   });
 
   const [quality, setQuality] = useState('High');
@@ -339,6 +343,10 @@ export default function ExportVideoModal({
     const preset = QUALITY_PRESETS[aspectKey]?.find(q => q.label === quality) || QUALITY_PRESETS['16:9'][2];
     setSettings(prev => ({ ...prev, targetWidth: preset.width }));
   }, [quality, aspectKey]);
+
+  useEffect(() => {
+    setSettings(prev => ({ ...prev, exportFileName: fileName || 'virtual-recording' }));
+  }, [fileName]);
 
   const handleExport = () => {
     onExport(settings);

@@ -5,12 +5,14 @@ import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
 import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
+import LoadModal from './LoadModal';
 import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
 import { Play, Pause, Square, Video, FolderUp, FileDown, Loader2, Volume2, VolumeX } from 'lucide-react';
 import fixWebmDuration from 'webm-duration-fix';
 import { convertAudioToMidi, isAudioFile } from '@/utils/audioToMidi';
 import { getAudioToMidiWorker } from '@/utils/audioToMidiWorker';
+import { useYouTubeMP3 } from '@/hooks/useYouTubeMP3';
 
 interface MidiPlayerCompactProps {
   onNoteStart?: (note: MidiNote) => void;
@@ -36,6 +38,9 @@ export default function MidiPlayerCompact({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { getCanvasCallbacks, getMidiPlayerState, getMidiPlayerFunctions, isMuted, toggleMute } = useMidiContext();
   
+  // YouTube MP3 hook
+  const { downloadMP3FromUrl, isLoading: isYouTubeLoading, error: youtubeError } = useYouTubeMP3();
+  
   // Get current density from the main canvas
   const [currentDensity, setCurrentDensity] = useState(20);
   
@@ -47,6 +52,7 @@ export default function MidiPlayerCompact({
   // Track if test MIDI has been loaded
   const [testMidiLoaded, setTestMidiLoaded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
   
   // Audio to MIDI conversion state
   const [isConverting, setIsConverting] = useState(false);
@@ -217,8 +223,7 @@ export default function MidiPlayerCompact({
     }
   }, [playerState?.midiData, playerFunctions]);
 
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileSelect = useCallback(async (file: File) => {
     if (!file || !playerFunctions) return;
 
     playerFunctions.stopPlayback();
@@ -282,9 +287,139 @@ export default function MidiPlayerCompact({
     setConversionStatus('Please select a valid MIDI or audio file (MP3, WAV, OGG, FLAC, etc.)');
   }, [playerFunctions]);
 
+  const handleFileInputChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await handleFileSelect(file);
+    }
+  }, [handleFileSelect]);
+
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
+
+  const handleYouTubeUrl = useCallback(async (url: string) => {
+    console.log("YouTube handler called with:", url);
+    if (!playerFunctions) return;
+
+    let timeoutId: NodeJS.Timeout | null = null;
+    const clearTimeoutIfSet = () => { if (timeoutId) clearTimeout(timeoutId); };
+    timeoutId = setTimeout(() => {
+      setIsConverting(false);
+      setConversionStatus('Conversion timed out. Please try a shorter or different audio.');
+      setConversionProgress(0);
+      console.log('Conversion timed out.');
+    }, 60000); // 60 seconds
+
+    playerFunctions.stopPlayback();
+    setConversionStatus('Processing YouTube URL...');
+    setConversionProgress(0);
+    setIsConverting(true);
+    console.log('Set isConverting: true, conversionStatus: Processing YouTube URL...');
+
+    try {
+      // First, try to download the audio from YouTube
+      const response = await downloadMP3FromUrl(url);
+      console.log("YouTube API response:", response);
+      
+      if ('error' in response) {
+        clearTimeoutIfSet();
+        setConversionStatus(`YouTube processing failed: ${response.error}`);
+        setConversionProgress(0);
+        setIsConverting(false);
+        console.log('Set isConverting: false, conversionStatus:', `YouTube processing failed: ${response.error}`);
+        return;
+      }
+      if ('status' in response && response.status === 'processing') {
+        clearTimeoutIfSet();
+        setConversionStatus(response.msg || 'The YouTube video is still being processed. Please try again in a few seconds.');
+        setConversionProgress(0);
+        setIsConverting(false);
+        console.log('Set isConverting: false, conversionStatus:', response.msg);
+        return;
+      }
+      if ('status' in response && response.status === 'fail') {
+        clearTimeoutIfSet();
+        setConversionStatus(response.msg || 'Failed to process the YouTube video.');
+        setConversionProgress(0);
+        setIsConverting(false);
+        console.log('Set isConverting: false, conversionStatus:', response.msg);
+        return;
+      }
+      if ('status' in response && response.status === 'ok') {
+        setConversionStatus('Downloading audio from YouTube...');
+        setConversionProgress(25);
+        console.log('Set conversionStatus: Downloading audio from YouTube..., conversionProgress: 25');
+
+        // Get the download URL from the response
+        const downloadUrl = response.result?.[0]?.dlurl;
+        if (!downloadUrl) {
+          clearTimeoutIfSet();
+          setConversionStatus('No download URL received from YouTube API');
+          setConversionProgress(0);
+          setIsConverting(false);
+          console.log('Set isConverting: false, conversionStatus: No download URL received from YouTube API');
+          return;
+        }
+
+        // Download the audio file
+        const audioResponse = await fetch(downloadUrl);
+        if (!audioResponse.ok) {
+          clearTimeoutIfSet();
+          throw new Error(`Failed to download audio: ${audioResponse.status}`);
+        }
+
+        const audioBlob = await audioResponse.blob();
+        const audioFile = new File([audioBlob], 'youtube-audio.mp3', { type: 'audio/mpeg' });
+
+        setConversionStatus('Converting audio to MIDI...');
+        setConversionProgress(75);
+        console.log('Set conversionStatus: Converting audio to MIDI..., conversionProgress: 75');
+
+        // Convert the audio to MIDI using the existing functionality
+        const midiBlob = await convertAudioToMidi(audioFile, {}, (progress) => {
+          setConversionProgress(75 + (progress.progress * 0.25)); // 75% to 100%
+          setConversionStatus(progress.message);
+          console.log('Progress update:', progress);
+        });
+
+        const midiFile = new File([midiBlob], 'youtube-audio.mid', { type: 'audio/midi' });
+
+        setConversionStatus('Loading MIDI for visualization...');
+        setConversionProgress(100);
+        console.log('Set conversionStatus: Loading MIDI for visualization..., conversionProgress: 100');
+
+        // Parse the MIDI file
+        const midiData = await playerFunctions.parseMidiFile(midiFile);
+        
+        if (midiData) {
+          // Load the original audio file for playback
+          await playerFunctions.parseAudioFile(audioFile, midiData);
+          setConversionStatus('YouTube audio loaded successfully!');
+          console.log('Set conversionStatus: YouTube audio loaded successfully!');
+        } else {
+          setConversionStatus('Failed to load MIDI data for visualization');
+          console.log('Set conversionStatus: Failed to load MIDI data for visualization');
+        }
+
+        clearTimeoutIfSet();
+        // Show success message briefly
+        setTimeout(() => {
+          setConversionStatus(null);
+          setIsConverting(false);
+          setConversionProgress(0);
+          setIsLoadModalOpen(false);
+          console.log('Reset modal state and closed modal');
+        }, 2000);
+      }
+    } catch (error) {
+      clearTimeoutIfSet();
+      setConversionStatus(`YouTube processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setConversionProgress(0);
+      setIsConverting(false);
+      console.log('Set isConverting: false, conversionStatus:', error);
+    }
+  }, [playerFunctions, downloadMP3FromUrl]);
 
   const handleLoadBeethoven = useCallback(async () => {
     if (playerFunctions) {
@@ -726,16 +861,16 @@ export default function MidiPlayerCompact({
         width: 'auto',
         height: '64px',
       }}>
-        {/* File Upload */}
+        {/* Hidden file input for direct file selection */}
         <input
           ref={fileInputRef}
           type="file"
           accept=".mid,audio/midi,audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.webm"
-          onChange={handleFileSelect}
+          onChange={handleFileInputChange}
           style={{ display: 'none' }}
         />
         <button
-          onClick={handleUploadClick}
+          onClick={() => setIsLoadModalOpen(true)}
           className="blend-btn"
           style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '100%', display: 'flex', alignItems: 'center', gap: '0.5em' }}
           disabled={isConverting}
@@ -910,6 +1045,17 @@ export default function MidiPlayerCompact({
         midiData={playerState?.midiData}
         mode={mode}
         chordType={chordType}
+      />
+
+      {/* Load Modal */}
+      <LoadModal
+        isOpen={isLoadModalOpen}
+        onClose={() => setIsLoadModalOpen(false)}
+        onFileSelect={handleFileSelect}
+        onYouTubeUrl={handleYouTubeUrl}
+        isConverting={isConverting}
+        conversionStatus={conversionStatus}
+        conversionProgress={conversionProgress}
       />
 
       {/* VirtualCanvasRecorder - only shown when recording */}

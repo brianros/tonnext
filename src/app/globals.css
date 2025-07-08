@@ -388,7 +388,13 @@ footer > div {
   align-items: center;
   justify-content: center;
   max-width: 20vw;
-  overflow: hidden;
+  overflow: visible;
+  text-transform: none !important;
+}
+
+/* Override text-transform for the title specifically */
+.blend-btn.tonnext-title {
+  text-transform: none !important;
 }
 .tonnext-logo {
   display: none;
@@ -536,19 +542,7 @@ footer > div {
     display: none !important;
   }
   
-  /* Show the new mobile logo */
-  .tonnext-mobile-logo {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    height: var(--header-footer-height) !important;
-    width: var(--header-footer-height) !important;
-    min-width: var(--header-footer-height) !important;
-    min-height: var(--header-footer-height) !important;
-    max-width: var(--header-footer-height) !important;
-    max-height: var(--header-footer-height) !important;
-    flex: 0 0 var(--header-footer-height) !important;
-  }
+
   
   /* All header icon containers same size */
   header .header-btn,
@@ -1664,12 +1658,6 @@ footer .blend-btn {
   justify-content: center !important;
 }
 
-@media (min-width: 769px) {
-  .tonnext-mobile-logo {
-    display: none !important;
-  }
-}
-
 /* Hide on mobile utility */
 @media (max-width: 768px) {
   .hide-on-mobile {
@@ -1677,20 +1665,6 @@ footer .blend-btn {
   }
 }
 
-.tonnext-mobile-logo {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  height: var(--header-footer-height) !important;
-  width: var(--header-footer-height) !important;
-  min-width: var(--header-footer-height) !important;
-  min-height: var(--header-footer-height) !important;
-  max-width: var(--header-footer-height) !important;
-  max-height: var(--header-footer-height) !important;
-  flex: 0 0 var(--header-footer-height) !important;
-}
-
-.tonnext-mobile-logo svg,
 .tonnext-logo svg {
   height: 50% !important;
   width: 50% !important;

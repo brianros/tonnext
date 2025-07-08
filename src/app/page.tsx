@@ -455,43 +455,6 @@ function HomeContent() {
           <div className="header-container">
             {/* Tonnext logo/title container */}
             <div className="flex items-center space-x-4 flex-shrink-0">
-              {/* Mobile logo (only visible on mobile, now with tooltip) */}
-              <div
-                className="tonnext-mobile-logo"
-                onClick={() => {
-                  if (window.innerWidth <= 768) setTonnextDropdownOpen(v => !v);
-                }}
-                style={{ position: 'relative', cursor: 'pointer' }}
-                aria-label="Tonnetz Acknowledgements"
-              >
-                <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <polygon points="62,18 110,102 14,102" fill="none" stroke="var(--color-accent)" stroke-width="3" />
-                  <circle cx="62" cy="18" r="12" fill="var(--color-accent)" />
-                  <circle cx="110" cy="102" r="12" fill="var(--color-accent)" />
-                  <circle cx="14" cy="102" r="12" fill="var(--color-accent)" />
-                </svg>
-                {/* Tooltip for mobile logo */}
-                {tonnextDropdownOpen && window.innerWidth <= 768 && (
-                  <div
-                    className="tonnext-dropdown"
-                    style={{ position: 'absolute', top: '110%', left: 0, zIndex: 1000 }}
-                    onMouseLeave={() => setTonnextDropdownOpen(false)}
-                  >
-                    <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
-                    <div style={{marginBottom: 8, color: 'var(--color-highlight)'}}>
-                      Tonnext is an interactive tool for exploring music and harmony through geometric visualization.
-                    </div>
-                    <div style={{marginBottom: 8}}>
-                      <span style={{fontWeight: 500}}>Tonnetz</span> is a geometric system for visualizing tonal relationships in music. <a href="https://en.wikipedia.org/wiki/Tonnetz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>Learn more</a>.
-                    </div>
-                    <div style={{marginBottom: 6}}>
-                      Visualization based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>tonnetz-viz</a> by cifkao.
-                    </div>
-                    <div style={{fontSize: '0.95em', color: 'var(--color-highlight)'}}>Brian Rosenfeld - 2025</div>
-                    <div style={{fontSize: '0.95em', color: 'var(--color-accent)'}}><a href="https://mirari.ar" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>mīrārī</a></div>
-                  </div>
-                )}
-              </div>
               {/* Desktop title/logo button, hidden on mobile */}
               <div
                 className="tonnext-title-container hide-on-mobile"
@@ -519,7 +482,6 @@ function HomeContent() {
                       padding: '0 1rem', 
                       height: '64px', 
                       width: '116px',
-                      textTransform: 'none', 
                       alignItems: 'center',
                       display: 'flex',
                       transition: 'opacity 0.7s',
@@ -530,10 +492,10 @@ function HomeContent() {
                       top: 0,
                       zIndex: 1,
                       justifyContent: 'center',
+                      textTransform: 'none',
                     }}
                   >
-                    Ton
-                    <span id="tonnext-second-n" style={{ position: 'relative', display: 'inline-block' }}>n</span>ext
+                    Tonnext
                   </h1>
                   <span 
                     className="tonnext-logo" 
@@ -553,14 +515,14 @@ function HomeContent() {
                     }}
                     ref={el => {
                       if (el && titleHovered) {
-                        const nSpan = document.getElementById('tonnext-second-n');
-                        if (nSpan) {
-                          const nRect = nSpan.getBoundingClientRect();
+                        const titleEl = el.parentElement?.querySelector('.tonnext-title');
+                        if (titleEl) {
+                          const titleRect = titleEl.getBoundingClientRect();
                           const parentRect = el.parentElement?.getBoundingClientRect();
                           if (parentRect) {
-                            const offsetLeft = nRect.left - parentRect.left + nRect.width / 2 - 24; // 24 = logo radius
+                            const offsetLeft = titleRect.left - parentRect.left + titleRect.width / 2 - 24; // 24 = logo radius
                             el.style.left = `${offsetLeft}px`;
-                            el.style.top = `${nRect.top - parentRect.top + nRect.height / 2 - 24}px`;
+                            el.style.top = `${titleRect.top - parentRect.top + titleRect.height / 2 - 24}px`;
                           }
                         }
                       }

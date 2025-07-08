@@ -279,6 +279,7 @@ export default function MidiPlayerCompact({
         setConversionProgress(0);
       } finally {
         setIsConverting(false);
+        setIsLoadModalOpen(false);
       }
       return;
     }
@@ -1084,67 +1085,85 @@ export default function MidiPlayerCompact({
 
       {/* Conversion Progress Overlay */}
       {isConverting && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '2rem',
-            borderRadius: '12px',
-            textAlign: 'center',
-            maxWidth: '400px',
-            width: '90%',
-          }}>
-            <div style={{ marginBottom: '1rem' }}>
-              <Loader2 className="animate-spin" style={{ fontSize: '2rem', marginBottom: '0.5rem' }} />
-              <h3 style={{ margin: '0.5rem 0', fontSize: '1.2rem' }}>Converting Audio to MIDI</h3>
-              <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', opacity: 0.8 }}>{conversionStatus}</p>
-            </div>
-            
-            {/* Progress Bar */}
-            <div style={{
+        <div className="export-modal-overlay" style={{ zIndex: 1000 }}>
+          <div
+            className="export-modal-outer"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
               width: '100%',
-              height: '8px',
-              backgroundColor: '#e5e7eb',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              marginBottom: '1rem',
-            }}>
-              <div style={{
-                width: `${conversionProgress}%`,
-                height: '100%',
-                backgroundColor: '#3b82f6',
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
-            
-            <div style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '1rem' }}>
-              {conversionProgress.toFixed(0)}% complete
-            </div>
-            
-            <button
-              onClick={handleCancelConversion}
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: '24px',
+              paddingBottom: '24px',
+            }}
+          >
+            <div
+              className="export-modal"
               style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
+                position: 'relative',
+                padding: '48px 32px 32px 32px',
+                borderRadius: '18px',
+                background: 'var(--color-main)',
+                boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
+                minWidth: 360,
+                minHeight: 180,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
               }}
             >
-              Cancel Conversion
-            </button>
+              {/* Spinner */}
+              <div style={{ marginBottom: '1rem' }}>
+                <Loader2
+                  className="animate-spin"
+                  style={{
+                    fontSize: '2.5rem',
+                    color: 'var(--color-accent)',
+                    display: 'block',
+                    margin: '0 auto'
+                  }}
+                />
+              </div>
+              <h3 style={{ margin: '0.5rem 0', fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>Converting Audio to MIDI</h3>
+              <p style={{ margin: '0.5rem 0', fontSize: '1rem', color: '#fff', opacity: 0.9 }}>{conversionStatus}</p>
+              {/* Progress Bar */}
+              <div style={{
+                width: '100%',
+                height: '8px',
+                backgroundColor: '#222',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                margin: '16px 0',
+              }}>
+                <div style={{
+                  width: `${conversionProgress}%`,
+                  height: '100%',
+                  backgroundColor: 'var(--color-accent)',
+                  borderRadius: '4px',
+                  transition: 'width 0.3s',
+                }} />
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#fff', opacity: 0.7, marginBottom: '1rem' }}>
+                {conversionProgress.toFixed(0)}% complete
+              </div>
+              <button
+                onClick={handleCancelConversion}
+                className="blend-btn"
+                style={{
+                  background: '#ef4444',
+                  color: '#fff',
+                  borderRadius: 8,
+                  padding: '10px 24px',
+                  fontWeight: 500,
+                  fontSize: 16,
+                  marginTop: 16,
+                }}
+              >
+                Cancel Conversion
+              </button>
+            </div>
           </div>
         </div>
       )}

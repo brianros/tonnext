@@ -215,46 +215,88 @@ export default function LoadModal({
 
             {/* Conversion progress */}
             {isConverting && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 9999,
-              }}>
-                <div style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  maxWidth: '400px',
-                  width: '90%',
-                }}>
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <Loader2 className="animate-spin" style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#3b82f6' }} />
-                    <h3 style={{ margin: '0.5rem 0', fontSize: '1.2rem', color: '#222' }}>Converting...</h3>
-                    <p style={{ margin: '0.5rem 0', fontSize: '1rem', color: '#444', opacity: 0.9 }}>{conversionStatus}</p>
-                  </div>
-                  <button
-                    onClick={onClose}
+              <div className="export-modal-overlay" style={{ zIndex: 1000 }}>
+                <div
+                  className="export-modal-outer"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingTop: '24px',
+                    paddingBottom: '24px',
+                  }}
+                >
+                  <div
+                    className="export-modal"
                     style={{
-                      padding: '0.75rem 2rem',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: 600,
+                      position: 'relative',
+                      padding: '48px 32px 32px 32px',
+                      borderRadius: '18px',
+                      background: 'var(--color-main)',
+                      boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
+                      minWidth: 360,
+                      minHeight: 180,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
                     }}
                   >
-                    Cancel Conversion
-                  </button>
+                    {/* Spinner */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <Loader2
+                        className="animate-spin"
+                        style={{
+                          fontSize: '2.5rem',
+                          color: 'var(--color-accent)',
+                          display: 'block',
+                          margin: '0 auto'
+                        }}
+                      />
+                    </div>
+                    <h3 style={{ margin: '0.5rem 0', fontSize: '1.5rem', color: '#fff', fontWeight: 700, textAlign: 'center' }}>Converting…</h3>
+                    <p style={{ margin: '0.5rem 0', fontSize: '1.1rem', color: '#fff', opacity: 0.85, textAlign: 'center' }}>{conversionStatus}</p>
+                    {/* Progress Bar */}
+                    {typeof conversionProgress === 'number' && conversionProgress > 0 && (
+                      <div style={{
+                        width: '100%',
+                        height: '8px',
+                        backgroundColor: '#222',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        margin: '16px 0',
+                      }}>
+                        <div style={{
+                          width: `${conversionProgress}%`,
+                          height: '100%',
+                          backgroundColor: 'var(--color-accent)',
+                          borderRadius: '4px',
+                          transition: 'width 0.3s',
+                        }} />
+                      </div>
+                    )}
+                    <button
+                      onClick={onClose}
+                      className="blend-btn"
+                      style={{
+                        background: '#ef4444',
+                        color: '#fff',
+                        borderRadius: 8,
+                        padding: '12px 32px',
+                        fontWeight: 600,
+                        fontSize: 18,
+                        marginTop: 24,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                        border: 'none',
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancel Conversion
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

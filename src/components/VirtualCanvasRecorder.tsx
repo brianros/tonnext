@@ -5,6 +5,7 @@ import { Square, Video, Music } from 'lucide-react';
 import * as Tone from 'tone';
 import fixWebmDuration from 'webm-duration-fix';
 import { useMidiContext } from '@/contexts/MidiContext';
+import type { MidiData } from '@/hooks/useMidiPlayer';
 
 interface VirtualCanvasRecorderProps {
   // Original canvas ref for getting dimensions and context
@@ -20,7 +21,7 @@ interface VirtualCanvasRecorderProps {
   // Whether to include audio in the recording
   includeAudio?: boolean;
   // MIDI data for audio synthesis during recording
-  midiData?: any;
+  midiData?: MidiData | null;
   // Original audio buffer for recording (if available)
   originalAudioBuffer?: AudioBuffer | null;
   // Whether original audio should be used instead of synthesized MIDI
@@ -168,7 +169,7 @@ export default function VirtualCanvasRecorder({
     
     // Helper function to create audio stream from AudioBuffer
     const createAudioStreamFromBuffer = (audioBuffer: AudioBuffer): MediaStream => {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
       
@@ -278,8 +279,8 @@ export default function VirtualCanvasRecorder({
         Tone.Transport.cancel();
         
         // Schedule all notes for the recording duration
-        midiData.tracks.forEach((track: any) => {
-          track.notes.forEach((note: any) => {
+        midiData.tracks.forEach((track: { notes: Array<{ note: string; time: number; duration: number; velocity: number; midi: number }> }) => {
+          track.notes.forEach((note: { note: string; time: number; duration: number; velocity: number; midi: number }) => {
             // Only schedule notes within the recording duration
             if (note.time < duration) {
               Tone.Transport.schedule((time) => {
@@ -370,14 +371,13 @@ export default function VirtualCanvasRecorder({
     midiData,
     originalAudioBuffer,
     isOriginalAudio,
-    aspectRatio,
-    targetWidth,
-    zoom,
-    calculateDimensions,
-    initializeAudio,
     onRecordingStart,
     onRecordingStop,
-    onProgress
+    onProgress,
+    isMuted,
+    calculateDimensions,
+    initializeAudio,
+    isRecording
   ]);
 
   const stopRecording = useCallback(() => {

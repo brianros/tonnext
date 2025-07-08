@@ -1,3 +1,5 @@
+import type { MidiData } from '@/hooks/useMidiPlayer';
+
 interface VirtualTonnetzNode {
   x: number;
   y: number;
@@ -80,8 +82,8 @@ export class VirtualTonnetz {
       
       for (let j = -Math.floor(uW / 2 + 1); j <= Math.floor(uW / 2 + 1); j++) {
         for (let i = -Math.floor(uH / 2 + 1); i <= Math.floor(uH / 2 + 1); i++) {
-          this.addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 - j * unit, height / 2 + i * yUnit, unit);
-          this.addNode(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 - (j - 0.5) * unit, height / 2 + (i + 0.5) * yUnit, unit);
+          this.addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 - j * unit, height / 2 + i * yUnit);
+          this.addNode(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 - (j - 0.5) * unit, height / 2 + (i + 0.5) * yUnit);
         }
       }
     } else if (this.layout === LAYOUT_SONOME) {
@@ -91,14 +93,14 @@ export class VirtualTonnetz {
 
       for (let j = -Math.floor(uH / 2 + 1); j <= Math.floor(uH / 2 + 1); j++) {
         for (let i = -Math.floor(uW / 2 + 1); i <= Math.floor(uW / 2 + 1); i++) {
-          this.addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 + i * xUnit, height / 2 + j * unit, unit);
-          this.addNode(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 + (i + 0.5) * xUnit, height / 2 + (j - 0.5) * unit, unit);
+          this.addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 + i * xUnit, height / 2 + j * unit);
+          this.addNode(((i - 7 * j) % 12 + 12 + 4) % 12, width / 2 + (i + 0.5) * xUnit, height / 2 + (j - 0.5) * unit);
         }
       }
     }
   }
 
-  private addNode(tone: number, x: number, y: number, unit: number) {
+  private addNode(tone: number, x: number, y: number) {
     // Remove border filtering to match main canvas behavior
     this.nodes.push({ x, y, tone });
   }
@@ -254,7 +256,7 @@ export class VirtualTonnetz {
     });
   }
 
-  public update(time: number, midiData?: any) {
+  public update(time: number, midiData?: MidiData | null | undefined) {
     // Clear active notes
     this.activeNotes.fill(false);
     

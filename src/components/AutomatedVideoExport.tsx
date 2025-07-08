@@ -79,17 +79,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       const ctx = virtualCanvas.getContext('2d');
       if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       virtualTonnetzRef.current = ctx ? new VirtualTonnetz(virtualCanvas, ctx, { mode, chordType }) : null;
-      const virtualTonnetz = virtualTonnetzRef.current;
-
-      // Prepare audio synth and MediaStreamDestination
-      await Tone.start();
-      if (audioSynthRef.current) audioSynthRef.current.dispose();
-      const synth = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth });
-      synth.set({
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 },
-      });
-      // @ts-ignore - Tone.js types may not expose this, but it exists
+      const synth = new Tone.PolySynth(Tone.Synth, Tone.Synth.getDefaults());
       const dest = Tone.context.createMediaStreamDestination();
       synth.connect(dest);
       audioSynthRef.current = synth;
@@ -143,8 +133,8 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       // Schedule MIDI notes for audio
       Tone.Transport.cancel();
       Tone.Transport.bpm.value = midiState.midiData.tempo || 120;
-      midiState.midiData.tracks.forEach((track: any) => {
-        track.notes.forEach((note: any) => {
+      midiState.midiData.tracks.forEach((track: { notes: Array<{ note: string; time: number; duration: number; velocity: number; midi: number }> }) => {
+        track.notes.forEach((note: { note: string; time: number; duration: number; velocity: number; midi: number }) => {
           Tone.Transport.schedule((time) => {
             if (!isMuted && audioSynthRef.current) {
               audioSynthRef.current.triggerAttack(note.note, time, note.velocity);
@@ -212,7 +202,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
         audioSynthRef.current = null;
       }
     }
-  }, [canvasRef, midiState, handleMidiNoteStart, handleMidiNoteEnd, mode, chordType, isInitialized, initTonnext]);
+  }, [canvasRef, midiState, handleMidiNoteStart, handleMidiNoteEnd, mode, chordType, isMuted]);
 
   React.useEffect(() => {
     return () => {

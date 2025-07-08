@@ -72,7 +72,7 @@ async function convertAudioToNotesMainThread(
   onProgress?.({ progress: 5, message: 'Reading audio file...' });
   
   const arrayBuffer = await audioFile.arrayBuffer();
-  const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const audioCtx = new (window.AudioContext || (window as unknown as typeof window & { webkitAudioContext: typeof AudioContext }))();
   let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
   
   onProgress?.({ progress: 15, message: 'Preprocessing audio...' });
@@ -111,7 +111,6 @@ async function convertAudioToNotesMainThread(
   
   onProgress?.({ progress: 30, message: 'Loading BasicPitch model...' });
   
-  // @ts-ignore
   const basicPitch = new BasicPitch('/model/model.json');
   const frames: number[][] = [];
   const onsets: number[][] = [];
@@ -150,7 +149,7 @@ async function convertAudioToNotesMainThread(
   console.log('BasicPitch notesResult:', notesResult);
   
   // Convert the notes to the format expected by the MIDI player
-  const convertedNotes: MidiNote[] = notesResult.map((note: any) => ({
+  const convertedNotes: MidiNote[] = (notesResult as unknown as Array<{ name: string; midi: number; start: number; end: number; velocity?: number }>).map((note) => ({
     note: note.name,
     midi: note.midi,
     time: note.start,

@@ -5,7 +5,6 @@ import { getAudioToMidiWorker, AudioToMidiWorker, ConversionProgress } from './a
 export interface AudioToMidiOptions {
   onsetThreshold?: number;
   frameThreshold?: number;
-  minimumNoteDuration?: number;
   maxPolyphony?: number;
 }
 
@@ -15,23 +14,23 @@ export interface AudioToMidiOptions {
  * @param maxPolyphony Maximum number of simultaneous notes allowed
  * @returns Filtered array of notes with limited polyphony
  */
-function limitPolyphony(notes: any[], maxPolyphony: number): any[] {
+function limitPolyphony(notes: unknown[], maxPolyphony: number): unknown[] {
   if (notes.length === 0) return notes;
   
   // Sort notes by start time
-  const sortedNotes = [...notes].sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
-  const limitedNotes: any[] = [];
-  const activeNotes: any[] = [];
+  const sortedNotes = [...notes].sort((a, b) => (a as { startTimeSeconds: number }).startTimeSeconds - (b as { startTimeSeconds: number }).startTimeSeconds);
+  const limitedNotes: unknown[] = [];
+  const activeNotes: unknown[] = [];
   
   for (const note of sortedNotes) {
     // Remove notes that have ended before this note starts
-    const currentTime = note.startTimeSeconds;
-    const stillActive = activeNotes.filter(n => n.startTimeSeconds + n.durationSeconds > currentTime);
+    const currentTime = (note as { startTimeSeconds: number }).startTimeSeconds;
+    const stillActive = activeNotes.filter(n => (n as { startTimeSeconds: number; durationSeconds: number }).startTimeSeconds + (n as { startTimeSeconds: number; durationSeconds: number }).durationSeconds > currentTime);
     
     // If we're at max polyphony, remove the oldest note
     if (stillActive.length >= maxPolyphony) {
       // Sort by start time and remove the oldest
-      stillActive.sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
+      stillActive.sort((a, b) => (a as { startTimeSeconds: number }).startTimeSeconds - (b as { startTimeSeconds: number }).startTimeSeconds);
       stillActive.shift(); // Remove oldest note
     }
     
@@ -80,7 +79,6 @@ async function convertAudioToMidiMainThread(
   const {
     onsetThreshold = 0.35,
     frameThreshold = 0.35,
-    minimumNoteDuration = 5,
     maxPolyphony = 4
   } = options;
 
@@ -89,7 +87,7 @@ async function convertAudioToMidiMainThread(
     
     // Read the audio file
     const arrayBuffer = await audioFile.arrayBuffer();
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
 
     onProgress?.({ progress: 15, message: 'Preprocessing audio...' });
@@ -129,7 +127,6 @@ async function convertAudioToMidiMainThread(
     onProgress?.({ progress: 30, message: 'Loading BasicPitch model...' });
 
     // Initialize Basic Pitch model
-    // @ts-ignore
     const basicPitch = new BasicPitch('/model/model.json');
     
     const frames: number[][] = [];
@@ -189,11 +186,11 @@ async function convertAudioToMidiMainThread(
     const midi = new Midi();
     const track = midi.addTrack();
 
-    correctedNotes.forEach((note: any) => {
-      const midiNote = Math.round(Math.max(0, Math.min(127, note.pitchMidi)));
-      const velocity = Math.max(0, Math.min(1, note.amplitude));
-      const startTime = Math.max(0, note.startTimeSeconds);
-      const duration = Math.max(0, note.durationSeconds);
+    correctedNotes.forEach((note: unknown) => {
+      const midiNote = Math.round(Math.max(0, Math.min(127, (note as { pitchMidi: number }).pitchMidi)));
+      const velocity = Math.max(0, Math.min(1, (note as { amplitude: number }).amplitude));
+      const startTime = Math.max(0, (note as { startTimeSeconds: number }).startTimeSeconds);
+      const duration = Math.max(0, (note as { durationSeconds: number }).durationSeconds);
 
       track.addNote({
         midi: midiNote,
@@ -203,11 +200,11 @@ async function convertAudioToMidiMainThread(
       });
 
       // Add pitch bends if present
-      if (note.pitchBends && Array.isArray(note.pitchBends)) {
-        note.pitchBends.forEach((bend: number, i: number) => {
+      if ((note as { pitchBends: number[] }).pitchBends && Array.isArray((note as { pitchBends: number[] }).pitchBends)) {
+        (note as { pitchBends: number[] }).pitchBends.forEach((bend: number, i: number) => {
           const clampedBend = Math.max(-1, Math.min(1, bend));
           track.addPitchBend({
-            time: startTime + (duration * i) / note.pitchBends.length,
+            time: startTime + (duration * i) / ((note as { pitchBends: number[] }).pitchBends as number[]).length,
             value: clampedBend,
           });
         });
@@ -223,24 +220,24 @@ async function convertAudioToMidiMainThread(
   }
 }
 
-function sanitizeNotes(notes: any[]): any[] {
+function sanitizeNotes(notes: unknown[]): unknown[] {
   return notes
     .map(n => {
       if (
-        typeof n.pitchMidi !== 'number' ||
-        typeof n.amplitude !== 'number' ||
-        typeof n.startTimeSeconds !== 'number' ||
-        typeof n.durationSeconds !== 'number'
+        typeof (n as { pitchMidi: number }).pitchMidi !== 'number' ||
+        typeof (n as { amplitude: number }).amplitude !== 'number' ||
+        typeof (n as { startTimeSeconds: number }).startTimeSeconds !== 'number' ||
+        typeof (n as { durationSeconds: number }).durationSeconds !== 'number'
       ) {
         return null; // Remove notes missing required fields
       }
       return {
-        pitchMidi: Math.round(Math.max(0, Math.min(127, n.pitchMidi))),
-        amplitude: Math.max(0, Math.min(1, n.amplitude)),
-        startTimeSeconds: Math.max(0, n.startTimeSeconds),
-        durationSeconds: Math.max(0, n.durationSeconds),
-        pitchBends: Array.isArray(n.pitchBends)
-          ? n.pitchBends.map((b: number) =>
+        pitchMidi: Math.round(Math.max(0, Math.min(127, (n as { pitchMidi: number }).pitchMidi))),
+        amplitude: Math.max(0, Math.min(1, (n as { amplitude: number }).amplitude)),
+        startTimeSeconds: Math.max(0, (n as { startTimeSeconds: number }).startTimeSeconds),
+        durationSeconds: Math.max(0, (n as { durationSeconds: number }).durationSeconds),
+        pitchBends: Array.isArray((n as { pitchBends: number[] }).pitchBends)
+          ? (n as { pitchBends: number[] }).pitchBends.map((b: number) =>
               typeof b === 'number' ? Math.max(-1, Math.min(1, b)) : 0
             )
           : undefined,
@@ -249,26 +246,26 @@ function sanitizeNotes(notes: any[]): any[] {
     .filter(Boolean);
 }
 
-function validateNotes(notes: any[]): string | null {
+function validateNotes(notes: unknown[]): string | null {
   if (!Array.isArray(notes)) return 'Notes result is not an array.';
   
   for (let i = 0; i < notes.length; i++) {
     const n = notes[i];
-    if (typeof n.pitchMidi !== 'number' || n.pitchMidi < 0 || n.pitchMidi > 127) {
+    if (typeof (n as { pitchMidi: number }).pitchMidi !== 'number' || (n as { pitchMidi: number }).pitchMidi < 0 || (n as { pitchMidi: number }).pitchMidi > 127) {
       return `Invalid pitchMidi at index ${i}`;
     }
-    if (typeof n.amplitude !== 'number' || n.amplitude < 0 || n.amplitude > 1) {
+    if (typeof (n as { amplitude: number }).amplitude !== 'number' || (n as { amplitude: number }).amplitude < 0 || (n as { amplitude: number }).amplitude > 1) {
       return `Invalid amplitude at index ${i}`;
     }
-    if (typeof n.startTimeSeconds !== 'number' || n.startTimeSeconds < 0) {
+    if (typeof (n as { startTimeSeconds: number }).startTimeSeconds !== 'number' || (n as { startTimeSeconds: number }).startTimeSeconds < 0) {
       return `Invalid startTimeSeconds at index ${i}`;
     }
-    if (typeof n.durationSeconds !== 'number' || n.durationSeconds < 0) {
+    if (typeof (n as { durationSeconds: number }).durationSeconds !== 'number' || (n as { durationSeconds: number }).durationSeconds < 0) {
       return `Invalid durationSeconds at index ${i}`;
     }
-    if (n.pitchBends && Array.isArray(n.pitchBends)) {
-      for (let j = 0; j < n.pitchBends.length; j++) {
-        if (typeof n.pitchBends[j] !== 'number' || n.pitchBends[j] < -1 || n.pitchBends[j] > 1) {
+    if ((n as { pitchBends: number[] }).pitchBends && Array.isArray((n as { pitchBends: number[] }).pitchBends)) {
+      for (let j = 0; j < (n as { pitchBends: number[] }).pitchBends.length; j++) {
+        if (typeof (n as { pitchBends: number[] }).pitchBends[j] !== 'number' || (n as { pitchBends: number[] }).pitchBends[j] < -1 || (n as { pitchBends: number[] }).pitchBends[j] > 1) {
           return `Invalid pitchBend at note ${i}, bend ${j}`;
         }
       }

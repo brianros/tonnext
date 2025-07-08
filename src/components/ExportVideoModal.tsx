@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { VirtualTonnetz } from './VirtualTonnetz';
+import type { MidiData } from '@/hooks/useMidiPlayer';
 import { Monitor, Smartphone, Tv, Square, RectangleHorizontal } from 'lucide-react';
 import { useMidiContext } from '@/contexts/MidiContext';
 
@@ -10,7 +11,7 @@ interface ExportVideoModalProps {
   onClose: () => void;
   onExport: (settings: ExportSettings) => void;
   originalCanvasRef: React.RefObject<HTMLCanvasElement | null>;
-  midiData?: any;
+  midiData?: MidiData | null;
   mode: 'note' | 'chord' | 'arpeggio';
   chordType: string;
   fileName?: string;
@@ -241,7 +242,7 @@ export default function ExportVideoModal({
   const [quality, setQuality] = useState('High');
 
   // Calculate preview dimensions based on aspect ratio
-  const calculatePreviewDimensions = useCallback((aspectRatio: string, zoom: number) => {
+  const calculatePreviewDimensions = useCallback((aspectRatio: string) => {
     const maxPreviewWidth = 450;
     const maxPreviewHeight = 350;
     
@@ -280,14 +281,14 @@ export default function ExportVideoModal({
       width,
       height
     };
-  }, [originalCanvasRef]);
+  }, []);
 
   // Update preview canvas
   const updatePreview = useCallback(() => {
     if (!previewCanvasRef.current || !originalCanvasRef.current) return;
     
     const previewCanvas = previewCanvasRef.current;
-    const { width, height } = calculatePreviewDimensions(settings.aspectRatio, settings.zoom);
+    const { width, height } = calculatePreviewDimensions(settings.aspectRatio);
     
     previewCanvas.width = width;
     previewCanvas.height = height;
@@ -300,7 +301,7 @@ export default function ExportVideoModal({
     ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
     
     // Calculate density based on zoom, using current canvas density as base
-    const baseDensity = (window as any).__currentCanvasDensity || 20;
+    const baseDensity = (window as unknown as { __currentCanvasDensity: number })?.__currentCanvasDensity || 20;
     const density = Math.round(baseDensity / settings.zoom);
     
     // Always create a new VirtualTonnetz instance after resizing

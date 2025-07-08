@@ -40,7 +40,6 @@ export function useMidiPlayer() {
   const [duration, setDuration] = useState(0);
   const [midiData, setMidiData] = useState<MidiData | null>(null);
   const [fileName, setFileName] = useState<string>('');
-  const [originalAudioFile, setOriginalAudioFile] = useState<File | null>(null);
   const [originalAudioBuffer, setOriginalAudioBuffer] = useState<AudioBuffer | null>(null);
   const [isOriginalAudio, setIsOriginalAudio] = useState(false);
   
@@ -122,7 +121,7 @@ export function useMidiPlayer() {
 
   const loadOriginalAudio = useCallback(async (file: File): Promise<AudioBuffer> => {
     const arrayBuffer = await file.arrayBuffer();
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
     return audioBuffer;
   }, []);
@@ -156,7 +155,6 @@ export function useMidiPlayer() {
       setMidiData(data);
       setDuration(data.duration);
       setFileName(file.name);
-      setOriginalAudioFile(null);
       setOriginalAudioBuffer(null);
       setIsOriginalAudio(false);
       return data;
@@ -168,7 +166,6 @@ export function useMidiPlayer() {
 
   const parseAudioFile = useCallback(async (file: File, midiData: MidiData): Promise<void> => {
     try {
-      setOriginalAudioFile(file);
       const audioBuffer = await loadOriginalAudio(file);
       setOriginalAudioBuffer(audioBuffer);
       setIsOriginalAudio(true);
@@ -221,7 +218,6 @@ export function useMidiPlayer() {
       setMidiData(data);
       setDuration(data.duration);
       setFileName(fileName);
-      setOriginalAudioFile(null);
       setOriginalAudioBuffer(null);
       setIsOriginalAudio(false);
       return data;
@@ -269,7 +265,7 @@ export function useMidiPlayer() {
       console.log('Starting original audio playback');
       
       if (!originalAudioContextRef.current) {
-        originalAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        originalAudioContextRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       }
       
       if (originalAudioSourceRef.current) {
@@ -391,7 +387,7 @@ export function useMidiPlayer() {
 
     console.log('Starting time update loop');
     updateTime();
-  }, [midiData, duration, releaseAllSynthNotes, isOriginalAudio, originalAudioBuffer, currentTime, triggerSynthAttack, triggerSynthRelease]);
+  }, [midiData, duration, releaseAllSynthNotes, isOriginalAudio, originalAudioBuffer, currentTime, triggerSynthAttack, triggerSynthRelease, getSelectedInstrument, isPlaying]);
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false);
@@ -614,7 +610,7 @@ export function useMidiPlayer() {
     };
     
     applyInitialInstrument();
-  }, [getSelectedInstrument, updateInstrument]);
+  }, [getSelectedInstrument, updateInstrument, isPlaying]);
 
   return {
     isPlaying,

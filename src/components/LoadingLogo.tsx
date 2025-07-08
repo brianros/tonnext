@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 // Colors from theme
 // const MAIN = 'var(--color-main)';
-const HIGHLIGHT = 'var(--color-highlight)';
-// const ACCENT = 'var(--color-accent)';
 const HOVER = 'var(--color-hover)';
+// const ACCENT = 'var(--color-accent)';
 const ACCENT_DARK = '#b07c6b'; // comet head
 const ACCENT_LIGHT = '#e7cfc2'; // trail
 
@@ -112,7 +111,7 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
     } else {
       setFadeOutTransform(null);
     }
-  }, [fadeOut]);
+  }, [fadeOut, rotation]);
 
   // Determine which bar the comet is on
   const barIndex = Math.floor(progress) % 3;

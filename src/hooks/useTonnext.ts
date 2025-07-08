@@ -49,7 +49,7 @@ export function useTonnext(options: UseTonnextOptions) {
   const polySynthRef = useRef<Tone.PolySynth | null>(null);
   
   // Get MIDI context for instrument settings
-  const { getSelectedInstrument, getMidiPlayerFunctions, isMuted } = useMidiContext();
+  const { getSelectedInstrument, isMuted } = useMidiContext();
   
   // State
   // Initialize density with a safe default for SSR
@@ -91,7 +91,7 @@ export function useTonnext(options: UseTonnextOptions) {
     if (!densityManuallySet) {
       setDensity(getResponsiveDensity());
     }
-  }, []);
+  }, [densityManuallySet]);
 
   const [layout, setLayout] = useState(LAYOUT_RIEMANN);
   
@@ -496,7 +496,7 @@ export function useTonnext(options: UseTonnextOptions) {
     setDimensions({ width, height, unit });
     buildToneGrid(width, height, unit);
     draw(true);
-  }, [density, layout, buildToneGrid, draw]);
+  }, [density, layout, buildToneGrid, draw]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCanvasClick = useCallback(async (x: number, y: number) => {
     // Resume Tone.js audio context on first interaction
@@ -629,7 +629,7 @@ export function useTonnext(options: UseTonnextOptions) {
         draw(true);
       }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3));
     }
-  }, [drawGrid,dimensions,options,synthRef,polySynthRef,activeRef,arpeggioTimeoutsRef,triggerSynthAttackRelease,triggerPolySynthAttackRelease]);
+  }, [drawGrid, dimensions, options, synthRef, polySynthRef, activeRef, arpeggioTimeoutsRef, triggerSynthAttackRelease, triggerPolySynthAttackRelease, getSelectedInstrument, updateSynthsWithInstrument]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMouseMove = useCallback((x: number, y: number) => {
     if (canvasRef.current) {
@@ -669,14 +669,6 @@ export function useTonnext(options: UseTonnextOptions) {
     const octave = Math.floor(pitch / 12) + 4;
     triggerSynthRelease(note + octave);
   }, [triggerSynthRelease]);
-
-  // Function to update highlights without rebuilding the grid
-  const updateHighlights = useCallback(() => {
-    if (!ctxRef.current || !canvasRef.current) return;
-    
-    // Only redraw the grid with current highlights, don't rebuild
-    drawGrid();
-  }, [drawGrid]);
 
   // MIDI Integration functions
   const handleMidiNoteStart = useCallback((midiNote: { note: string; midi: number; velocity: number }) => {
@@ -757,7 +749,7 @@ export function useTonnext(options: UseTonnextOptions) {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [buildToneGrid, draw]);
+  }, [buildToneGrid, draw, densityManuallySet]);
 
   // Handle mouse wheel for zoom
   const handleWheel = (event: React.WheelEvent<HTMLCanvasElement> | WheelEvent) => {
@@ -778,7 +770,7 @@ export function useTonnext(options: UseTonnextOptions) {
   const resetZoom = useCallback(() => {
     setDensityManuallySet(false);
     setDensity(getResponsiveDensity());
-  }, [densityManuallySet]);
+  }, []);
 
   // Rebuild grid when density changes (for zoom)
   useEffect(() => {
@@ -791,7 +783,7 @@ export function useTonnext(options: UseTonnextOptions) {
     const unit = (width + height) / density;
     
     // Set global density for virtual canvas
-    (window as any).__currentCanvasDensity = density;
+    (window as typeof window & { __currentCanvasDensity: number }).__currentCanvasDensity = density;
     
     setDimensions(prev => {
       if (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface TourStep {
   id: string;
@@ -86,6 +86,56 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
   const currentTourStep = TOUR_STEPS[step];
   const isCanvasStep = currentTourStep.id === 'canvas';
 
+  const positionTooltip = useCallback((target: HTMLElement | null, position: string) => {
+    if (!target || !tooltipRef.current) return;
+
+    const targetRect = target.getBoundingClientRect();
+    const tooltip = tooltipRef.current;
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.display = 'block';
+    const tooltipRect = tooltip.getBoundingClientRect();
+    tooltip.style.visibility = 'visible';
+
+    let top = 0;
+    let left = 0;
+
+    // Special case for 4th step (Playback Modes)
+    const isModeControlsStep = currentTourStep.id === 'mode-controls';
+
+    switch (position) {
+      case 'top':
+        // Raise the tooltip higher for the 4th step
+        top = targetRect.top - tooltipRect.height - (isModeControlsStep ? 100 : 20);
+        left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+        break;
+      case 'bottom':
+        top = targetRect.bottom + 20;
+        left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+        break;
+      case 'left':
+        top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
+        left = targetRect.left - tooltipRect.width - 40; // extra margin from edge
+        left = Math.max(left, 32); // never too close to the edge
+        break;
+      case 'right':
+        top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
+        left = targetRect.right + 20;
+        break;
+      case 'center':
+      default:
+        top = window.innerHeight / 2 - tooltipRect.height / 2;
+        left = window.innerWidth / 2 - tooltipRect.width / 2;
+        break;
+    }
+
+    // Ensure tooltip stays within viewport
+    top = Math.max(20, Math.min(top, window.innerHeight - tooltipRect.height - 20));
+    left = Math.max(20, Math.min(left, window.innerWidth - tooltipRect.width - 20));
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+  }, [currentTourStep]);
+
   // Animate tooltip on step change
   useEffect(() => {
     if (!isOpen) return;
@@ -139,57 +189,7 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
       // For the canvas step, force position to 'left'
       positionTooltip(targetElement, isCanvasStep ? 'left' : stepObj.position);
     }, 100);
-  }, [step, isOpen, isCanvasStep]);
-
-  const positionTooltip = (target: HTMLElement | null, position: string) => {
-    if (!target || !tooltipRef.current) return;
-
-    const targetRect = target.getBoundingClientRect();
-    const tooltip = tooltipRef.current;
-    tooltip.style.visibility = 'hidden';
-    tooltip.style.display = 'block';
-    const tooltipRect = tooltip.getBoundingClientRect();
-    tooltip.style.visibility = 'visible';
-
-    let top = 0;
-    let left = 0;
-
-    // Special case for 4th step (Playback Modes)
-    const isModeControlsStep = currentTourStep.id === 'mode-controls';
-
-    switch (position) {
-      case 'top':
-        // Raise the tooltip higher for the 4th step
-        top = targetRect.top - tooltipRect.height - (isModeControlsStep ? 100 : 20);
-        left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-        break;
-      case 'bottom':
-        top = targetRect.bottom + 20;
-        left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
-        break;
-      case 'left':
-        top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
-        left = targetRect.left - tooltipRect.width - 40; // extra margin from edge
-        left = Math.max(left, 32); // never too close to the edge
-        break;
-      case 'right':
-        top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
-        left = targetRect.right + 20;
-        break;
-      case 'center':
-      default:
-        top = window.innerHeight / 2 - tooltipRect.height / 2;
-        left = window.innerWidth / 2 - tooltipRect.width / 2;
-        break;
-    }
-
-    // Ensure tooltip stays within viewport
-    top = Math.max(20, Math.min(top, window.innerHeight - tooltipRect.height - 20));
-    left = Math.max(20, Math.min(left, window.innerWidth - tooltipRect.width - 20));
-
-    tooltip.style.top = `${top}px`;
-    tooltip.style.left = `${left}px`;
-  };
+  }, [step, isOpen, isCanvasStep, positionTooltip]);
 
   const handleNext = () => {
     if (step < TOUR_STEPS.length - 1) {

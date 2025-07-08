@@ -3,12 +3,11 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
-import { createVirtualTonnetz, VirtualTonnetz } from './VirtualTonnetz';
+import { VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import LoadModal from './LoadModal';
-import VirtualCanvasRecorder from './VirtualCanvasRecorder';
 import * as Tone from 'tone';
-import { Play, Pause, Square, Video, FolderUp, FileDown, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Square, FolderUp, FileDown, Loader2, Volume2, VolumeX } from 'lucide-react';
 import fixWebmDuration from 'webm-duration-fix';
 import { convertAudioToMidi, isAudioFile } from '@/utils/audioToMidi';
 import { getAudioToMidiWorker } from '@/utils/audioToMidiWorker';
@@ -39,18 +38,9 @@ export default function MidiPlayerCompact({
   const { getCanvasCallbacks, getMidiPlayerState, getMidiPlayerFunctions, isMuted, toggleMute } = useMidiContext();
   
   // YouTube MP3 hook
-  const { downloadMP3FromUrl, isLoading: isYouTubeLoading, error: youtubeError } = useYouTubeMP3();
-  
-  // Get current density from the main canvas
-  const [currentDensity, setCurrentDensity] = useState(20);
-  
-  // Global density tracker
-  const getCurrentDensity = () => {
-    return (window as any).__currentCanvasDensity || 20;
-  };
+  const { downloadMP3FromUrl } = useYouTubeMP3();
   
   // Track if test MIDI has been loaded
-  const [testMidiLoaded, setTestMidiLoaded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
   
@@ -65,16 +55,6 @@ export default function MidiPlayerCompact({
   const [showCancel, setShowCancel] = useState(false);
   
   // Recording settings and state
-  const [recordingSettings, setRecordingSettings] = useState({
-    duration: 30,
-    speedMultiplier: 1,
-    targetFrameRate: 30,
-    includeAudio: true,
-    aspectRatio: 'original' as string,
-    targetWidth: 1920,
-    zoom: 1.0
-  });
-  const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const wasCancelled = useRef(false);
@@ -190,28 +170,13 @@ export default function MidiPlayerCompact({
     }
   }, [playerState?.midiData, playerFunctions, setupCallbacks]);
 
-  // Get current density from the main canvas
-  React.useEffect(() => {
-    const updateDensity = () => {
-      const density = getCurrentDensity();
-      setCurrentDensity(density);
-    };
-
-    // Update immediately
-    updateDensity();
-
-    // Set up polling to get density updates
-    const interval = setInterval(updateDensity, 100);
-    return () => clearInterval(interval);
-  }, []);
-
   // Auto-set duration from MIDI if available
   React.useEffect(() => {
     if (playerState?.midiData && playerState.duration > 0) {
-      setRecordingSettings(prev => ({
-        ...prev,
-        duration: playerState.duration
-      }));
+      // setRecordingSettings(prev => ({ // This line is removed as per the edit hint
+      //   ...prev,
+      //   duration: playerState.duration
+      // }));
     }
   }, [playerState?.midiData, playerState?.duration]);
 
@@ -219,7 +184,6 @@ export default function MidiPlayerCompact({
   useEffect(() => {
     if (!playerState?.midiData && playerFunctions) {
       playerFunctions.loadMidiFromUrl('/example.mid', 'Example MIDI');
-      setTestMidiLoaded(true);
     }
   }, [playerState?.midiData, playerFunctions]);
 
@@ -294,10 +258,6 @@ export default function MidiPlayerCompact({
       await handleFileSelect(file);
     }
   }, [handleFileSelect]);
-
-  const handleUploadClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
 
   const handleYouTubeUrl = useCallback(async (url: string) => {
     console.log("YouTube handler called with:", url);
@@ -425,14 +385,6 @@ export default function MidiPlayerCompact({
     }
   }, [playerFunctions, downloadMP3FromUrl]);
 
-  const handleLoadBeethoven = useCallback(async () => {
-    if (playerFunctions) {
-      playerFunctions.stopPlayback();
-      await playerFunctions.loadMidiFromUrl('/example.mid', 'Example MIDI');
-      setTestMidiLoaded(true);
-    }
-  }, [playerFunctions]);
-
   const formatTime = useCallback((time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -490,31 +442,19 @@ export default function MidiPlayerCompact({
   }, [isConverting]);
 
   // Callback to render a frame at a specific time for video recording
-  const handleRenderFrame = useCallback((canvas: HTMLCanvasElement, time: number) => {
-    // Initialize VirtualTonnetz if not already done
-    if (!virtualTonnetzRef.current) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Calculate density based on zoom (higher zoom = lower density = nodes closer together)
-        const baseDensity = 20;
-        const density = Math.round(baseDensity / recordingSettings.zoom);
-        virtualTonnetzRef.current = new VirtualTonnetz(canvas, ctx, { 
-          mode, 
-          chordType,
-          density 
-        });
-      }
-    }
-    
-    // Update the virtual tonnetz with the current time
-    if (virtualTonnetzRef.current && playerState?.midiData) {
-      virtualTonnetzRef.current.update(time, playerState.midiData);
-    }
-  }, [recordingSettings.zoom, mode, chordType, playerState?.midiData]);
-
-  // Remove isRecording and VirtualCanvasRecorder overlay state
-  // Add a function to programmatically trigger the virtual canvas export
-  const triggerVirtualExport = useCallback(async (settings: any, fileName: string | undefined) => {
+  const triggerVirtualExport = useCallback(async (settings: {
+    targetWidth: number;
+    aspectRatio: string;
+    targetFrameRate: number;
+    includeAudio: boolean;
+    startTime: number;
+    endTime: number;
+    exportFileName?: string;
+    midiData?: MidiData | null;
+    mode?: 'note' | 'chord' | 'arpeggio';
+    chordType?: string;
+    zoom?: number;
+  }) => {
     try {
       // Set export state
       setIsExporting(true);
@@ -586,7 +526,7 @@ export default function MidiPlayerCompact({
 
     // Helper function to create audio stream from AudioBuffer with time range
     const createAudioStreamFromBuffer = (audioBuffer: AudioBuffer, startTime: number, endTime: number): MediaStream => {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
       
@@ -621,8 +561,8 @@ export default function MidiPlayerCompact({
           envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
         });
         Tone.Transport.cancel();
-        midiData.tracks.forEach((track: any) => {
-          track.notes.forEach((note: any) => {
+        midiData.tracks.forEach((track: { notes: Array<{ note: string; time: number; duration: number; velocity: number; midi: number }> }) => {
+          track.notes.forEach((note: { note: string; time: number; duration: number; velocity: number; midi: number }) => {
             // Only schedule notes that fall within the export time range
             if (note.time >= settings.startTime && note.time < settings.endTime) {
               const adjustedTime = note.time - settings.startTime;
@@ -712,11 +652,10 @@ export default function MidiPlayerCompact({
     mediaRecorder.start();
 
     // --- Use VirtualTonnetz for rendering frames ---
-    const density = Math.round(20 / settings.zoom);
     const virtualTonnetz = new VirtualTonnetz(hiddenCanvas, ctx, {
       mode: settings.mode || mode,
       chordType: settings.chordType || chordType,
-      density
+      density: Math.round(20 / (settings.zoom || 1.0))
     });
 
     // Load watermark image
@@ -743,8 +682,9 @@ export default function MidiPlayerCompact({
       // Render all frames that should have been rendered by now
       while (frame <= expectedFrame && frame < totalFrames) {
         const simulationTime = settings.startTime + (frame * timeStep);
-        if (virtualTonnetz && midiData) {
-          virtualTonnetz.update(simulationTime, midiData);
+        // Update the virtual tonnetz with the current time
+        if (virtualTonnetz && playerState?.midiData && playerState.midiData !== null) {
+          virtualTonnetz.update(simulationTime, playerState.midiData);
         }
         
         // Draw watermark at bottom right
@@ -825,7 +765,7 @@ export default function MidiPlayerCompact({
       cancelAnimationFrame(animationFrameRef.current);
     }
   }
-  }, [canvasRef, mode, chordType, playerState?.midiData]);
+  }, [isMuted, playerState?.fileName, playerState?.isOriginalAudio, playerState?.originalAudioBuffer, canvasRef, playerState?.midiData, mode, chordType]);
 
   return (
     <>
@@ -1044,10 +984,10 @@ export default function MidiPlayerCompact({
         onClose={() => setIsModalOpen(false)}
         onExport={(settings) => {
           setIsModalOpen(false);
-          triggerVirtualExport(settings, playerState?.fileName);
+          triggerVirtualExport(settings);
         }}
         originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
-        midiData={playerState?.midiData}
+        midiData={playerState?.midiData ?? undefined}
         mode={mode}
         chordType={chordType}
         fileName={playerState?.fileName}

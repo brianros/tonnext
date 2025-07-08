@@ -14,33 +14,6 @@ import { Piano } from 'lucide-react';
 // import Controls from '@/components/Controls'; // No longer used
 import React from 'react';
 
-const CHORD_TYPES = [
-  { value: 'major', label: 'Major' },
-  { value: 'minor', label: 'Minor' },
-  { value: 'diminished', label: 'Diminished' },
-  { value: 'augmented', label: 'Augmented' },
-  { value: 'sus2', label: 'Suspended 2nd (sus2)' },
-  { value: 'sus4', label: 'Suspended 4th (sus4)' },
-  { value: 'major6', label: 'Major 6th' },
-  { value: 'minor6', label: 'Minor 6th' },
-  { value: 'major7', label: 'Major 7th' },
-  { value: 'minor7', label: 'Minor 7th' },
-  { value: 'dominant7', label: 'Dominant 7th' },
-  { value: 'diminished7', label: 'Diminished 7th' },
-  { value: 'half-diminished7', label: 'Half-diminished 7th (m7♭5)' },
-  { value: 'minorMajor7', label: 'Minor Major 7th' },
-  { value: 'augmented7', label: 'Augmented 7th' },
-  { value: '7b5', label: '7th Flat 5 (7♭5)' },
-  { value: '7#5', label: '7th Sharp 5 (7♯5)' },
-  { value: 'add9', label: 'Add 9' },
-  { value: 'madd9', label: 'Minor Add 9' },
-  { value: 'add11', label: 'Add 11' },
-  { value: 'add13', label: 'Add 13' },
-  { value: 'm7b5', label: 'Minor 7th Flat 5 (m7♭5)' },
-  { value: 'sus2_7', label: 'Sus2 7th' },
-  { value: 'sus4_7', label: 'Sus4 7th' },
-];
-
 // Palette presets must match those in Settings
 const PALETTE_PRESETS = [
   { name: 'Cinnabar', main: '#DA4C2B' },
@@ -156,12 +129,8 @@ function HomeContent() {
   const [tourStep, setTourStep] = useState(0);
 
   // Loading overlay demo state (disabled)
-  const [loading, setLoading] = useState(false);
-  const [spinLoadingLogo, setSpinLoadingLogo] = useState(false);
   const [showLoadingLogo, setShowLoadingLogo] = useState(false);
 
-  const [logoTooltipOpen, setLogoTooltipOpen] = useState(false);
-  const logoTooltipTimeout = useRef<NodeJS.Timeout | null>(null);
   const [titleHovered, setTitleHovered] = useState(false);
 
   // Add state for dropdown
@@ -207,7 +176,7 @@ function HomeContent() {
       // Ctrl+T or Cmd+T to start tour
       if ((event.ctrlKey || event.metaKey) && event.key === 't') {
         event.preventDefault();
-        if (!isTourOpen && !loading) {
+        if (!isTourOpen && !showLoadingLogo) {
           setIsTourOpen(true);
           localStorage.setItem('tonnext-visited', 'true');
         }
@@ -226,7 +195,7 @@ function HomeContent() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isTourOpen, loading, tonnextDropdownOpen]);
+  }, [isTourOpen, showLoadingLogo, tonnextDropdownOpen]);
 
   // Handler to apply a palette preset by name (delegates to Settings logic)
   const handleApplyPreset = (name: string) => {
@@ -440,12 +409,12 @@ function HomeContent() {
   return (
     <div className="h-screen flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       {showLoadingLogo && (
-        <LoadingLogo spin={spinLoadingLogo} onFinish={handleLoadingLogoFinish} />
+        <LoadingLogo onFinish={handleLoadingLogoFinish} />
       )}
       <div className="main-content" style={{
-        filter: loading ? 'blur(6px) brightness(0.7)' : 'none',
+        filter: showLoadingLogo ? 'blur(6px) brightness(0.7)' : 'none',
         transition: 'filter 0.3s',
-        pointerEvents: loading ? 'none' : 'auto',
+        pointerEvents: showLoadingLogo ? 'none' : 'auto',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',

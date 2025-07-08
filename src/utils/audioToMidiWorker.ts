@@ -179,7 +179,7 @@ export class AudioToMidiWorker {
    */
   private async convertFileToAudioBuffer(file: File): Promise<AudioBuffer> {
     const arrayBuffer = await file.arrayBuffer();
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     return await audioCtx.decodeAudioData(arrayBuffer.slice(0));
   }
 

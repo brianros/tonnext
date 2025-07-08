@@ -7,6 +7,7 @@ import { useMidiContext } from '@/contexts/MidiContext';
 import { VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import { Music, Video } from 'lucide-react';
+import type { MidiData } from '@/hooks/useMidiPlayer';
 
 interface VirtualRecordingExampleProps {
   mode: 'note' | 'chord' | 'arpeggio';
@@ -39,11 +40,6 @@ export default function VirtualRecordingExample({
     handleCanvasClick, 
     handleMouseMove, 
     handleMouseLeave,
-    handleWheel,
-    handleMidiNoteStart,
-    handleMidiNoteEnd,
-    handleMidiChordStart,
-    handleMidiChordEnd,
     isInitialized
   } = useTonnext({ mode, chordType });
 
@@ -91,7 +87,7 @@ export default function VirtualRecordingExample({
 
   const [isRecording, setIsRecording] = useState(false);
 
-  const handleExportSettings = (settings: any) => {
+  const handleExportSettings = (settings: { duration: number; speedMultiplier: number; targetFrameRate: number; includeAudio: boolean; aspectRatio: string; targetWidth: number; zoom: number; }) => {
     setRecordingSettings(settings);
     setIsRecording(true); // This will trigger the recording
   };
@@ -213,7 +209,7 @@ export default function VirtualRecordingExample({
           aspectRatio={recordingSettings.aspectRatio}
           targetWidth={recordingSettings.targetWidth}
           zoom={recordingSettings.zoom}
-          midiData={midiState?.midiData}
+          midiData={midiState?.midiData === null ? undefined : (midiState?.midiData as MidiData | undefined)}
           originalAudioBuffer={midiState?.originalAudioBuffer}
           isOriginalAudio={midiState?.isOriginalAudio}
           onRecordingStart={handleRecordingStart}

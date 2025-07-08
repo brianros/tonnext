@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Piano, Guitar, Music, Mic, Heart, Sun, Flame, Dice6, Zap } from 'lucide-react';
+import { Piano, Guitar, Music, Mic, Heart, Sun, Flame, Dice6, Zap } from 'lucide-react';
 
 export interface Instrument {
   id: string;
@@ -9,7 +9,7 @@ export interface Instrument {
   category: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   toneType: 'synth' | 'sampler' | 'instrument' | 'random';
-  toneOptions?: any;
+  toneOptions?: unknown;
 }
 
 const INSTRUMENTS: Instrument[] = [

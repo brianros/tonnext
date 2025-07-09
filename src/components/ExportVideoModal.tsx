@@ -141,70 +141,26 @@ function DualRangeSlider({
   return (
     <div 
       ref={containerRef}
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        ...style
-      }}
+      className="dual-range-slider"
+      style={style}
     >
       {/* Track background */}
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          height: '4px',
-          backgroundColor: '#D4D7CB',
-          borderRadius: '2px'
-        }}
-      />
-      
+      <div className="dual-range-slider__track" />
       {/* Selected range */}
       <div
-        style={{
-          position: 'absolute',
-          left: `${startPercentage}%`,
-          right: `${100 - endPercentage}%`,
-          height: '4px',
-          backgroundColor: 'var(--color-accent)',
-          borderRadius: '2px'
-        }}
+        className="dual-range-slider__selected"
+        style={{ left: `${startPercentage}%`, right: `${100 - endPercentage}%` }}
       />
-      
       {/* Start thumb */}
       <div
-        style={{
-          position: 'absolute',
-          left: `${startPercentage}%`,
-          transform: 'translateX(-50%)',
-          width: '14px',
-          height: '14px',
-          backgroundColor: '#e7b6a3',
-          border: '2px solid #e7b6a3',
-          borderRadius: '50%',
-          cursor: 'pointer',
-          zIndex: 2
-        }}
+        className="dual-range-slider__thumb"
+        style={{ left: `${startPercentage}%` }}
         onMouseDown={(e) => handleMouseDown(e, true)}
       />
-      
       {/* End thumb */}
       <div
-        style={{
-          position: 'absolute',
-          left: `${endPercentage}%`,
-          transform: 'translateX(-50%)',
-          width: '14px',
-          height: '14px',
-          backgroundColor: '#e7b6a3',
-          border: '2px solid #e7b6a3',
-          borderRadius: '50%',
-          cursor: 'pointer',
-          zIndex: 2
-        }}
+        className="dual-range-slider__thumb"
+        style={{ left: `${endPercentage}%` }}
         onMouseDown={(e) => handleMouseDown(e, false)}
       />
     </div>
@@ -358,29 +314,27 @@ export default function ExportVideoModal({
 
   return (
     <div className="export-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="export-modal-outer" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', paddingTop: '24px', paddingBottom: '24px' }}>
-        <div className="export-modal" style={{ position: 'relative', paddingTop: '48px', width: '100%' }}>
+      <div className="export-modal-outer">
+        <div className="export-modal">
           <button
             onClick={onClose}
             className="export-modal-btn export-modal-close"
             title="Close"
-            style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, borderRadius: 12 }}
           >
             ×
           </button>
-          <div className="export-modal-content" style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', minHeight: '340px', gap: '48px', paddingLeft: '32px', paddingRight: '32px' }}>
-            <div className="export-modal-preview-col" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '48px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
-                  <div className="export-modal-preview-area" style={{ width: '280px', height: '280px' }}>
+          <div className="export-modal__content">
+            <div className="export-modal__preview-col">
+              <div className="export-modal__preview-row">
+                <div className="export-modal__preview-stack">
+                  <div className="export-modal-preview-area">
                     <canvas
                       ref={previewCanvasRef}
                       className="export-modal-preview-canvas"
-                      style={{ maxWidth: '90%', maxHeight: '90%' }}
                     />
                   </div>
-                  <div className="export-modal-zoom" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Zoom</label>
+                  <div className="export-modal__zoom">
+                    <label className="export-modal__zoom-label">Zoom</label>
                     <input
                       type="range"
                       min="0.5"
@@ -389,13 +343,12 @@ export default function ExportVideoModal({
                       value={settings.zoom}
                       onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
                       className="export-modal-zoom-slider"
-                      style={{ accentColor: 'var(--color-accent)', height: '4px', margin: '4px 0', width: '200px', background: '#D4D7CB', borderRadius: '2px' }}
                     />
                   </div>
-                  <div className="export-modal-time-range" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Time Range</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '200px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#aaa' }}>
+                  <div className="export-modal__time-range">
+                    <label className="export-modal__time-range-label">Time Range</label>
+                    <div className="export-modal__time-range-box">
+                      <div className="export-modal__time-range-info">
                         <span>Start: {settings.startTime.toFixed(1)}s</span>
                         <span>End: {settings.endTime.toFixed(1)}s</span>
                       </div>
@@ -419,8 +372,8 @@ export default function ExportVideoModal({
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
-                  <div className="export-modal-right-group" style={{ width: '180px', height: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '18px' }}>
+                <div className="export-modal__preview-stack">
+                  <div className="export-modal__right-group">
                     <div className="export-modal-aspect">
                       <div className="export-modal-aspect-list">
                         {ASPECT_RATIOS.map((ratio) => (
@@ -435,22 +388,21 @@ export default function ExportVideoModal({
                         ))}
                       </div>
                     </div>
-                    <div className="export-modal-quality-group" style={{ width: '100%', marginTop: '8px', display: 'flex', gap: '8px' }}>
+                    <div className="export-modal-quality-group">
                       {QUALITY_PRESETS[aspectKey]?.map((q: { label: string; width: number; height: number; }) => (
                         <button
                           key={q.label}
                           onClick={() => setQuality(q.label)}
                           className={`export-modal-aspect-btn${quality === q.label ? ' selected' : ''}`}
-                          style={{ flex: 1, textAlign: 'center' }}
                         >
                           {q.label}
                         </button>
                       ))}
                     </div>
                   </div>
-                  <div className="export-modal-audio" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500' }}>Audio</label>
-                    <div style={{ fontSize: '0.75rem', color: '#aaa', textAlign: 'center', maxWidth: '150px' }}>
+                  <div className="export-modal-audio">
+                    <label className="export-modal__audio-label">Audio</label>
+                    <div className="export-modal__audio-info">
                       {midiData ? (
                         playerState?.isOriginalAudio ? 'Original audio will be used' : 'Synthesized MIDI audio will be used'
                       ) : (
@@ -462,11 +414,10 @@ export default function ExportVideoModal({
               </div>
             </div>
           </div>
-          <div className="export-modal-footer" style={{ marginTop: 0, padding: 0, width: '100%' }}>
+          <div className="export-modal-footer">
             <button
               onClick={handleExport}
-              className="blend-btn"
-              style={{ width: '100%', padding: 0 }}
+              className="blend-btn export-modal__export-btn"
             >
               Export Video
             </button>

@@ -79,95 +79,30 @@ export default function LoadModal({
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-    }}>
+    <div className="load-modal-overlay">
       <div className="load-modal">
         {/* Close button */}
         <button
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'none',
-            border: 'none',
-            color: '#fff',
-            cursor: 'pointer',
-            fontSize: '1.5rem',
-            padding: '0.5rem',
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className="load-modal__close-btn"
         >
           <X size={20} />
         </button>
 
-        <h2 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', textAlign: 'center' }}>
-          Load Music
-        </h2>
+        <h2 className="load-modal__title">Load Music</h2>
 
         {/* Tab buttons */}
-        <div style={{
-          display: 'flex',
-          marginBottom: '1rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        }}>
+        <div className="load-modal__tabs">
           <button
             onClick={() => setActiveTab('file')}
-            style={{
-              flex: 1,
-              padding: '0.5rem',
-              background: activeTab === 'file' ? 'var(--color-accent)' : 'transparent',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: activeTab === 'file' ? 'bold' : 'normal',
-              borderBottom: activeTab === 'file' ? '2px solid var(--color-accent)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.4rem',
-            }}
+            className={`load-modal__tab-btn${activeTab === 'file' ? ' active' : ''}`}
           >
             <FolderUp size={20} style={{ marginRight: '0.3rem', display: 'inline' }} />
             File Upload
           </button>
           <button
             onClick={() => setActiveTab('youtube')}
-            style={{
-              flex: 1,
-              padding: '0.5rem',
-              background: activeTab === 'youtube' ? 'var(--color-accent)' : 'transparent',
-              border: 'none',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
-              borderBottom: activeTab === 'youtube' ? '2px solid var(--color-accent)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.4rem',
-            }}
+            className={`load-modal__tab-btn${activeTab === 'youtube' ? ' active' : ''}`}
           >
             <Youtube size={20} style={{ marginRight: '0.3rem', display: 'inline' }} />
             YouTube
@@ -190,109 +125,41 @@ export default function LoadModal({
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              style={{
-                border: '2px dashed rgba(255, 255, 255, 0.3)',
-                borderRadius: '8px',
-                padding: '1.2rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                backgroundColor: dragActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                borderColor: dragActive ? 'var(--color-accent)' : 'rgba(255, 255, 255, 0.3)',
-                maxWidth: '340px',
-                margin: '0 auto',
-              }}
+              className={`load-modal__upload-area${dragActive ? ' drag-active' : ''}`}
               onClick={handleUploadClick}
             >
-              <FolderUp size={38} style={{ marginBottom: '0.7rem', opacity: 0.7 }} />
-              <p style={{ margin: '0 0 0.3rem 0', fontSize: '1rem' }}>
+              <FolderUp size={38} className="load-modal__upload-icon" />
+              <p className="load-modal__upload-title">
                 {dragActive ? 'Drop your file here' : 'Click to browse or drag & drop'}
               </p>
-              <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
+              <p className="load-modal__upload-desc">
                 Supports MIDI files and audio files (MP3, WAV, OGG, FLAC, etc.)
               </p>
             </div>
 
             {/* Conversion progress */}
             {isConverting && (
-              <div className="export-modal-overlay" style={{ zIndex: 1000 }}>
-                <div
-                  className="export-modal-outer"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                    width: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingTop: '24px',
-                    paddingBottom: '24px',
-                  }}
-                >
-                  <div
-                    className="export-modal"
-                    style={{
-                      position: 'relative',
-                      padding: '48px 32px 32px 32px',
-                      borderRadius: '18px',
-                      background: 'var(--color-main)',
-                      boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
-                      minWidth: 360,
-                      minHeight: 180,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                    }}
-                  >
+              <div className="load-modal__conversion-overlay export-modal-overlay">
+                <div className="load-modal__conversion-outer export-modal-outer">
+                  <div className="load-modal__conversion-modal export-modal">
                     {/* Spinner */}
-                    <div style={{ marginBottom: '1rem' }}>
-                      <Loader2
-                        className="animate-spin"
-                        style={{
-                          fontSize: '2.5rem',
-                          color: 'var(--color-accent)',
-                          display: 'block',
-                          margin: '0 auto'
-                        }}
-                      />
+                    <div className="load-modal__conversion-spinner">
+                      <Loader2 className="animate-spin" />
                     </div>
-                    <h3 style={{ margin: '0.5rem 0', fontSize: '1.5rem', color: '#fff', fontWeight: 700, textAlign: 'center' }}>Converting…</h3>
-                    <p style={{ margin: '0.5rem 0', fontSize: '1.1rem', color: '#fff', opacity: 0.85, textAlign: 'center' }}>{conversionStatus}</p>
+                    <h3 className="load-modal__conversion-title">Converting…</h3>
+                    <p className="load-modal__conversion-status">{conversionStatus}</p>
                     {/* Progress Bar */}
                     {typeof conversionProgress === 'number' && conversionProgress > 0 && (
-                      <div style={{
-                        width: '100%',
-                        height: '8px',
-                        backgroundColor: '#222',
-                        borderRadius: '4px',
-                        overflow: 'hidden',
-                        margin: '16px 0',
-                      }}>
-                        <div style={{
-                          width: `${conversionProgress}%`,
-                          height: '100%',
-                          backgroundColor: 'var(--color-accent)',
-                          borderRadius: '4px',
-                          transition: 'width 0.3s',
-                        }} />
+                      <div className="load-modal__progress-bar-container">
+                        <div
+                          className="load-modal__progress-bar"
+                          style={{ width: `${conversionProgress}%` }}
+                        />
                       </div>
                     )}
                     <button
                       onClick={onClose}
-                      className="blend-btn"
-                      style={{
-                        background: '#ef4444',
-                        color: '#fff',
-                        borderRadius: 8,
-                        padding: '12px 32px',
-                        fontWeight: 600,
-                        fontSize: 18,
-                        marginTop: 24,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-                        border: 'none',
-                        outline: 'none',
-                        cursor: 'pointer',
-                      }}
+                      className="load-modal__cancel-btn blend-btn"
                     >
                       Cancel Conversion
                     </button>
@@ -306,9 +173,9 @@ export default function LoadModal({
         {/* YouTube Tab */}
         {activeTab === 'youtube' && (
           <div>
-            <form onSubmit={handleYouTubeSubmit}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="youtube-url" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <form onSubmit={handleYouTubeSubmit} className="load-modal__youtube-form">
+              <div>
+                <label htmlFor="youtube-url" className="load-modal__youtube-label">
                   YouTube URL
                 </label>
                 <input
@@ -317,16 +184,7 @@ export default function LoadModal({
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    borderRadius: '6px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                    color: '#fff',
-                    fontSize: '1rem',
-                    boxSizing: 'border-box',
-                  }}
+                  className="load-modal__youtube-input"
                   required
                 />
               </div>
@@ -334,17 +192,7 @@ export default function LoadModal({
               <button
                 type="submit"
                 disabled={!youtubeUrl.trim() || isConverting}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  backgroundColor: 'var(--color-accent)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  fontSize: '1rem',
-                  cursor: youtubeUrl.trim() && !isConverting ? 'pointer' : 'not-allowed',
-                  opacity: youtubeUrl.trim() && !isConverting ? 1 : 0.5,
-                }}
+                className="load-modal__youtube-btn"
               >
                 {isConverting ? (
                   <>
@@ -360,8 +208,8 @@ export default function LoadModal({
               </button>
             </form>
 
-            <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: '8px' }}>
-              <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.8 }}>
+            <div className="load-modal__info-box">
+              <p className="load-modal__info-text">
                 <strong>Note:</strong> YouTube processing may take a few moments. The video will be converted to audio, then to MIDI for visualization.
               </p>
             </div>

@@ -220,26 +220,20 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       {/* Hidden virtual canvas */}
       <canvas
         ref={virtualCanvasRef}
-        style={{ position: 'absolute', left: '-9999px', top: '-9999px', visibility: 'hidden' }}
+        className="automated-video-export__canvas"
       />
       
       {/* Simple Export Video Button */}
       <button
         onClick={startAutomatedExport}
         disabled={isExporting}
-        className="blend-btn midi-theme-btn"
-        style={{
-          fontSize: '0.8rem',
-          padding: '0.3em 0.6em',
-          borderRadius: 0,
-          transition: 'background 0.2s, color 0.2s',
-          cursor: isExporting ? 'not-allowed' : 'pointer',
-          flexShrink: 0,
-          backgroundColor: isExporting ? '#666' : '#2196F3',
-          color: 'white',
-          opacity: isExporting ? 0.7 : 1
-        }}
+        className="blend-btn midi-theme-btn automated-video-export__btn"
         title={isExporting ? 'Exporting...' : 'Export video with audio'}
+        style={{
+          background: isExporting ? '#666' : '#2196F3',
+          opacity: isExporting ? 0.7 : 1,
+          cursor: isExporting ? 'not-allowed' : 'pointer',
+        }}
       >
         {isExporting ? <><Square size={16} /> Exporting...</> : <><Video size={16} /> Export Video</>}
       </button>

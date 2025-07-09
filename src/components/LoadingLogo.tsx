@@ -192,26 +192,14 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
         }
       `}</style>
       <div
+        className="loading-logo__overlay"
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.45)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'all',
-          transition: 'opacity 1.5s',
           opacity: fadeOut ? 0 : 1,
         }}
       >
         <svg
           viewBox="0 0 120 120"
-          width={120}
-          height={120}
+          className="loading-logo__svg"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           style={{
@@ -249,7 +237,7 @@ export default function LoadingLogo({ spin = false, onFinish }: { spin?: boolean
               cy={node.cy}
               r={15}
               fill={getNodeColor(i)}
-              style={{ transition: 'fill 0.25s' }}
+              className="loading-logo__node"
             />
           ))}
         </svg>

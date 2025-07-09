@@ -312,10 +312,48 @@ export default function ExportVideoModal({
 
   if (!isOpen) return null;
 
+  const zoomSlider = (
+    <input
+      type="range"
+      min="0.5"
+      max="2.0"
+      step="0.1"
+      value={settings.zoom}
+      onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+      className="export-modal-zoom-slider"
+    />
+  );
+
+  const timeRangeSlider = (
+    <div className="export-modal__time-range-box">
+      <div className="export-modal__time-range-info">
+        <span>Start: {settings.startTime.toFixed(1)}s</span>
+        <span>End: {settings.endTime.toFixed(1)}s</span>
+      </div>
+      <DualRangeSlider
+        min={0}
+        max={settings.duration}
+        step={0.1}
+        startValue={settings.startTime}
+        endValue={settings.endTime}
+        onStartChange={(value) => setSettings(prev => ({ 
+          ...prev, 
+          startTime: value,
+          endTime: Math.max(value + 1, prev.endTime)
+        }))}
+        onEndChange={(value) => setSettings(prev => ({ 
+          ...prev, 
+          endTime: value,
+          startTime: Math.min(value - 1, prev.startTime)
+        }))}
+      />
+    </div>
+  );
+
   return (
     <div className="export-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="export-modal-outer">
-        <div className="export-modal">
+        <div className="export-modal" style={{ borderRadius: 12, maxWidth: 600, width: '95vw', paddingTop: 32, paddingBottom: 0, padding: 0, margin: 0 }}>
           <button
             onClick={onClose}
             className="export-modal-btn export-modal-close"
@@ -332,44 +370,6 @@ export default function ExportVideoModal({
                       ref={previewCanvasRef}
                       className="export-modal-preview-canvas"
                     />
-                  </div>
-                  <div className="export-modal__zoom">
-                    <label className="export-modal__zoom-label">Zoom</label>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="2.0"
-                      step="0.1"
-                      value={settings.zoom}
-                      onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
-                      className="export-modal-zoom-slider"
-                    />
-                  </div>
-                  <div className="export-modal__time-range">
-                    <label className="export-modal__time-range-label">Time Range</label>
-                    <div className="export-modal__time-range-box">
-                      <div className="export-modal__time-range-info">
-                        <span>Start: {settings.startTime.toFixed(1)}s</span>
-                        <span>End: {settings.endTime.toFixed(1)}s</span>
-                      </div>
-                      <DualRangeSlider
-                        min={0}
-                        max={settings.duration}
-                        step={0.1}
-                        startValue={settings.startTime}
-                        endValue={settings.endTime}
-                        onStartChange={(value) => setSettings(prev => ({ 
-                          ...prev, 
-                          startTime: value,
-                          endTime: Math.max(value + 1, prev.endTime)
-                        }))}
-                        onEndChange={(value) => setSettings(prev => ({ 
-                          ...prev, 
-                          endTime: value,
-                          startTime: Math.min(value - 1, prev.startTime)
-                        }))}
-                      />
-                    </div>
                   </div>
                 </div>
                 <div className="export-modal__preview-stack">
@@ -400,17 +400,48 @@ export default function ExportVideoModal({
                       ))}
                     </div>
                   </div>
-                  <div className="export-modal-audio">
-                    <label className="export-modal__audio-label">Audio</label>
-                    <div className="export-modal__audio-info">
-                      {midiData ? (
-                        playerState?.isOriginalAudio ? 'Original audio will be used' : 'Synthesized MIDI audio will be used'
-                      ) : (
-                        'Load MIDI file to include audio'
-                      )}
-                    </div>
-                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+          {/* Replace the controls section with a two-column layout for sliders */}
+          <div className="export-modal-controls" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'center', marginTop: 12, marginBottom: 24 }}>
+            <div style={{ width: 240 }}>
+              <label className="export-modal-label">Zoom</label>
+              <input
+                type="range"
+                min="0.5"
+                max="2.0"
+                step="0.1"
+                value={settings.zoom}
+                onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                className="export-modal-zoom-slider"
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div style={{ width: 240, marginTop: 24 }}>
+              <label className="export-modal-label" style={{ marginTop: -8 }}>{'Time Range'}</label>
+              <DualRangeSlider
+                min={0}
+                max={settings.duration}
+                step={0.1}
+                startValue={settings.startTime}
+                endValue={settings.endTime}
+                onStartChange={(value) => setSettings(prev => ({ 
+                  ...prev, 
+                  startTime: value,
+                  endTime: Math.max(value + 1, prev.endTime)
+                }))}
+                onEndChange={(value) => setSettings(prev => ({ 
+                  ...prev, 
+                  endTime: value,
+                  startTime: Math.min(value - 1, prev.startTime)
+                }))}
+                style={{ width: '100%' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#bdbdbd', marginTop: 2 }}>
+                <span>Start: {settings.startTime.toFixed(1)}s</span>
+                <span>End: {settings.endTime.toFixed(1)}s</span>
               </div>
             </div>
           </div>

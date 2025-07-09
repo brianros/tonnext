@@ -847,7 +847,7 @@ export default function MidiPlayerCompact({
             {/* Centered non-button controls */}
             <div className="midi-player-compact__time-row">
               {/* Progress Bar (visible on desktop, hidden on mobile via CSS) */}
-              <div className="midi-player-compact__progress-bar-container">
+              <div className="midi-player-compact__progress-bar-container hide-on-mobile">
                 <input
                   type="range"
                   className="midi-player-compact__progress-bar midi-progress-bar"

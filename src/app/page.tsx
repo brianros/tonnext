@@ -422,131 +422,8 @@ function HomeContent() {
         {/* Sleek Header */}
         <header className="responsive-header" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
           <div className="header-container">
-            {/* Tonnext logo/title container */}
-            <div className="flex items-center space-x-4 flex-shrink-0">
-              {/* Desktop title/logo button, hidden on mobile */}
-              <div
-                className="tonnext-title-container hide-on-mobile"
-                onMouseEnter={() => {
-                  setTonnextDropdownOpen(true);
-                  setTitleHovered(true);
-                }}
-                onMouseLeave={(e) => {
-                  // Check if we're moving to the dropdown
-                  const relatedTarget = e.relatedTarget as HTMLElement;
-                  if (!relatedTarget || !relatedTarget.closest('.tonnext-dropdown')) {
-                    setTonnextDropdownOpen(false);
-                    setTitleHovered(false);
-                  }
-                }}
-                onTouchStart={() => setTonnextDropdownOpen(v => !v)}
-                tabIndex={0}
-                aria-label="Tonnetz Acknowledgements"
-              >
-                <div className="tonnext-title-wrapper">
-                  <h1 
-                    className="blend-btn tonnext-title" 
-                    style={{
-                      margin: 0, 
-                      padding: '0 1rem', 
-                      height: '64px', 
-                      width: '116px',
-                      alignItems: 'center',
-                      display: 'flex',
-                      transition: 'opacity 0.7s',
-                      opacity: titleHovered ? 0 : 1,
-                      pointerEvents: 'none',
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      zIndex: 1,
-                      justifyContent: 'center',
-                      textTransform: 'none',
-                    }}
-                  >
-                    Tonnext
-                  </h1>
-                  <span 
-                    className="tonnext-logo" 
-                    style={{
-                      height: '48px',
-                      width: '48px',
-                      position: 'absolute',
-                      transition: 'opacity 0.7s',
-                      opacity: titleHovered ? 1 : 0,
-                      pointerEvents: 'none',
-                      zIndex: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      left: '0',
-                      top: '0',
-                    }}
-                    ref={el => {
-                      if (el && titleHovered) {
-                        const titleEl = el.parentElement?.querySelector('.tonnext-title');
-                        if (titleEl) {
-                          const titleRect = titleEl.getBoundingClientRect();
-                          const parentRect = el.parentElement?.getBoundingClientRect();
-                          if (parentRect) {
-                            const offsetLeft = titleRect.left - parentRect.left + titleRect.width / 2 - 24; // 24 = logo radius
-                            el.style.left = `${offsetLeft}px`;
-                            el.style.top = `${titleRect.top - parentRect.top + titleRect.height / 2 - 24}px`;
-                          }
-                        }
-                      }
-                    }}
-                  >
-                    <svg viewBox="0 0 124 124" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <polygon points="62,18 110,102 14,102" fill="none" stroke="var(--color-accent)" stroke-width="3" />
-                      <circle cx="62" cy="18" r="12" fill="var(--color-accent)" />
-                      <circle cx="110" cy="102" r="12" fill="var(--color-accent)" />
-                      <circle cx="14" cy="102" r="12" fill="var(--color-accent)" />
-                    </svg>
-                  </span>
-                </div>
-                {/* Tooltip for desktop only */}
-                {tonnextDropdownOpen && window.innerWidth > 768 && (
-                  <div
-                    className="tonnext-dropdown"
-                    onMouseEnter={() => {
-                      setTonnextDropdownOpen(true);
-                      setTitleHovered(true);
-                    }}
-                    onMouseLeave={() => {
-                      setTonnextDropdownOpen(false);
-                      setTitleHovered(false);
-                    }}
-                    ref={el => {
-                      if (el) {
-                        const rect = el.getBoundingClientRect();
-                        const vw = window.innerWidth;
-                        // If the dropdown would overflow right, shift it left
-                        if (rect.right > vw - 8) {
-                          const overflow = rect.right - (vw - 8);
-                          el.style.left = `-${overflow}px`;
-                        } else {
-                          el.style.left = '0';
-                        }
-                      }
-                    }}
-                  >
-                    <div style={{fontWeight: 'bold', marginBottom: 6, color: 'var(--color-accent)'}}>Tonnetz Acknowledgements</div>
-                    <div style={{marginBottom: 8, color: 'var(--color-highlight)'}}>
-                      Tonnext is an interactive tool for exploring music and harmony through geometric visualization.
-                    </div>
-                    <div style={{marginBottom: 8}}>
-                      <span style={{fontWeight: 500}}>Tonnetz</span> is a geometric system for visualizing tonal relationships in music. <a href="https://en.wikipedia.org/wiki/Tonnetz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>Learn more</a>.
-                    </div>
-                    <div style={{marginBottom: 6}}>
-                      Visualization based on <a href="https://github.com/cifkao/tonnetz-viz" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>tonnetz-viz</a> by cifkao.
-                    </div>
-                    <div style={{fontSize: '0.95em', color: 'var(--color-highlight)'}}>Brian Rosenfeld - 2025</div>
-                    <div style={{fontSize: '0.95em', color: 'var(--color-accent)'}}><a href="https://mirari.ar" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>mīrārī</a></div>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Tonnext title - minimal markup */}
+            <h1 className="blend-btn tonnext-title">Tonnext</h1>
             {/* MIDI player container as sibling */}
             <div className="midi-controller-container flex-shrink-0">
               <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
@@ -571,8 +448,8 @@ function HomeContent() {
                   aria-expanded={appearanceDropdown}
                   data-tour="appearance"
                   title="Theme Settings"
+                  aria-label="Theme Settings"
                 >
-                  <span className="theme-text">Theme</span>
                   <svg className="theme-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                     <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                   </svg>
@@ -647,11 +524,21 @@ function HomeContent() {
                 onClick={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
                 className="blend-btn header-btn tour-btn"
                 title="Start guided tour (Ctrl+T)"
+                aria-label="Start guided tour"
               >
-                <span className="tour-text">Tour</span>
                 <svg className="tour-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                   <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+                </svg>
+              </button>
+              <button
+                className="blend-btn header-btn options-btn"
+                title="Settings"
+                aria-label="Settings"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <svg className="options-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M19.14,12.94a7.07,7.07,0,0,0,0-1.88l2.11-1.65a.5.5,0,0,0,.12-.64l-2-3.46a.5.5,0,0,0-.61-.22l-2.49,1a7,7,0,0,0-1.62-.94l-.38-2.65A.5.5,0,0,0,13,2.5H11a.5.5,0,0,0-.5.42l-.38,2.65a7,7,0,0,0-1.62.94l-2.49-1a.5.5,0,0,0-.61.22l-2,3.46a.5.5,0,0,0,.12.64l2.11,1.65a7.07,7.07,0,0,0,0,1.88L2.12,14.59a.5.5,0,0,0-.12.64l2,3.46a.5.5,0,0,0,.61.22l2.49-1a7,7,0,0,0,1.62.94l.38,2.65A.5.5,0,0,0,11,21.5h2a.5.5,0,0,0,.5-.42l.38-2.65a7,7,0,0,0,1.62-.94l2.49,1a.5.5,0,0,0,.61-.22l2-3.46a.5.5,0,0,0-.12-.64ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
                 </svg>
               </button>
             </div>
@@ -685,13 +572,15 @@ function HomeContent() {
           </div>
         </footer>
 
-        {/* Settings Panel */}
+        {/* Settings Modal */}
         {isSettingsOpen && (
-          <div className="bg-gray-800 border-b border-gray-700 p-4">
-            <Settings 
-              onClose={() => setIsSettingsOpen(false)} 
-              onStartTour={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
-            />
+          <div className="export-modal-overlay" style={{ zIndex: 1000 }}>
+            <div className="export-modal" style={{ maxWidth: 400, width: '95vw', padding: 0, margin: 0 }}>
+              <Settings
+                onClose={() => setIsSettingsOpen(false)}
+                onStartTour={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
+              />
+            </div>
           </div>
         )}
 

@@ -312,15 +312,16 @@ header > div {
   justify-content: space-between;
   position: relative;
   width: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
 .tonnext-title-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
   height: 64px;
-  min-width: 148px;
   cursor: pointer;
   padding: 0;
 }
@@ -790,6 +791,7 @@ footer > div {
   /* Smaller MIDI player */
   .midi-controller-container {
     height: 44px !important;
+    flex: 1 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -933,6 +935,7 @@ footer > div {
   /* Minimal MIDI player */
   .midi-controller-container {
     height: 40px !important;
+    flex: 1 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1179,7 +1182,7 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   flex-direction: row;
   gap: 24px;
   width: 100%;
-  padding: 0 18px 0 18px;
+  padding: 0 18px 0 0;
   box-sizing: border-box;
 }
 .export-modal-preview-col {
@@ -1316,6 +1319,9 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   display: flex;
   justify-content: center;
   padding: 18px 0 18px 0;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  overflow: hidden;
 }
 .export-modal-export {
   min-width: 140px;

@@ -127,101 +127,20 @@ export default function Settings({ onClose, onStartTour }: SettingsProps) {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Palette Presets
-          </label>
-          <div className="space-y-2">
-            {PALETTE_PRESETS.map((preset) => (
-              <button
-                key={preset.name}
-                className={`settings-panel__preset-btn${palette.main === preset.colors.main ? ' selected' : ''}`}
-                style={{ background: palette.main === preset.colors.main ? '#222' : 'transparent' }}
-                onClick={() => handlePreset(preset.colors)}
-              >
-                <span className="settings-panel__preset-name">{preset.name}</span>
-                {Object.values(preset.colors).map((color, _) => (
-                  <span key={_} className="settings-panel__preset-color" style={{ background: color }} />
-                ))}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
             Color Palette
           </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="flex items-center space-x-2">
-              <span className="text-gray-200 w-20">Main</span>
-              <input type="color" value={palette.main} onChange={e => handlePaletteChange('main', e.target.value)} />
-            </label>
-            <label className="flex items-center space-x-2">
-              <span className="text-gray-200 w-20">Highlight</span>
-              <input type="color" value={palette.highlight} onChange={e => handlePaletteChange('highlight', e.target.value)} />
-            </label>
-            <label className="flex items-center space-x-2">
-              <span className="text-gray-200 w-20">Accent</span>
-              <input type="color" value={palette.accent} onChange={e => handlePaletteChange('accent', e.target.value)} />
-            </label>
-            <label className="flex items-center space-x-2">
-              <span className="text-gray-200 w-20">Hover</span>
-              <input type="color" value={palette.hover} onChange={e => handlePaletteChange('hover', e.target.value)} />
-            </label>
-            <label className="flex items-center space-x-2">
-              <span className="text-gray-200 w-20">Hover2</span>
-              <input type="color" value={palette.hover2} onChange={e => handlePaletteChange('hover2', e.target.value)} />
-            </label>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-2 items-center">
+            <span className="text-gray-200">Main</span>
+            <input type="color" value={palette.main} onChange={e => handlePaletteChange('main', e.target.value)} />
+            <span className="text-gray-200">Highlight</span>
+            <input type="color" value={palette.highlight} onChange={e => handlePaletteChange('highlight', e.target.value)} />
+            <span className="text-gray-200">Accent</span>
+            <input type="color" value={palette.accent} onChange={e => handlePaletteChange('accent', e.target.value)} />
+            <span className="text-gray-200">Hover</span>
+            <input type="color" value={palette.hover} onChange={e => handlePaletteChange('hover', e.target.value)} />
+            <span className="text-gray-200">Hover2</span>
+            <input type="color" value={palette.hover2} onChange={e => handlePaletteChange('hover2', e.target.value)} />
           </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Layout
-          </label>
-          <div className="space-x-4">
-            <label className="inline-flex items-center">
-              <input type="radio" name="layout" value="riemann" defaultChecked className="mr-2" />
-              <span className="text-gray-300">Riemannian</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input type="radio" name="layout" value="sonome" className="mr-2" />
-              <span className="text-gray-300">Sonome</span>
-            </label>
-          </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Show/Hide
-          </label>
-          <div className="space-y-2">
-            <label className="flex items-center">
-              <input type="checkbox" defaultChecked className="mr-2" />
-              <span className="text-gray-300">Tone names</span>
-            </label>
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" />
-              <span className="text-gray-300">Triad names</span>
-            </label>
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" />
-              <span className="text-gray-300">Unit cell</span>
-            </label>
-          </div>
-        </div>
-        
-
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Ghost tone duration (ms)
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="50"
-            defaultValue="500"
-            className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white"
-          />
         </div>
       </div>
     </div>

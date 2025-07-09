@@ -171,27 +171,20 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
     tooltip.style.left = `${left}px`;
   }, [currentTourStep]);
 
-  // Handle tour opening - ensure tooltip is hidden initially
+  // Handle tour opening and step change
   useEffect(() => {
     if (isOpen) {
       setVisible(false);
-      // Small delay to ensure proper positioning before showing
+      // Use longer delay for step changes, shorter for tour opening
+      const delay = step === 0 ? 50 : 220;
       const timeout = setTimeout(() => {
         setVisible(true);
-      }, 50);
+      }, delay);
       return () => clearTimeout(timeout);
+    } else {
+      setVisible(false); // Ensure tooltip is hidden when tour is closed
     }
-  }, [isOpen]);
-
-  // Animate tooltip on step change
-  useEffect(() => {
-    if (!isOpen) return;
-    setVisible(false);
-    const timeout = setTimeout(() => {
-      setVisible(true);
-    }, 220); // match CSS transition duration
-    return () => clearTimeout(timeout);
-  }, [step]);
+  }, [isOpen, step]); // Add step to dependency array
 
   // Show a chord being pressed in the canvas during the 'Interactive Canvas' step
   useEffect(() => {

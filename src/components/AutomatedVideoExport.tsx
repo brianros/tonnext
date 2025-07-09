@@ -204,7 +204,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
         audioSynthRef.current = null;
       }
     }
-  }, [canvasRef, midiState, handleMidiNoteStart, handleMidiNoteEnd, mode, chordType, isMuted]);
+  }, [canvasRef, midiState, handleMidiNoteStart, handleMidiNoteEnd, mode, chordType, isMuted, getNoteName]);
 
   React.useEffect(() => {
     return () => {

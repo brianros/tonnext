@@ -768,7 +768,7 @@ export default function MidiPlayerCompact({
       cancelAnimationFrame(animationFrameRef.current);
     }
   }
-  }, [isMuted, playerState?.fileName, playerState?.isOriginalAudio, playerState?.originalAudioBuffer, canvasRef, playerState?.midiData, mode, chordType]);
+  }, [isMuted, playerState?.fileName, playerState?.isOriginalAudio, playerState?.originalAudioBuffer, canvasRef, playerState?.midiData, mode, chordType, getNoteName]);
 
   return (
     <>

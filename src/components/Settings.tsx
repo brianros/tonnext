@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useNotation } from '@/contexts/NotationContext';
 
 interface SettingsProps {
@@ -8,76 +7,76 @@ interface SettingsProps {
   onStartTour?: () => void;
 }
 
-const DEFAULT_PALETTE = {
-  main: '#DA4C2B',
-  highlight: '#D4D7CB',
-  accent: '#D7A798',
-  hover: '#DD4A2F',
-  hover2: '#DB4A2F',
-};
+// const DEFAULT_PALETTE = {
+//   main: '#DA4C2B',
+//   highlight: '#D4D7CB',
+//   accent: '#D7A798',
+//   hover: '#DD4A2F',
+//   hover2: '#DB4A2F',
+// };
 
-const PALETTE_PRESETS = [
-  {
-    name: 'Cinnabar',
-    colors: {
-      main: '#DA4C2B',
-      highlight: '#D4D7CB',
-      accent: '#D7A798',
-      hover: '#DD4A2F',
-      hover2: '#DB4A2F',
-    },
-  },
-  {
-    name: 'Aurora',
-    colors: {
-      main: '#1A535C',
-      highlight: '#F7FFF7',
-      accent: '#FF6B6B',
-      hover: '#4ECDC4',
-      hover2: '#FFE66D',
-    },
-  },
-  {
-    name: 'Retro Pop',
-    colors: {
-      main: '#22223B',
-      highlight: '#F2E9E4',
-      accent: '#9A8C98',
-      hover: '#C9ADA7',
-      hover2: '#4A4E69',
-    },
-  },
-  {
-    name: 'Citrus Fresh',
-    colors: {
-      main: '#F9DC5C',
-      highlight: '#FAFAFA',
-      accent: '#F76C6C',
-      hover: '#374785',
-      hover2: '#24305E',
-    },
-  },
-  {
-    name: 'Forest Haze',
-    colors: {
-      main: '#386641',
-      highlight: '#F2E8CF',
-      accent: '#A7C957',
-      hover: '#6A994E',
-      hover2: '#BC4749',
-    },
-  },
-  {
-    name: 'Neon Night',
-    colors: {
-      main: '#22223B',
-      highlight: '#F7F7FF',
-      accent: '#9D4EDD',
-      hover: '#F72585',
-      hover2: '#4361EE',
-    },
-  },
-];
+// const PALETTE_PRESETS = [
+//   {
+//     name: 'Cinnabar',
+//     colors: {
+//       main: '#DA4C2B',
+//       highlight: '#D4D7CB',
+//       accent: '#D7A798',
+//       hover: '#DD4A2F',
+//       hover2: '#DB4A2F',
+//     },
+//   },
+//   {
+//     name: 'Aurora',
+//     colors: {
+//       main: '#1A535C',
+//       highlight: '#F7FFF7',
+//       accent: '#FF6B6B',
+//       hover: '#4ECDC4',
+//       hover2: '#FFE66D',
+//     },
+//   },
+//   {
+//     name: 'Retro Pop',
+//     colors: {
+//       main: '#22223B',
+//       highlight: '#F2E9E4',
+//       accent: '#9A8C98',
+//       hover: '#C9ADA7',
+//       hover2: '#4A4E69',
+//     },
+//   },
+//   {
+//     name: 'Citrus Fresh',
+//     colors: {
+//       main: '#F9DC5C',
+//       highlight: '#FAFAFA',
+//       accent: '#F76C6C',
+//       hover: '#374785',
+//       hover2: '#24305E',
+//     },
+//   },
+//   {
+//     name: 'Forest Haze',
+//     colors: {
+//       main: '#386641',
+//       highlight: '#F2E8CF',
+//       accent: '#A7C957',
+//       hover: '#6A994E',
+//       hover2: '#BC4749',
+//     },
+//   },
+//   {
+//     name: 'Neon Night',
+//     colors: {
+//       main: '#22223B',
+//       highlight: '#F7F7FF',
+//       accent: '#9D4EDD',
+//       hover: '#F72585',
+//       hover2: '#4361EE',
+//     },
+//   },
+// ];
 
 export default function Settings({ onClose, onStartTour }: SettingsProps) {
   const { notationType, setNotationType } = useNotation();

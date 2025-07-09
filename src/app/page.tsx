@@ -131,7 +131,7 @@ function HomeContent() {
   // Loading overlay demo state (disabled)
   const [showLoadingLogo, setShowLoadingLogo] = useState(false);
 
-  const [titleHovered, setTitleHovered] = useState(false);
+  // const [titleHovered, setTitleHovered] = useState(false);
 
   // Add state for dropdown
   const [tonnextDropdownOpen, setTonnextDropdownOpen] = useState(false);
@@ -188,7 +188,7 @@ function HomeContent() {
         }
         if (tonnextDropdownOpen) {
           setTonnextDropdownOpen(false);
-          setTitleHovered(false);
+          // setTitleHovered(false);
         }
       }
     };

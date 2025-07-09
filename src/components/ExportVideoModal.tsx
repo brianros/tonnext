@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { VirtualTonnetz } from './VirtualTonnetz';
 import type { MidiData } from '@/hooks/useMidiPlayer';
 import { Monitor, Smartphone, Tv, Square, RectangleHorizontal } from 'lucide-react';
-import { useMidiContext } from '@/contexts/MidiContext';
+// import { useMidiContext } from '@/contexts/MidiContext';
 import { useNotation } from '@/contexts/NotationContext';
 
 interface ExportVideoModalProps {
@@ -180,9 +180,9 @@ export default function ExportVideoModal({
 }: ExportVideoModalProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
-  const { getMidiPlayerState } = useMidiContext();
+  // const { getMidiPlayerState } = useMidiContext();
   const { getNoteName } = useNotation();
-  const playerState = getMidiPlayerState();
+  // const playerState = getMidiPlayerState();
   
   const [settings, setSettings] = useState<ExportSettings>({
     duration: midiData?.duration || 30,
@@ -273,7 +273,7 @@ export default function ExportVideoModal({
       const sampleNotes = [0, 4, 7]; // C major chord
       virtualTonnetzRef.current.setActiveNotes(sampleNotes);
     }
-  }, [settings.aspectRatio, settings.zoom, calculatePreviewDimensions, originalCanvasRef, mode, chordType, midiData]);
+  }, [settings.aspectRatio, settings.zoom, calculatePreviewDimensions, originalCanvasRef, mode, chordType, midiData, getNoteName]);
 
   // Update settings when MIDI data changes
   useEffect(() => {
@@ -314,45 +314,45 @@ export default function ExportVideoModal({
 
   if (!isOpen) return null;
 
-  const zoomSlider = (
-    <input
-      type="range"
-      min="0.5"
-      max="2.0"
-      step="0.1"
-      value={settings.zoom}
-      onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
-      className="export-modal-zoom-slider"
-      aria-label="Zoom Slider"
-    />
-  );
+  // const zoomSlider = (
+  //   <input
+  //     type="range"
+  //     min="0.5"
+  //     max="2.0"
+  //     step="0.1"
+  //     value={settings.zoom}
+  //     onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+  //     className="export-modal-zoom-slider"
+  //     aria-label="Zoom Slider"
+  //   />
+  // );
 
-  const timeRangeSlider = (
-    <div className="export-modal__time-range-box">
-      <div className="export-modal__time-range-info">
-        <span>Start: {settings.startTime.toFixed(1)}s</span>
-        <span>End: {settings.endTime.toFixed(1)}s</span>
-      </div>
-      <DualRangeSlider
-        min={0}
-        max={settings.duration}
-        step={0.1}
-        startValue={settings.startTime}
-        endValue={settings.endTime}
-        onStartChange={(value) => setSettings(prev => ({ 
-          ...prev, 
-          startTime: value,
-          endTime: Math.max(value + 1, prev.endTime)
-        }))}
-        onEndChange={(value) => setSettings(prev => ({ 
-          ...prev, 
-          endTime: value,
-          startTime: Math.min(value - 1, prev.startTime)
-        }))}
-        aria-label="Time Range Slider"
-      />
-    </div>
-  );
+  // const timeRangeSlider = (
+  //   <div className="export-modal__time-range-box">
+  //     <div className="export-modal__time-range-info">
+  //       <span>Start: {settings.startTime.toFixed(1)}s</span>
+  //       <span>End: {settings.endTime.toFixed(1)}s</span>
+  //     </div>
+  //     <DualRangeSlider
+  //       min={0}
+  //       max={settings.duration}
+  //       step={0.1}
+  //       startValue={settings.startTime}
+  //       endValue={settings.endTime}
+  //       onStartChange={(value) => setSettings(prev => ({ 
+  //         ...prev, 
+  //         startTime: value,
+  //         endTime: Math.max(value + 1, prev.endTime)
+  //       }))}
+  //       onEndChange={(value) => setSettings(prev => ({ 
+  //         ...prev, 
+  //         endTime: value,
+  //         startTime: Math.min(value - 1, prev.startTime)
+  //       }))}
+  //       aria-label="Time Range Slider"
+  //     />
+  //   </div>
+  // );
 
   return (
     <div className="export-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>

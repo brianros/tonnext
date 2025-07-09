@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
-import { FolderUp, Youtube, X, Loader2 } from 'lucide-react';
+import { FolderUp, Youtube, Loader2 } from 'lucide-react';
 
 interface LoadModalProps {
   isOpen: boolean;

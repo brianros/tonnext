@@ -423,9 +423,9 @@ function HomeContent() {
         <header className="responsive-header" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
           <div className="header-container">
             {/* Tonnext title - minimal markup */}
-            <h1 className="blend-btn tonnext-title">Tonnext</h1>
+            <h1 className="blend-btn tonnext-title" aria-label="Tonnext Home">Tonnext</h1>
             {/* MIDI player container as sibling */}
-            <div className="midi-controller-container flex-shrink-0">
+            <div className="midi-controller-container flex-shrink-0" data-tour="midi-player" aria-label="MIDI Player Controls">
               <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
             </div>
             {/* Other header buttons */}
@@ -550,6 +550,7 @@ function HomeContent() {
           className="flex-1 relative min-h-0"
           style={{ flex: '1 1 auto', minHeight: 0 }}
           data-tour="canvas"
+          aria-label="Main Tonnetz Canvas"
         >
           <TonnextCanvas 
             mode={mode} 
@@ -559,16 +560,17 @@ function HomeContent() {
         </div>
 
         {/* Sleek Footer with Controls */}
-        <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls">
+        <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls" aria-label="Playback Mode Controls">
           <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full px-4">
             <InstrumentSelector 
               selectedInstrument={selectedInstrument} 
               onInstrumentChange={handleInstrumentChange} 
+              aria-label="Instrument Selector"
             />
-            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')}>Note</button>
-            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')}>Chord</button>
-            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')}>Arpeggio</button>
-            <ChordDropdown value={chordType} onChange={setChordType} />
+            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')} aria-label="Note Mode">Note</button>
+            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')} aria-label="Chord Mode">Chord</button>
+            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')} aria-label="Arpeggio Mode">Arpeggio</button>
+            <ChordDropdown value={chordType} onChange={setChordType} aria-label="Chord Type Selector" />
           </div>
         </footer>
 

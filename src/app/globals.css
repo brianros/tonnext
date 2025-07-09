@@ -344,8 +344,8 @@ header > div {
 }
 
 .header-btn {
-  width: 120px;
-  height: 64px;
+  width: calc(var(--header-footer-height) * 0.85);
+  height: calc(var(--header-footer-height) * 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -474,8 +474,8 @@ footer > div {
   }
   
   .header-btn {
-    width: 110px;
-    height: 60px;
+    width: calc(var(--header-footer-height) * 0.85);
+    height: calc(var(--header-footer-height) * 0.85);
   }
 }
 
@@ -501,8 +501,8 @@ footer > div {
   }
   
   .header-btn {
-    width: 100px;
-    height: 56px;
+    width: calc(var(--header-footer-height) * 0.85);
+    height: calc(var(--header-footer-height) * 0.85);
   }
   
   /* Reduce spacing between header elements */
@@ -547,7 +547,7 @@ footer > div {
   
 
   
-  /* All header icon containers same size */
+  /* All header icon containers same size - compact */
   header .header-btn,
   header .blend-btn,
   header .theme-btn,
@@ -564,6 +564,18 @@ footer > div {
     justify-content: center !important;
     padding: 0 !important;
     margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Compact header button spacing for mobile */
+  .header-buttons {
+    gap: calc(var(--header-footer-height) * 0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   
   /* Compact title container */
@@ -678,7 +690,7 @@ footer > div {
   
   /* Compact header buttons */
   .header-buttons {
-    gap: 0.25rem !important;
+    gap: calc(var(--header-footer-height) * 0.1) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1545,7 +1557,7 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   display: inline;
 }
 .theme-icon, .tour-icon {
-  display: none;
+  display: inline !important;
   vertical-align: middle;
 }
 
@@ -1563,6 +1575,34 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   align-items: center !important;
   justify-content: center !important;
   margin: auto;
+}
+
+/* Compact header buttons - make them smaller than header height */
+.header-btn {
+  width: calc(var(--header-footer-height) * 0.85) !important;
+  height: calc(var(--header-footer-height) * 0.85) !important;
+  min-width: calc(var(--header-footer-height) * 0.85) !important;
+  min-height: calc(var(--header-footer-height) * 0.85) !important;
+  max-width: calc(var(--header-footer-height) * 0.85) !important;
+  max-height: calc(var(--header-footer-height) * 0.85) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  flex: 0 0 calc(var(--header-footer-height) * 0.85) !important;
+}
+
+/* Compact header button spacing */
+.header-buttons {
+  gap: calc(var(--header-footer-height) * 0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Player icons centering */
@@ -1745,6 +1785,14 @@ svg {
   height: 50% !important;
   max-width: 50% !important;
   max-height: 50% !important;
+}
+
+/* Header button icons - slightly larger for better visibility in compact buttons */
+.header-btn svg {
+  width: 60% !important;
+  height: 60% !important;
+  max-width: 60% !important;
+  max-height: 60% !important;
 }
 
 .instrument-icon {
@@ -2694,6 +2742,45 @@ svg {
   background: #666;
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* Header buttons: match midi player button sizing exactly */
+header .header-btn,
+header .blend-btn,
+header .theme-btn,
+header .tour-btn {
+  width: var(--header-footer-height) !important;
+  height: var(--header-footer-height) !important;
+  min-width: var(--header-footer-height) !important;
+  min-height: var(--header-footer-height) !important;
+  max-width: var(--header-footer-height) !important;
+  max-height: var(--header-footer-height) !important;
+  flex: 0 0 var(--header-footer-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Header button icons: match midi player icon sizing */
+header .header-btn svg,
+header .blend-btn svg,
+header .theme-btn svg,
+header .tour-btn svg,
+.theme-icon, .tour-icon {
+  width: 50% !important;
+  height: 50% !important;
+  max-width: 50% !important;
+  max-height: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto;
 }
 
 

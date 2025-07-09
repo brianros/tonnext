@@ -323,6 +323,7 @@ export default function ExportVideoModal({
       value={settings.zoom}
       onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
       className="export-modal-zoom-slider"
+      aria-label="Zoom Slider"
     />
   );
 
@@ -348,6 +349,7 @@ export default function ExportVideoModal({
           endTime: value,
           startTime: Math.min(value - 1, prev.startTime)
         }))}
+        aria-label="Time Range Slider"
       />
     </div>
   );
@@ -360,6 +362,7 @@ export default function ExportVideoModal({
             onClick={onClose}
             className="export-modal-btn export-modal-close"
             title="Close"
+            aria-label="Close Export Modal"
           >
             ×
           </button>
@@ -371,6 +374,7 @@ export default function ExportVideoModal({
                     <canvas
                       ref={previewCanvasRef}
                       className="export-modal-preview-canvas"
+                      aria-label="Preview Canvas"
                     />
                   </div>
                 </div>
@@ -383,6 +387,7 @@ export default function ExportVideoModal({
                             key={ratio.value}
                             onClick={() => setSettings(prev => ({ ...prev, aspectRatio: ratio.value }))}
                             className={`export-modal-aspect-btn${settings.aspectRatio === ratio.value ? ' selected' : ''}`}
+                            aria-label={`Aspect Ratio: ${ratio.label}`}
                           >
                             <div className="export-modal-aspect-icon">{ratio.icon}</div>
                             <div className="export-modal-aspect-label">{ratio.label}</div>
@@ -396,6 +401,7 @@ export default function ExportVideoModal({
                           key={q.label}
                           onClick={() => setQuality(q.label)}
                           className={`export-modal-aspect-btn${quality === q.label ? ' selected' : ''}`}
+                          aria-label={`Quality: ${q.label}`}
                         >
                           {q.label}
                         </button>
@@ -419,6 +425,7 @@ export default function ExportVideoModal({
                 onChange={(e) => setSettings(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
                 className="export-modal-zoom-slider"
                 style={{ width: '100%' }}
+                aria-label="Zoom Slider"
               />
             </div>
             <div style={{ width: 240, marginTop: 24 }}>
@@ -440,6 +447,7 @@ export default function ExportVideoModal({
                   startTime: Math.min(value - 1, prev.startTime)
                 }))}
                 style={{ width: '100%' }}
+                aria-label="Time Range Slider"
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#bdbdbd', marginTop: 2 }}>
                 <span>Start: {settings.startTime.toFixed(1)}s</span>
@@ -451,6 +459,7 @@ export default function ExportVideoModal({
             <button
               onClick={handleExport}
               className="blend-btn export-modal__export-btn"
+              aria-label="Export Video"
             >
               Export Video
             </button>

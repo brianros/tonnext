@@ -22,50 +22,85 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to Tonnext!',
-    content: 'Tonnext is an interactive music visualization tool that explores tonal relationships through beautiful geometric patterns. Let\'s take a quick tour of the key features.',
+    content: 'Tonnext is an interactive music visualization tool that explores tonal relationships through beautiful geometric patterns. Let\'s take a quick tour of the key features. (Screen reader users: all interactive elements have descriptive aria-labels.)',
     target: 'body',
-    position: 'center'
-  },
-  {
-    id: 'canvas',
-    title: 'Interactive Canvas',
-    content: 'This is the main visualization area. Click on any node to hear and see musical notes, chords, or arpeggios. The triangular grid shows the relationships between musical tones.',
-    target: 'canvas',
     position: 'center'
   },
   {
     id: 'midi-player',
     title: 'MIDI Player',
-    content: 'Upload and play MIDI files to see how your music maps to the tonal network. The visualization will highlight the notes and chords as they play.',
-    target: 'midi-player',
+    content: 'Upload and play MIDI files to see how your music maps to the tonal network. The visualization will highlight the notes and chords as they play. (aria-label: MIDI Player Controls)',
+    target: '[data-tour="midi-player"]',
     position: 'bottom'
+  },
+  {
+    id: 'theme-settings',
+    title: 'Theme & Appearance',
+    content: 'Customize the visual theme with preset color palettes or create your own custom colors to match your style. (aria-label: Theme Settings)',
+    target: '[data-tour="appearance"]',
+    position: 'bottom'
+  },
+  {
+    id: 'tour-btn',
+    title: 'Guided Tour',
+    content: 'Click this button any time to restart the guided tour. (aria-label: Start guided tour)',
+    target: '.tour-btn[aria-label="Start guided tour"]',
+    position: 'bottom'
+  },
+  {
+    id: 'settings-btn',
+    title: 'Settings',
+    content: 'Open the settings panel to adjust advanced options. (aria-label: Settings)',
+    target: '.options-btn[aria-label="Settings"]',
+    position: 'bottom'
+  },
+  {
+    id: 'canvas',
+    title: 'Interactive Canvas',
+    content: 'This is the main visualization area (aria-label: Main Tonnetz Canvas). Click on any node to hear and see musical notes, chords, or arpeggios. The triangular grid shows the relationships between musical tones.',
+    target: '[aria-label="Main Tonnetz Canvas"]',
+    position: 'center'
+  },
+  {
+    id: 'instrument-selector',
+    title: 'Instrument Selector',
+    content: 'Choose your instrument sound for playback. (aria-label: Instrument Selector)',
+    target: '[aria-label="Instrument Selector"]',
+    position: 'top'
   },
   {
     id: 'mode-controls',
     title: 'Playback Modes',
-    content: 'Choose how you want to interact with the canvas: Note (single tones), Chord (harmonies), or Arpeggio (sequential chord notes).',
-    target: 'mode-controls',
+    content: 'Choose how you want to interact with the canvas: Note (aria-label: Note Mode), Chord (aria-label: Chord Mode), or Arpeggio (aria-label: Arpeggio Mode).',
+    target: '[data-tour="mode-controls"]',
     position: 'top'
   },
   {
     id: 'chord-selector',
     title: 'Chord Types',
-    content: 'Select from 25+ chord types including major, minor, diminished, augmented, and extended chords like 7ths, 9ths, and suspended chords.',
-    target: 'chord-selector',
+    content: 'Select from 25+ chord types including major, minor, diminished, augmented, and extended chords like 7ths, 9ths, and suspended chords. (aria-label: Chord Type Selector)',
+    target: '[aria-label="Chord Type Selector"]',
     position: 'center'
   },
   {
-    id: 'appearance',
-    title: 'Appearance',
-    content: 'Customize the visual theme with preset color palettes or create your own custom colors to match your style.',
-    target: 'appearance',
-    position: 'bottom'
+    id: 'settings-modal',
+    title: 'Settings Modal',
+    content: 'Here you can adjust advanced settings for Tonnext. (aria-label: Settings)',
+    target: '.export-modal[role="dialog"], [aria-label="Settings"]',
+    position: 'center'
   },
   {
-    id: 'zoom',
-    title: 'Zoom & Navigation',
-    content: 'Use your mouse wheel to zoom in and out of the visualization. The grid adapts to show more or fewer details.',
-    target: 'canvas',
+    id: 'custom-palette-modal',
+    title: 'Custom Palette Modal',
+    content: 'Create and apply your own custom color palette for the visualization. (aria-label: Custom Palette Modal)',
+    target: '.custom-palette-modal__container',
+    position: 'center'
+  },
+  {
+    id: 'loading-logo',
+    title: 'Loading Logo',
+    content: 'This animated logo appears while Tonnext is loading or processing. (aria-label: Loading Logo)',
+    target: '.loading-logo__overlay',
     position: 'center'
   },
   {
@@ -79,7 +114,7 @@ const TOUR_STEPS: TourStep[] = [
 
 export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
@@ -136,6 +171,18 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
     tooltip.style.left = `${left}px`;
   }, [currentTourStep]);
 
+  // Handle tour opening - ensure tooltip is hidden initially
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(false);
+      // Small delay to ensure proper positioning before showing
+      const timeout = setTimeout(() => {
+        setVisible(true);
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen]);
+
   // Animate tooltip on step change
   useEffect(() => {
     if (!isOpen) return;
@@ -144,7 +191,7 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
       setVisible(true);
     }, 220); // match CSS transition duration
     return () => clearTimeout(timeout);
-  }, [step, isOpen]);
+  }, [step]);
 
   // Show a chord being pressed in the canvas during the 'Interactive Canvas' step
   useEffect(() => {
@@ -181,14 +228,22 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
         targetElement = document.querySelector('[data-tour="appearance"]');
         break;
       default:
-        targetElement = document.body;
+        // Handle CSS selector targets
+        if (stepObj.target.startsWith('[') || stepObj.target.startsWith('.')) {
+          targetElement = document.querySelector(stepObj.target);
+        } else {
+          targetElement = document.body;
+        }
     }
 
     setHighlightedElement(targetElement);
-    setTimeout(() => {
-      // For the canvas step, force position to 'left'
+    
+    // Position tooltip after a short delay to ensure DOM is ready
+    const positionTimeout = setTimeout(() => {
       positionTooltip(targetElement, isCanvasStep ? 'left' : stepObj.position);
-    }, 100);
+    }, 50);
+    
+    return () => clearTimeout(positionTimeout);
   }, [step, isOpen, isCanvasStep, positionTooltip]);
 
   const handleNext = () => {

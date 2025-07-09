@@ -817,7 +817,6 @@ export default function MidiPlayerCompact({
         <button
           onClick={() => setIsLoadModalOpen(true)}
           className="blend-btn"
-          style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)', padding: '0.5em 1.5em', borderTopRightRadius: 0, borderBottomRightRadius: 0, flexShrink: 0, height: '100%', display: 'flex', alignItems: 'center', gap: '0.5em' }}
           disabled={isConverting}
         >
           {isConverting ? (
@@ -838,42 +837,18 @@ export default function MidiPlayerCompact({
             <button
               onClick={handlePlayPause}
               className="blend-btn"
-              style={{
-                borderRadius: 0,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-              }}
             >
               {playerState.isPlaying ? <Pause className="playback-icon" /> : <Play className="playback-icon" />}
             </button>
             <button
               onClick={handleStop}
               className="blend-btn"
-              style={{
-                borderRadius: 0,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-              }}
             >
               <Square className="playback-icon" />
             </button>
             <button
               onClick={toggleMute}
               className="blend-btn"
-              style={{
-                borderRadius: 0,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-              }}
               title={isMuted ? 'Unmute synthesizer' : 'Mute synthesizer'}
             >
               {isMuted ? <VolumeX className="playback-icon" /> : <Volume2 className="playback-icon" />}
@@ -944,23 +919,6 @@ export default function MidiPlayerCompact({
                 }}
                 disabled={isExporting && !showCancel}
                 className="blend-btn"
-                style={{
-                  fontSize: 'clamp(1rem, 2vw, 1.6rem)',
-                  padding: '0.5em 0',
-                  borderRadius: 0,
-                  flexShrink: 0,
-                  maxWidth: '220px',
-                  width: 'clamp(140px, 15vw, 220px)',
-                  textAlign: 'center',
-                  boxSizing: 'border-box',
-                  position: 'relative',
-                  zIndex: 1,
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5em',
-                }}
                 title={isExporting && showCancel ? 'Cancel export' : isExporting ? 'Exporting video...' : 'Export video with settings'}
               >
                 {/* Visually hidden span to reserve space for the longest text */}

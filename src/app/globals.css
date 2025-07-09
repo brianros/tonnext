@@ -619,15 +619,22 @@ footer > div {
   }
   
   .midi-player-compact .blend-btn {
-    height: 100% !important;
-    min-height: unset !important;
-    max-height: unset !important;
+    width: var(--header-footer-height) !important;
+    height: var(--header-footer-height) !important;
+    min-width: var(--header-footer-height) !important;
+    min-height: var(--header-footer-height) !important;
+    max-width: var(--header-footer-height) !important;
+    max-height: var(--header-footer-height) !important;
     padding: 0 !important;
     margin: 0 !important;
-    box-sizing: border-box !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    box-sizing: border-box !important;
+    flex: 0 0 var(--header-footer-height) !important;
   }
   
   .midi-player-compact button {
@@ -800,8 +807,22 @@ footer > div {
   
   .midi-player-compact button,
   .midi-player-compact .blend-btn {
-    font-size: 0.8rem !important;
-    padding: 0.25em 0.6em !important;
+    width: var(--header-footer-height) !important;
+    height: var(--header-footer-height) !important;
+    min-width: var(--header-footer-height) !important;
+    min-height: var(--header-footer-height) !important;
+    max-width: var(--header-footer-height) !important;
+    max-height: var(--header-footer-height) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    flex: 0 0 var(--header-footer-height) !important;
   }
   
   .midi-player-compact .song-title {
@@ -929,8 +950,22 @@ footer > div {
   
   .midi-player-compact button,
   .midi-player-compact .blend-btn {
-    font-size: 0.75rem !important;
-    padding: 0.2em 0.5em !important;
+    width: var(--header-footer-height) !important;
+    height: var(--header-footer-height) !important;
+    min-width: var(--header-footer-height) !important;
+    min-height: var(--header-footer-height) !important;
+    max-width: var(--header-footer-height) !important;
+    max-height: var(--header-footer-height) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    flex: 0 0 var(--header-footer-height) !important;
   }
   
   .midi-player-compact .song-title {
@@ -1506,10 +1541,10 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 
 /* Load/Export button text/icon responsive styles */
 .load-text, .export-text {
-  display: inline;
+  display: none !important;
 }
 .load-icon, .export-icon {
-  display: none;
+  display: inline !important;
 }
 
 /* Icon sizing for mobile - ensure square aspect ratio and full height */
@@ -1541,12 +1576,7 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   .theme-icon, .tour-icon {
     display: inline !important;
   }
-  .load-text, .export-text {
-    display: none !important;
-  }
-  .load-icon, .export-icon {
-    display: inline !important;
-  }
+  /* Load/Export buttons already have icons only from the base styles above */
   .midi-time-display {
     display: none !important;
   }
@@ -1586,6 +1616,26 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 0.01em !important;
+}
+
+/* MIDI Player Button Overrides - Square buttons relative to header height */
+.midi-player-compact .blend-btn {
+  width: var(--header-footer-height) !important;
+  height: var(--header-footer-height) !important;
+  min-width: var(--header-footer-height) !important;
+  min-height: var(--header-footer-height) !important;
+  max-width: var(--header-footer-height) !important;
+  max-height: var(--header-footer-height) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  flex: 0 0 var(--header-footer-height) !important;
 }
 
 /* Mobile button adjustments */

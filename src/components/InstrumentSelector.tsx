@@ -124,57 +124,18 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
       onMouseLeave={handleMouseLeave}
     >
       <button
-        className="blend-btn"
-        style={{ 
-          minWidth: '6vw',
-          width: '10vw',
-          maxWidth: '20vw',
-          paddingLeft: 16, 
-          paddingRight: 16,
-          height: '64px',
-          fontSize: 'clamp(1rem, 2vw, 1.6rem)',
-          textTransform: 'uppercase',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
+        className="blend-btn instrument-selector__button"
         title={selectedInstrument.name}
       >
-        <span style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center' }}>
+        <span className="instrument-selector__icon-wrapper">
           <selectedInstrument.icon size={18} />
         </span>
-        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>▲</span>
+        <span className="instrument-selector__arrow">▲</span>
       </button>
       
       {isOpen && (
         <div
-          className="custom-chord-dropdown instrument-selector-dropdown"
-          style={{
-            position: 'absolute',
-            left: 0,
-            bottom: '100%',
-            zIndex: 1000,
-            background: 'var(--color-main)',
-            color: '#fff',
-            minWidth: '100%',
-            maxWidth: '100%',
-            width: '100%',
-            border: 'none',
-            borderRadius: 0,
-            marginBottom: 0,
-            boxShadow: 'none',
-            fontSize: '0.85rem',
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            maxHeight: 'none',
-            overflowY: 'visible',
-            padding: 0,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 0,
-            boxSizing: 'border-box',
-            aspectRatio: '1/1',
-          }}
+          className="instrument-selector__dropdown"
           role="listbox"
         >
           {INSTRUMENTS.map(instrument => (
@@ -185,32 +146,15 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
               tabIndex={0}
               onClick={() => handleInstrumentSelect(instrument)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { handleInstrumentSelect(instrument); }}}
-              className={`blend-btn chord-option${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
-              style={{
-                aspectRatio: '1/1',
-                width: '100%',
-                height: '100%',
-                cursor: 'pointer',
-                background: selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'var(--color-main)',
-                color: selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff',
-                border: 'none',
-                transition: 'background 0.2s, color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-                fontSize: '0.85rem',
-                minHeight: 0,
-                minWidth: 0,
-                padding: 0,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-highlight)'; e.currentTarget.style.color = 'var(--color-main)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'var(--color-main)'; e.currentTarget.style.color = selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff'; }}
+              className={`instrument-selector__option blend-btn chord-option${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
+              style={{ aspectRatio: '1/1' }}
+              onMouseEnter={e => { e.currentTarget.classList.add('selected'); }}
+              onMouseLeave={e => { if (selectedInstrument.id !== instrument.id) e.currentTarget.classList.remove('selected'); }}
               title={instrument.name}
             >
               <instrument.icon
                 size={56}
-                className={`instrument-icon${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
+                className={`instrument-selector__icon${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
               />
             </button>
           ))}

@@ -796,16 +796,7 @@ export default function MidiPlayerCompact({
         </div>
       )} */}
       
-      <div className="midi-player-compact" style={{
-        display: 'inline-flex',
-        alignItems: 'stretch',
-        gap: 0,
-        fontSize: '0.9rem',
-        flexWrap: 'nowrap',
-        whiteSpace: 'nowrap',
-        width: 'auto',
-        height: '64px',
-      }}>
+      <div className="midi-player-compact">
         {/* Hidden file input for direct file selection */}
         <input
           ref={fileInputRef}
@@ -854,42 +845,28 @@ export default function MidiPlayerCompact({
               {isMuted ? <VolumeX className="playback-icon" /> : <Volume2 className="playback-icon" />}
             </button>
             {/* Centered non-button controls */}
-            <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <div className="midi-player-compact__time-row">
               {/* Progress Bar (visible on desktop, hidden on mobile via CSS) */}
-              <div className="midi-progress-bar-container" style={{ width: '120px', marginLeft: 8, flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
+              <div className="midi-player-compact__progress-bar-container">
                 <input
                   type="range"
-                  className="midi-progress-bar"
+                  className="midi-player-compact__progress-bar midi-progress-bar"
                   min={0}
                   max={playerState.duration || 0}
                   value={playerState.currentTime || 0}
                   onChange={handleSeek}
                   step={0.1}
-                  style={{
-                    width: '100%',
-                    height: '4px',
-                    borderRadius: '2px',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
                 />
               </div>
               {/* Time Display and Filename */}
-              <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                <span className="midi-time-display" style={{ fontSize: '0.8rem', opacity: 0.8, minWidth: '60px', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+              <div className="midi-player-compact__time-row">
+                <span className="midi-player-compact__time-display midi-time-display">
                   {formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}
                 </span>
-                <span className="song-title" style={{ fontSize: '0.8rem', opacity: 0.7, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                <span className="midi-player-compact__song-title song-title">
                   {playerState.fileName}
                   {playerState.isOriginalAudio && (
-                    <span style={{ 
-                      fontSize: '0.7rem', 
-                      opacity: 0.6, 
-                      marginLeft: 4,
-                      fontStyle: 'italic'
-                    }}>
+                    <span className="midi-player-compact__song-title-original">
                       (Original Audio)
                     </span>
                   )}
@@ -898,11 +875,7 @@ export default function MidiPlayerCompact({
             </div>
             {/* Export Video Button */}
             <div
-              style={{
-                position: 'relative',
-                display: 'inline-block',
-                marginLeft: 8
-              }}
+              className="midi-player-compact__export-btn-wrapper"
               onMouseEnter={() => isExporting && setShowCancel(true)}
               onMouseLeave={() => setShowCancel(false)}
             >
@@ -922,7 +895,7 @@ export default function MidiPlayerCompact({
                 title={isExporting && showCancel ? 'Cancel export' : isExporting ? 'Exporting video...' : 'Export video with settings'}
               >
                 {/* Visually hidden span to reserve space for the longest text */}
-                <span style={{visibility: 'hidden', position: 'absolute', pointerEvents: 'none', height: 0, overflow: 'hidden'}}>
+                <span className="midi-player-compact__export-btn-span">
                   Exporting 100%
                 </span>
                 {isExporting && showCancel
@@ -983,81 +956,32 @@ export default function MidiPlayerCompact({
 
       {/* Conversion Progress Overlay */}
       {isConverting && (
-        <div className="export-modal-overlay" style={{ zIndex: 1000 }}>
+        <div className="export-modal-overlay midi-player-compact__conversion-overlay" style={{ zIndex: 1000 }}>
           <div
-            className="export-modal-outer"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              width: '100%',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingTop: '24px',
-              paddingBottom: '24px',
-            }}
+            className="export-modal-outer midi-player-compact__conversion-outer"
           >
             <div
-              className="export-modal"
-              style={{
-                position: 'relative',
-                padding: '48px 32px 32px 32px',
-                borderRadius: '18px',
-                background: 'var(--color-main)',
-                boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
-                minWidth: 360,
-                minHeight: 180,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
+              className="export-modal midi-player-compact__conversion-modal"
             >
               {/* Spinner */}
-              <div style={{ marginBottom: '1rem' }}>
-                <Loader2
-                  className="animate-spin"
-                  style={{
-                    fontSize: '2.5rem',
-                    color: 'var(--color-accent)',
-                    display: 'block',
-                    margin: '0 auto'
-                  }}
+              <div className="midi-player-compact__conversion-spinner">
+                <Loader2 className="animate-spin" />
+              </div>
+              <h3 className="midi-player-compact__conversion-title">Converting Audio to MIDI</h3>
+              <p className="midi-player-compact__conversion-status">{conversionStatus}</p>
+              {/* Progress Bar */}
+              <div className="midi-player-compact__progress-bar-bg">
+                <div
+                  className="midi-player-compact__progress-bar-fg"
+                  style={{ width: `${conversionProgress}%` }}
                 />
               </div>
-              <h3 style={{ margin: '0.5rem 0', fontSize: '1.2rem', color: '#fff', fontWeight: 600 }}>Converting Audio to MIDI</h3>
-              <p style={{ margin: '0.5rem 0', fontSize: '1rem', color: '#fff', opacity: 0.9 }}>{conversionStatus}</p>
-              {/* Progress Bar */}
-              <div style={{
-                width: '100%',
-                height: '8px',
-                backgroundColor: '#222',
-                borderRadius: '4px',
-                overflow: 'hidden',
-                margin: '16px 0',
-              }}>
-                <div style={{
-                  width: `${conversionProgress}%`,
-                  height: '100%',
-                  backgroundColor: 'var(--color-accent)',
-                  borderRadius: '4px',
-                  transition: 'width 0.3s',
-                }} />
-              </div>
-              <div style={{ fontSize: '0.9rem', color: '#fff', opacity: 0.7, marginBottom: '1rem' }}>
+              <div className="midi-player-compact__conversion-info">
                 {conversionProgress.toFixed(0)}% complete
               </div>
               <button
                 onClick={handleCancelConversion}
-                className="blend-btn"
-                style={{
-                  background: '#ef4444',
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '10px 24px',
-                  fontWeight: 500,
-                  fontSize: 16,
-                  marginTop: 16,
-                }}
+                className="blend-btn midi-player-compact__cancel-btn"
               >
                 Cancel Conversion
               </button>

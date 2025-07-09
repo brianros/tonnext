@@ -2335,4 +2335,333 @@ svg {
   margin-top: 16px;
 }
 
+/* Settings Panel (BEM-like) */
+.settings-panel__tour {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-main);
+  border: 1px solid var(--color-accent);
+}
+.settings-panel__tour-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-highlight);
+}
+.settings-panel__tour-desc {
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-highlight);
+}
+.settings-panel__tour-btn {
+  background: var(--color-accent);
+  color: #fff;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+}
+.settings-panel__preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-accent);
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.25rem;
+  background: transparent;
+  transition: background 0.2s, border 0.2s;
+}
+.settings-panel__preset-btn.selected {
+  background: #222;
+  border-color: #fff;
+}
+.settings-panel__preset-name {
+  width: 5rem;
+  text-align: left;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.settings-panel__preset-color {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid #333;
+}
+
+/* Custom Palette Modal (BEM-like) */
+.custom-palette-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-palette-modal__container {
+  background: #222;
+  border-radius: 12px;
+  padding: 32px;
+  min-width: 340px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+  color: #fff;
+}
+.custom-palette-modal__title {
+  font-size: 2rem;
+  margin-bottom: 24px;
+}
+.custom-palette-modal__row {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.custom-palette-modal__label {
+  min-width: 90px;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+.custom-palette-modal__input {
+  width: 48px;
+  height: 32px;
+  border: none;
+  background: none;
+}
+.custom-palette-modal__value {
+  font-family: monospace;
+  font-size: 1rem;
+  margin-left: 8px;
+}
+.custom-palette-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+}
+.custom-palette-modal__btn {
+  padding: 0.5em 1.5em;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  border: none;
+  color: #fff;
+  background: #444;
+}
+.custom-palette-modal__btn--apply {
+  background: var(--color-main);
+  font-weight: bold;
+}
+
+/* Virtual Canvas Recorder (BEM-like) */
+.virtual-canvas-recorder__canvas {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  visibility: hidden;
+}
+.virtual-canvas-recorder__controls {
+  display: flex;
+  gap: 0.5rem;
+}
+.virtual-canvas-recorder__btn {
+  font-size: 0.9rem;
+  padding: 0.5em 1em;
+  border-radius: 0.375rem;
+  color: #fff;
+  background: #ff4444;
+}
+.virtual-canvas-recorder__btn--stop {
+  background: #444444;
+}
+.virtual-canvas-recorder__progress-bar {
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  height: 0.5rem;
+}
+.virtual-canvas-recorder__progress-inner {
+  background: #2563eb;
+  height: 0.5rem;
+  border-radius: 9999px;
+  transition: width 0.3s;
+}
+.virtual-canvas-recorder__progress-label {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+.virtual-canvas-recorder__info {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+.virtual-canvas-recorder__info-green {
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Virtual Recording Example (BEM-like) */
+.virtual-recording-example__canvas {
+  width: 100%;
+  height: 100%;
+  cursor: default;
+  touch-action: none;
+  pointer-events: auto;
+}
+.virtual-recording-example__export-btn {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.virtual-recording-example__export-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Tour Tooltip Buttons (BEM-like) */
+.tour-tooltip__btn {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.tour-tooltip__btn--highlight {
+  background: var(--color-highlight);
+  color: var(--color-main);
+}
+.tour-tooltip__btn--accent {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* Instrument Selector (BEM-like) */
+.instrument-selector__button {
+  min-width: 6vw;
+  width: 10vw;
+  max-width: 20vw;
+  padding-left: 16px;
+  padding-right: 16px;
+  height: 64px;
+  font-size: clamp(1rem, 2vw, 1.6rem);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.instrument-selector__icon-wrapper {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+.instrument-selector__arrow {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.instrument-selector__dropdown {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  z-index: 1000;
+  background: var(--color-main);
+  color: #fff;
+  min-width: 100%;
+  max-width: 100%;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  max-height: none;
+  overflow-y: visible;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  box-sizing: border-box;
+  aspect-ratio: 1/1;
+}
+.instrument-selector__option {
+  aspect-ratio: 1/1;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background: var(--color-main);
+  color: #fff;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 0.85rem;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+}
+.instrument-selector__option.selected {
+  background: var(--color-highlight);
+  color: var(--color-main);
+}
+.instrument-selector__option:hover,
+.instrument-selector__option:focus {
+  background: var(--color-highlight);
+  color: var(--color-main);
+}
+.instrument-selector__icon {
+  width: 56px;
+  height: 56px;
+}
+.instrument-selector__icon.selected {
+  color: var(--color-main);
+}
+
+/* Loading Logo (BEM-like) */
+.loading-logo__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  transition: opacity 1.5s;
+}
+.loading-logo__svg {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+.loading-logo__node {
+  transition: fill 0.25s;
+}
+
 

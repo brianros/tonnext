@@ -108,7 +108,7 @@ export default function VirtualRecordingExample({
       <div className="relative w-full h-full">
         <canvas
           ref={canvasRef}
-          className="w-full h-full cursor-default"
+          className="virtual-recording-example__canvas"
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -123,7 +123,6 @@ export default function VirtualRecordingExample({
           }}
           onMouseLeave={handleMouseLeave}
           tabIndex={0}
-          style={{ touchAction: 'none', pointerEvents: 'auto' }}
         />
         <div id="note-labels" className="absolute inset-0 pointer-events-none" />
         <div id="triad-labels" className="absolute inset-0 pointer-events-none" />
@@ -152,7 +151,7 @@ export default function VirtualRecordingExample({
         <div className="flex gap-4 items-center">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="virtual-recording-example__export-btn"
           >
             <Video size={16} />
             <span>Export Video</span>

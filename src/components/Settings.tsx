@@ -110,18 +110,14 @@ export default function Settings({ onClose, onStartTour }: SettingsProps) {
       
       {/* Tour Section */}
       {onStartTour && (
-        <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--color-main)', border: '1px solid var(--color-accent)' }}>
-          <h4 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-highlight)' }}>Getting Started</h4>
-          <p className="text-sm mb-3" style={{ color: 'var(--color-highlight)' }}>
+        <div className="settings-panel__tour">
+          <h4 className="settings-panel__tour-title">Getting Started</h4>
+          <p className="settings-panel__tour-desc">
             New to Tonnext? Take a guided tour to learn about all the features and how to use them effectively.
           </p>
           <button
             onClick={() => { onStartTour(); onClose(); }}
-            className="px-4 py-2 text-sm font-medium rounded"
-            style={{
-              background: 'var(--color-accent)',
-              color: 'white',
-            }}
+            className="settings-panel__tour-btn"
           >
             Start Tour
           </button>
@@ -137,13 +133,13 @@ export default function Settings({ onClose, onStartTour }: SettingsProps) {
             {PALETTE_PRESETS.map((preset) => (
               <button
                 key={preset.name}
-                className="flex items-center space-x-2 w-full rounded border border-gray-500 hover:border-white p-1 mb-1"
+                className={`settings-panel__preset-btn${palette.main === preset.colors.main ? ' selected' : ''}`}
                 style={{ background: palette.main === preset.colors.main ? '#222' : 'transparent' }}
                 onClick={() => handlePreset(preset.colors)}
               >
-                <span className="w-20 text-left text-white text-xs font-bold">{preset.name}</span>
+                <span className="settings-panel__preset-name">{preset.name}</span>
                 {Object.values(preset.colors).map((color, _) => (
-                  <span key={_} className="inline-block w-6 h-6 rounded" style={{ background: color, border: '1px solid #333' }} />
+                  <span key={_} className="settings-panel__preset-color" style={{ background: color }} />
                 ))}
               </button>
             ))}

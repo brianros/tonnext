@@ -282,11 +282,7 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
               {step > 0 && (
                 <button
                   onClick={handlePrevious}
-                  className="px-4 py-2 text-sm font-medium rounded"
-                  style={{
-                    background: 'var(--color-highlight)',
-                    color: 'var(--color-main)',
-                  }}
+                  className="tour-tooltip__btn tour-tooltip__btn--highlight"
                 >
                   Previous
                 </button>
@@ -294,11 +290,7 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
               
               <button
                 onClick={handleNext}
-                className="px-4 py-2 text-sm font-medium rounded"
-                style={{
-                  background: 'var(--color-accent)',
-                  color: 'white',
-                }}
+                className="tour-tooltip__btn tour-tooltip__btn--accent"
               >
                 {step === TOUR_STEPS.length - 1 ? 'Finish' : 'Next'}
               </button>

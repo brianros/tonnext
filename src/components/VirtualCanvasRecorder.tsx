@@ -426,39 +426,22 @@ export default function VirtualCanvasRecorder({
       {/* Hidden virtual canvas */}
       <canvas
         ref={virtualCanvasRef}
-        style={{ 
-          position: 'absolute', 
-          left: '-9999px', 
-          top: '-9999px',
-          visibility: 'hidden'
-        }}
+        className="virtual-canvas-recorder__canvas"
       />
       
       {/* Controls */}
-      <div className="flex gap-2">
+      <div className="virtual-canvas-recorder__controls">
         {!isRecording ? (
           <button
             onClick={startVirtualRecording}
-            className="blend-btn"
-            style={{
-              fontSize: '0.9rem',
-              padding: '0.5em 1em',
-              backgroundColor: '#ff4444',
-              color: 'white'
-            }}
+            className="blend-btn virtual-canvas-recorder__btn"
           >
             <Video size={16} /> Start Virtual Recording{includeAudio ? ' with Audio' : ''}
           </button>
         ) : (
           <button
             onClick={stopRecording}
-            className="blend-btn"
-            style={{
-              fontSize: '0.9rem',
-              padding: '0.5em 1em',
-              backgroundColor: '#444444',
-              color: 'white'
-            }}
+            className="blend-btn virtual-canvas-recorder__btn virtual-canvas-recorder__btn--stop"
           >
             <Square size={16} /> Stop Recording
           </button>
@@ -468,12 +451,12 @@ export default function VirtualCanvasRecorder({
       {/* Progress bar */}
       {isRecording && (
         <div className="w-full">
-          <div className="text-sm text-gray-600 mb-1">
+          <div className="virtual-canvas-recorder__progress-label">
             Recording Progress: {progress.toFixed(1)}%
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="virtual-canvas-recorder__progress-bar">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="virtual-canvas-recorder__progress-inner"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -481,7 +464,7 @@ export default function VirtualCanvasRecorder({
       )}
 
       {/* Recording info */}
-      <div className="text-xs text-gray-500 space-y-1">
+      <div className="virtual-canvas-recorder__info space-y-1">
         <div>Duration: {duration}s</div>
         <div>Speed: {speedMultiplier}x</div>
         <div>Frame rate: {targetFrameRate}fps</div>
@@ -490,7 +473,7 @@ export default function VirtualCanvasRecorder({
         <div>Zoom: {Math.round(zoom * 100)}%</div>
         <div>Estimated recording time: {(duration / speedMultiplier).toFixed(1)}s</div>
         {includeAudio && (
-          <div className="text-green-600"><Music size={16} /> Audio will be included in recording</div>
+          <div className="virtual-canvas-recorder__info-green"><Music size={16} /> Audio will be included in recording</div>
         )}
       </div>
     </div>

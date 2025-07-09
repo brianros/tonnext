@@ -126,8 +126,9 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
       <button
         className="blend-btn"
         style={{ 
-          minWidth: '120px', 
-          width: '120px', 
+          minWidth: '6vw',
+          width: '10vw',
+          maxWidth: '20vw',
           paddingLeft: 16, 
           paddingRight: 16,
           height: '64px',
@@ -165,8 +166,8 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
             fontSize: '0.85rem',
             fontWeight: 500,
             textTransform: 'uppercase',
-            maxHeight: 500,
-            overflowY: 'auto',
+            maxHeight: 'none',
+            overflowY: 'visible',
             padding: 0,
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
@@ -184,31 +185,30 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
               onClick={() => handleInstrumentSelect(instrument)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { handleInstrumentSelect(instrument); }}}
               style={{
-                padding: '0.15em 0.7em',
+                aspectRatio: '1/1',
+                width: '100%',
                 cursor: 'pointer',
                 background: selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'var(--color-main)',
                 color: selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff',
                 border: 'none',
                 transition: 'background 0.2s, color 0.2s',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                width: '100%',
-                boxSizing: 'border-box',
-                fontSize: '0.85rem',
-                minHeight: undefined,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxSizing: 'border-box',
+                fontSize: '0.85rem',
+                minHeight: 0,
+                minWidth: 0,
               }}
-              className="blend-btn"
+              className={`blend-btn${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-highlight)'; e.currentTarget.style.color = 'var(--color-main)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'var(--color-main)'; e.currentTarget.style.color = selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff'; }}
               title={instrument.name}
             >
-              <div style={{ width: '80%', height: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <instrument.icon size={32} />
-              </div>
+              <instrument.icon 
+                size={32} 
+                className={`instrument-icon${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
+              />
             </div>
           ))}
         </div>

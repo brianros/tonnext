@@ -5,6 +5,7 @@ import { VirtualTonnetz } from './VirtualTonnetz';
 import type { MidiData } from '@/hooks/useMidiPlayer';
 import { Monitor, Smartphone, Tv, Square, RectangleHorizontal } from 'lucide-react';
 import { useMidiContext } from '@/contexts/MidiContext';
+import { useNotation } from '@/contexts/NotationContext';
 
 interface ExportVideoModalProps {
   isOpen: boolean;
@@ -180,6 +181,7 @@ export default function ExportVideoModal({
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
   const { getMidiPlayerState } = useMidiContext();
+  const { getNoteName } = useNotation();
   const playerState = getMidiPlayerState();
   
   const [settings, setSettings] = useState<ExportSettings>({
@@ -261,7 +263,7 @@ export default function ExportVideoModal({
     const density = Math.round(baseDensity / settings.zoom);
     
     // Always create a new VirtualTonnetz instance after resizing
-    virtualTonnetzRef.current = new VirtualTonnetz(previewCanvas, ctx, { mode, chordType, density });
+    virtualTonnetzRef.current = new VirtualTonnetz(previewCanvas, ctx, { mode, chordType, density, getNoteName });
     
     // Render a sample frame (at 0 seconds or current time)
     if (virtualTonnetzRef.current && midiData) {

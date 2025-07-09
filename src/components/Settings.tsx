@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useNotation } from '@/contexts/NotationContext';
 
 interface SettingsProps {
   onClose: () => void;
@@ -79,67 +80,55 @@ const PALETTE_PRESETS = [
 ];
 
 export default function Settings({ onClose, onStartTour }: SettingsProps) {
-  const [palette, setPalette] = useState(DEFAULT_PALETTE);
-
-  const handlePaletteChange = (key: keyof typeof DEFAULT_PALETTE, value: string) => {
-    setPalette(p => {
-      const next = { ...p, [key]: value };
-      document.documentElement.style.setProperty(`--color-${key}`, value);
-      return next;
-    });
-  };
-
-  const handlePreset = (preset: typeof PALETTE_PRESETS[number]['colors']) => {
-    setPalette(preset);
-    Object.entries(preset).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(`--color-${key}`, value);
-    });
-  };
+  const { notationType, setNotationType } = useNotation();
 
   return (
-    <div className="bg-gray-700 rounded-lg p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Settings</h3>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white"
-        >
-          ✕
-        </button>
-      </div>
-      
-      {/* Tour Section */}
-      {onStartTour && (
-        <div className="settings-panel__tour">
-          <h4 className="settings-panel__tour-title">Getting Started</h4>
-          <p className="settings-panel__tour-desc">
-            New to Tonnext? Take a guided tour to learn about all the features and how to use them effectively.
-          </p>
-          <button
-            onClick={() => { onStartTour(); onClose(); }}
-            className="settings-panel__tour-btn"
-          >
-            Start Tour
-          </button>
-        </div>
-      )}
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Color Palette
-          </label>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-2 items-center">
-            <span className="text-gray-200">Main</span>
-            <input type="color" value={palette.main} onChange={e => handlePaletteChange('main', e.target.value)} />
-            <span className="text-gray-200">Highlight</span>
-            <input type="color" value={palette.highlight} onChange={e => handlePaletteChange('highlight', e.target.value)} />
-            <span className="text-gray-200">Accent</span>
-            <input type="color" value={palette.accent} onChange={e => handlePaletteChange('accent', e.target.value)} />
-            <span className="text-gray-200">Hover</span>
-            <input type="color" value={palette.hover} onChange={e => handlePaletteChange('hover', e.target.value)} />
-            <span className="text-gray-200">Hover2</span>
-            <input type="color" value={palette.hover2} onChange={e => handlePaletteChange('hover2', e.target.value)} />
+    <div className="export-modal__content" style={{ minWidth: 320, maxWidth: 420, margin: '0 auto', padding: 0 }}>
+      <button
+        onClick={onClose}
+        className="export-modal-btn export-modal-close"
+        title="Close"
+      >
+        ×
+      </button>
+      <div style={{ padding: '32px 32px 24px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
+        <h3 className="export-modal-title" style={{ fontSize: 28, fontWeight: 700, marginBottom: 8, alignSelf: 'flex-start' }}>Settings</h3>
+        {onStartTour && (
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: '100%', background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 20, marginBottom: 8 }}>
+              <h4 style={{ fontWeight: 600, fontSize: 18, marginBottom: 8 }}>Getting Started</h4>
+              <p style={{ color: '#eee', fontSize: 15, marginBottom: 16 }}>
+                New to Tonnext? Take a guided tour to learn about all the features and how to use them effectively.
+              </p>
+              <button
+                onClick={() => { onStartTour(); onClose(); }}
+                className="blend-btn export-modal__export-btn"
+                style={{ width: '100%', fontSize: 20, fontWeight: 700, padding: '10px 0' }}
+              >
+                START TOUR
+              </button>
+            </div>
+          </div>
+        )}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ width: '100%' }}>
+            <label className="export-modal-label" style={{ marginBottom: 8, display: 'block' }}>Note Labels (Current: {notationType})</label>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => setNotationType('abc')}
+                className={`export-modal-aspect-btn${notationType === 'abc' ? ' selected' : ''}`}
+                style={{ flex: 1 }}
+              >
+                ABC (C, D, E...)
+              </button>
+              <button
+                onClick={() => setNotationType('solfège')}
+                className={`export-modal-aspect-btn${notationType === 'solfège' ? ' selected' : ''}`}
+                style={{ flex: 1 }}
+              >
+                Solfège (Do, Re, Mi...)
+              </button>
+            </div>
           </div>
         </div>
       </div>

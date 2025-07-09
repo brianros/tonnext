@@ -8,6 +8,7 @@ import { VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import { Music, Video } from 'lucide-react';
 import type { MidiData } from '@/hooks/useMidiPlayer';
+import { useNotation } from '@/contexts/NotationContext';
 
 interface VirtualRecordingExampleProps {
   mode: 'note' | 'chord' | 'arpeggio';
@@ -21,6 +22,7 @@ export default function VirtualRecordingExample({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
   const { getMidiPlayerState } = useMidiContext();
+  const { getNoteName } = useNotation();
   const midiState = getMidiPlayerState();
   
   const [recordingSettings, setRecordingSettings] = useState({
@@ -62,7 +64,8 @@ export default function VirtualRecordingExample({
         virtualTonnetzRef.current = new VirtualTonnetz(canvas, ctx, { 
           mode, 
           chordType,
-          density 
+          density,
+          getNoteName
         });
       }
     }

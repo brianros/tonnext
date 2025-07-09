@@ -84,9 +84,10 @@ export default function LoadModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="load-modal__close-btn"
+          className="export-modal-btn export-modal-close"
+          title="Close"
         >
-          <X size={20} />
+          ×
         </button>
 
         <h2 className="load-modal__title">Load Music</h2>

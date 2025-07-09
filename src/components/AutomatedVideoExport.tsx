@@ -4,6 +4,7 @@ import React, { useRef, useState, useCallback } from 'react';
 import { Square, Video } from 'lucide-react';
 import * as Tone from 'tone';
 import { useMidiContext } from '@/contexts/MidiContext';
+import { useNotation } from '@/contexts/NotationContext';
 import { useTonnext } from '@/hooks/useTonnext';
 import { VirtualTonnetz } from './VirtualTonnetz';
 import fixWebmDuration from 'webm-duration-fix';
@@ -22,6 +23,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
   canvasRef,
 }) => {
   const { getMidiPlayerState, isMuted } = useMidiContext();
+  const { getNoteName } = useNotation();
   const midiState = getMidiPlayerState();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -78,7 +80,7 @@ const AutomatedVideoExport: React.FC<AutomatedVideoExportProps> = ({
       // 3. Get the context and scale for DPR
       const ctx = virtualCanvas.getContext('2d');
       if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      virtualTonnetzRef.current = ctx ? new VirtualTonnetz(virtualCanvas, ctx, { mode, chordType }) : null;
+      virtualTonnetzRef.current = ctx ? new VirtualTonnetz(virtualCanvas, ctx, { mode, chordType, getNoteName }) : null;
       const synth = new Tone.PolySynth(Tone.Synth, Tone.Synth.getDefaults());
       const dest = Tone.context.createMediaStreamDestination();
       synth.connect(dest);

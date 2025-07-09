@@ -257,16 +257,17 @@ export default function Tour({ isOpen, onComplete, step, setStep }: TourProps) {
         }}
       >
         <div className="p-6">
-          <div className="flex justify-between items-start mb-4">
+          <button
+            onClick={handleSkip}
+            className="export-modal-btn export-modal-close"
+            title="Close"
+          >
+            ×
+          </button>
+          <div className="mb-4">
             <h3 className="text-lg font-bold text-white">
               {currentTourStep.title}
             </h3>
-            <button
-              onClick={handleSkip}
-              className="text-gray-400 hover:text-white text-xl font-bold"
-            >
-              ×
-            </button>
           </div>
           
           <p className="text-sm leading-relaxed mb-6">

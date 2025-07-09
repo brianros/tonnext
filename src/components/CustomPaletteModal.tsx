@@ -28,6 +28,13 @@ export default function CustomPaletteModal({ initialPalette, onApply, onCancel }
   return (
     <div className="custom-palette-modal__overlay">
       <div className="custom-palette-modal__container">
+        <button
+          onClick={onCancel}
+          className="export-modal-btn export-modal-close"
+          title="Close"
+        >
+          ×
+        </button>
         <h2 className="custom-palette-modal__title">Custom Palette</h2>
         <form onSubmit={e => { e.preventDefault(); onApply(palette); }}>
           {Object.keys(palette).map((key) => (

@@ -3,6 +3,7 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import type { MidiData, MidiNote, MidiChord } from '@/hooks/useMidiPlayer';
 import { useMidiContext } from '@/contexts/MidiContext';
+import { useNotation } from '@/contexts/NotationContext';
 import { VirtualTonnetz } from './VirtualTonnetz';
 import ExportVideoModal from './ExportVideoModal';
 import LoadModal from './LoadModal';
@@ -36,6 +37,7 @@ export default function MidiPlayerCompact({
 }: MidiPlayerCompactProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { getCanvasCallbacks, getMidiPlayerState, getMidiPlayerFunctions, isMuted, toggleMute } = useMidiContext();
+  const { getNoteName } = useNotation();
   
   // YouTube MP3 hook
   const { downloadMP3FromUrl } = useYouTubeMP3();
@@ -655,7 +657,8 @@ export default function MidiPlayerCompact({
     const virtualTonnetz = new VirtualTonnetz(hiddenCanvas, ctx, {
       mode: settings.mode || mode,
       chordType: settings.chordType || chordType,
-      density: Math.round(20 / (settings.zoom || 1.0))
+      density: Math.round(20 / (settings.zoom || 1.0)),
+      getNoteName
     });
 
     // Load watermark image

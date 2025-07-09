@@ -574,12 +574,14 @@ function HomeContent() {
 
         {/* Settings Modal */}
         {isSettingsOpen && (
-          <div className="export-modal-overlay" style={{ zIndex: 1000 }}>
-            <div className="export-modal" style={{ maxWidth: 400, width: '95vw', padding: 0, margin: 0 }}>
-              <Settings
-                onClose={() => setIsSettingsOpen(false)}
-                onStartTour={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
-              />
+          <div className="export-modal-overlay" onClick={e => { if (e.target === e.currentTarget) setIsSettingsOpen(false); }}>
+            <div className="export-modal-outer">
+              <div className="export-modal" style={{ borderRadius: 12, maxWidth: 500, width: '95vw', paddingTop: 32, paddingBottom: 0, padding: 0, margin: 0 }}>
+                <Settings
+                  onClose={() => setIsSettingsOpen(false)}
+                  onStartTour={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
+                />
+              </div>
             </div>
           </div>
         )}

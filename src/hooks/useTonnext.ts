@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
 import { useMidiContext } from '@/contexts/MidiContext';
+import { useNotation } from '@/contexts/NotationContext';
 import type { Instrument } from '@/components/InstrumentSelector';
 import { Piano } from 'lucide-react';
 
@@ -50,6 +51,7 @@ export function useTonnext(options: UseTonnextOptions) {
   
   // Get MIDI context for instrument settings
   const { getSelectedInstrument, isMuted } = useMidiContext();
+  const { getNoteName } = useNotation();
   
   // State
   // Initialize density with a safe default for SSR
@@ -359,8 +361,7 @@ export function useTonnext(options: UseTonnextOptions) {
       const active=activeRef.current[tone];
       
       // Draw note labels
-      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      const noteName = noteNames[tone % 12];
+      const noteName = getNoteName(tone);
       const fontSize = Math.max(12, Math.min(20, radius * 0.8));
       ctx.font = `bold ${fontSize}px Arial`;
       
@@ -390,7 +391,7 @@ export function useTonnext(options: UseTonnextOptions) {
       ctx.fillText(noteName, x, y);
       ctx.shadowBlur = 0;
     });
-  },[layout,activeRef]);
+  },[layout,activeRef,getNoteName]);
 
   // 4. drawNow
   const drawNow = useCallback(() => {

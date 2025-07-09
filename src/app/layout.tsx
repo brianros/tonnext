@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { MidiProvider } from "@/contexts/MidiContext";
+import { NotationProvider } from "@/contexts/NotationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,9 +33,11 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <MidiProvider>
-          <div className="min-h-screen bg-gray-900 text-white">
-            {children}
-          </div>
+          <NotationProvider>
+            <div className="min-h-screen bg-gray-900 text-white">
+              {children}
+            </div>
+          </NotationProvider>
         </MidiProvider>
       </body>
     </html>

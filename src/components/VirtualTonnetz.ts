@@ -10,6 +10,7 @@ interface VirtualTonnetzOptions {
   mode: 'note' | 'chord' | 'arpeggio';
   chordType: string;
   density?: number;
+  getNoteName?: (tone: number) => string;
 }
 
 // Constants from useTonnext
@@ -39,6 +40,7 @@ export class VirtualTonnetz {
   private dimensions: { width: number; height: number; unit: number };
   private density: number = 20;
   private layout: string = LAYOUT_RIEMANN;
+  private getNoteName: (tone: number) => string;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, options: VirtualTonnetzOptions) {
     this.canvas = canvas;
@@ -57,6 +59,12 @@ export class VirtualTonnetz {
       height: canvas.height,
       unit: (canvas.width + canvas.height) / this.density
     };
+    
+    // Initialize getNoteName function
+    this.getNoteName = options.getNoteName || ((tone: number) => {
+      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      return noteNames[tone % 12];
+    });
     
     this.buildToneGrid();
     this.drawGrid();
@@ -223,8 +231,7 @@ export class VirtualTonnetz {
       const active = this.activeNotes[tone];
       
       // Draw note labels
-      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-      const noteName = noteNames[tone % 12];
+      const noteName = this.getNoteName(tone);
       const fontSize = Math.max(12, Math.min(20, radius * 0.8));
       ctx.font = `bold ${fontSize}px Arial`;
       

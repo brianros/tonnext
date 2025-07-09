@@ -1490,18 +1490,22 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   background: var(--color-main);
   color: #fff;
   transition: background 0.2s, color 0.2s;
-  height: auto !important;
-  padding: 12px 8px !important;
-  min-height: 60px !important;
+  height: 100% !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
   line-height: 1.2;
   border-bottom: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
 }
 
-.instrument-selector-dropdown button svg {
-  width: 24px !important;
-  height: 24px !important;
-  color: inherit !important;
-}
+/* Instrument selector icons should be 100% of the button (grid cell) */
+
 .instrument-selector-dropdown button[aria-selected="true"],
 .instrument-selector-dropdown button:hover,
 .instrument-selector-dropdown button:active,
@@ -1547,22 +1551,16 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   display: inline !important;
 }
 
-/* Icon sizing for mobile - ensure square aspect ratio and full height */
+/* Icon centering for mobile */
 .load-icon, .export-icon, .theme-icon, .tour-icon, .playback-icon, .midi-player-compact svg {
-  width: calc(var(--header-footer-height) * 0.5) !important;
-  height: calc(var(--header-footer-height) * 0.5) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   margin: auto;
 }
 
-/* Player icons (Play, Pause, Square) - 60% of container size */
+/* Player icons centering */
 .midi-player-compact svg {
-  width: 60% !important;
-  height: 60% !important;
-  max-width: 60% !important;
-  max-height: 60% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1666,10 +1664,8 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   outline: none !important;
 }
 
-/* Icon sizing for header and player - 50% of container, centered */
+/* Icon centering for header and player */
 .load-icon, .export-icon, .theme-icon, .tour-icon, .midi-player-compact svg {
-  width: calc(var(--header-footer-height) * 0.5) !important;
-  height: calc(var(--header-footer-height) * 0.5) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1735,9 +1731,14 @@ footer .blend-btn {
   }
 }
 
-.tonnext-logo svg {
-  height: 50% !important;
+
+
+/* Universal icon sizing - 50% of container */
+svg {
   width: 50% !important;
+  height: 50% !important;
+  max-width: 50% !important;
+  max-height: 50% !important;
 }
 
 .instrument-icon {
@@ -1746,6 +1747,28 @@ footer .blend-btn {
 }
 .instrument-icon.selected {
   color: var(--color-main) !important;
+}
+
+.load-modal {
+  max-width: 480px;
+  width: 95vw;
+  max-height: 90vh;
+  margin: auto;
+  border-radius: 16px;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 24px 16px;
+  background: var(--color-main);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .load-modal {
+    max-width: 98vw;
+    padding: 12px 4px;
+  }
 }
 
 

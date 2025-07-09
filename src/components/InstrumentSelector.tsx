@@ -148,7 +148,7 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
       
       {isOpen && (
         <div
-          className="instrument-selector-dropdown"
+          className="custom-chord-dropdown instrument-selector-dropdown"
           style={{
             position: 'absolute',
             left: 0,
@@ -173,20 +173,23 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 0,
             boxSizing: 'border-box',
+            aspectRatio: '1/1',
           }}
           role="listbox"
         >
-          {INSTRUMENTS.map((instrument) => (
-            <div
+          {INSTRUMENTS.map(instrument => (
+            <button
               key={instrument.id}
               role="option"
               aria-selected={selectedInstrument.id === instrument.id}
               tabIndex={0}
               onClick={() => handleInstrumentSelect(instrument)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { handleInstrumentSelect(instrument); }}}
+              className={`blend-btn chord-option${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
               style={{
                 aspectRatio: '1/1',
                 width: '100%',
+                height: '100%',
                 cursor: 'pointer',
                 background: selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'var(--color-main)',
                 color: selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff',
@@ -199,17 +202,17 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
                 fontSize: '0.85rem',
                 minHeight: 0,
                 minWidth: 0,
+                padding: 0,
               }}
-              className={`blend-btn${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-highlight)'; e.currentTarget.style.color = 'var(--color-main)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'var(--color-main)'; e.currentTarget.style.color = selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff'; }}
               title={instrument.name}
             >
-              <instrument.icon 
-                size={32} 
+              <instrument.icon
+                size={56}
                 className={`instrument-icon${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
               />
-            </div>
+            </button>
           ))}
         </div>
       )}

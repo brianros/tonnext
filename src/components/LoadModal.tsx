@@ -91,17 +91,7 @@ export default function LoadModal({
       justifyContent: 'center',
       zIndex: 9999,
     }}>
-      <div style={{
-        backgroundColor: 'var(--color-main)',
-        color: '#fff',
-        padding: '2rem',
-        borderRadius: '12px',
-        maxWidth: '500px',
-        width: '90%',
-        maxHeight: '80vh',
-        overflow: 'auto',
-        position: 'relative',
-      }}>
+      <div className="load-modal">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -130,48 +120,56 @@ export default function LoadModal({
           <X size={20} />
         </button>
 
-        <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.5rem', textAlign: 'center' }}>
+        <h2 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', textAlign: 'center' }}>
           Load Music
         </h2>
 
         {/* Tab buttons */}
         <div style={{
           display: 'flex',
-          marginBottom: '1.5rem',
+          marginBottom: '1rem',
           borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
         }}>
           <button
             onClick={() => setActiveTab('file')}
             style={{
               flex: 1,
-              padding: '0.75rem',
+              padding: '0.5rem',
               background: activeTab === 'file' ? 'var(--color-accent)' : 'transparent',
               border: 'none',
               color: '#fff',
               cursor: 'pointer',
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               fontWeight: activeTab === 'file' ? 'bold' : 'normal',
               borderBottom: activeTab === 'file' ? '2px solid var(--color-accent)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
             }}
           >
-            <FolderUp size={16} style={{ marginRight: '0.5rem', display: 'inline' }} />
+            <FolderUp size={20} style={{ marginRight: '0.3rem', display: 'inline' }} />
             File Upload
           </button>
           <button
             onClick={() => setActiveTab('youtube')}
             style={{
               flex: 1,
-              padding: '0.75rem',
+              padding: '0.5rem',
               background: activeTab === 'youtube' ? 'var(--color-accent)' : 'transparent',
               border: 'none',
               color: '#fff',
               cursor: 'pointer',
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               fontWeight: activeTab === 'youtube' ? 'bold' : 'normal',
               borderBottom: activeTab === 'youtube' ? '2px solid var(--color-accent)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
             }}
           >
-            <Youtube size={16} style={{ marginRight: '0.5rem', display: 'inline' }} />
+            <Youtube size={20} style={{ marginRight: '0.3rem', display: 'inline' }} />
             YouTube
           </button>
         </div>
@@ -195,20 +193,22 @@ export default function LoadModal({
               style={{
                 border: '2px dashed rgba(255, 255, 255, 0.3)',
                 borderRadius: '8px',
-                padding: '2rem',
+                padding: '1.2rem',
                 textAlign: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 backgroundColor: dragActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                 borderColor: dragActive ? 'var(--color-accent)' : 'rgba(255, 255, 255, 0.3)',
+                maxWidth: '340px',
+                margin: '0 auto',
               }}
               onClick={handleUploadClick}
             >
-              <FolderUp size={48} style={{ marginBottom: '1rem', opacity: 0.7 }} />
-              <p style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>
+              <FolderUp size={38} style={{ marginBottom: '0.7rem', opacity: 0.7 }} />
+              <p style={{ margin: '0 0 0.3rem 0', fontSize: '1rem' }}>
                 {dragActive ? 'Drop your file here' : 'Click to browse or drag & drop'}
               </p>
-              <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.7 }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
                 Supports MIDI files and audio files (MP3, WAV, OGG, FLAC, etc.)
               </p>
             </div>

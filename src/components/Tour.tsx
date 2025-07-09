@@ -34,6 +34,34 @@ const TOUR_STEPS: TourStep[] = [
     position: 'bottom'
   },
   {
+    id: 'load-button',
+    title: 'Load Files',
+    content: 'Click the Load button to upload MIDI files, audio files, or YouTube URLs. Tonnext can convert audio to MIDI automatically. (aria-label: Load Files)',
+    target: '.midi-player-compact button:has(.load-icon)',
+    position: 'bottom'
+  },
+  {
+    id: 'playback-controls',
+    title: 'Playback Controls',
+    content: 'Use Play/Pause, Stop, and Mute buttons to control playback. The progress bar shows your position in the track. (aria-label: Playback Controls)',
+    target: '.midi-player-compact button:has(.playback-icon)',
+    position: 'bottom'
+  },
+  {
+    id: 'progress-bar',
+    title: 'Progress Bar',
+    content: 'Drag the progress bar to jump to any point in your music. The time display shows current position and total duration. (aria-label: Progress Bar)',
+    target: '.midi-player-compact__progress-bar',
+    position: 'bottom'
+  },
+  {
+    id: 'export-button',
+    title: 'Export Video',
+    content: 'Create beautiful videos of your music visualization with custom settings for aspect ratio, quality, and timing. (aria-label: Export Video)',
+    target: '.midi-player-compact button:has(.export-icon)',
+    position: 'bottom'
+  },
+  {
     id: 'theme-settings',
     title: 'Theme & Appearance',
     content: 'Customize the visual theme with preset color palettes or create your own custom colors to match your style. (aria-label: Theme Settings)',
@@ -87,20 +115,6 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Settings Modal',
     content: 'Here you can adjust advanced settings for Tonnext. (aria-label: Settings)',
     target: '.export-modal[role="dialog"], [aria-label="Settings"]',
-    position: 'center'
-  },
-  {
-    id: 'custom-palette-modal',
-    title: 'Custom Palette Modal',
-    content: 'Create and apply your own custom color palette for the visualization. (aria-label: Custom Palette Modal)',
-    target: '.custom-palette-modal__container',
-    position: 'center'
-  },
-  {
-    id: 'loading-logo',
-    title: 'Loading Logo',
-    content: 'This animated logo appears while Tonnext is loading or processing. (aria-label: Loading Logo)',
-    target: '.loading-logo__overlay',
     position: 'center'
   },
   {

@@ -399,6 +399,16 @@ footer > div {
 .blend-btn.tonnext-title {
   text-transform: none !important;
 }
+
+/* Remove hover effect from Tonnext title */
+.blend-btn.tonnext-title:hover,
+.blend-btn.tonnext-title:focus,
+.blend-btn.tonnext-title:active {
+  background: transparent !important;
+  color: inherit !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
 .tonnext-logo {
   display: none;
   max-width: 12vw;
@@ -1430,9 +1440,7 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 }
 
 /* The parent div is the clickable area for the logo/title */
-.flex.items-center.space-x-4.flex-shrink-0 > div:hover .tonnext-logo {
-  animation: tonnext-logo-spin 16s linear infinite;
-}
+/* Removed hover effect on tonnext logo */
 
 /* Custom chord dropdown styles */
 .custom-chord-dropdown {

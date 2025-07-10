@@ -96,7 +96,7 @@ const CHORD_GROUPS = [
 
 function HomeContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [mode, setMode] = useState<'note' | 'chord' | 'arpeggio'>('arpeggio');
+  const [mode, setMode] = useState<'note' | 'chord' | 'arpeggio'>('chord');
   const [chordType, setChordType] = useState<string>('major');
   const [appearanceDropdown, setAppearanceDropdown] = useState(false);
   const appearanceBtnRef = useRef<HTMLButtonElement>(null);

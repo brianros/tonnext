@@ -602,11 +602,10 @@ export function useTonnext(options: UseTonnextOptions) {
       // Stop any previous arpeggio
       arpeggioTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
       arpeggioTimeoutsRef.current = [];
-      // Sequentially play each note, highlight as played, keep all highlighted, then play full chord, then clear
+      // Sequentially play each note, highlight as played, then clear highlights
       const root = clickedTone;
       const intervals = getChordIntervals(options.chordType);
       const notesIdx = intervals.map(i => (root + i) % 12);
-      const notes = notesIdx.map(i => TONE_NAMES[i] + '4');
       // Clear all highlights first
       for (let i = 0; i < 12; i++) activeRef.current[i] = false;
       draw(true);
@@ -619,16 +618,11 @@ export function useTonnext(options: UseTonnextOptions) {
           triggerPolySynthAttackRelease(TONE_NAMES[idx] + '4', arpeggioStep / 1000); // duration in seconds
         }, step * arpeggioStep));
       });
-      // After arpeggio, add a pause (double the previous pause)
-      const arpeggioPause = arpeggioStep * 2; // ms (double the previous pause)
-      arpeggioTimeoutsRef.current.push(setTimeout(() => {
-        triggerPolySynthAttackRelease(notes, (arpeggioStep * 3) / 1000); // chord duration = step * 3
-      }, notesIdx.length * arpeggioStep + arpeggioPause));
-      // After full chord, clear highlights
+      // After arpeggio, clear highlights
       arpeggioTimeoutsRef.current.push(setTimeout(() => {
         notesIdx.forEach(i => { activeRef.current[i] = false; });
         draw(true);
-      }, notesIdx.length * arpeggioStep + arpeggioPause + arpeggioStep * 3));
+      }, notesIdx.length * arpeggioStep + arpeggioStep));
     }
   }, [drawGrid, dimensions, options, synthRef, polySynthRef, activeRef, arpeggioTimeoutsRef, triggerSynthAttackRelease, triggerPolySynthAttackRelease, getSelectedInstrument, updateSynthsWithInstrument]); // eslint-disable-line react-hooks/exhaustive-deps
 

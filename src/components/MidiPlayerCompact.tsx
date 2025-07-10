@@ -185,7 +185,7 @@ export default function MidiPlayerCompact({
   // Remove Example Song button and load example MIDI by default
   useEffect(() => {
     if (!playerState?.midiData && playerFunctions) {
-      playerFunctions.loadMidiFromUrl('/example.mid', 'Example MIDI');
+      playerFunctions.loadMidiFromUrl('/Great Fairy\'s fountain.mid', 'Great Fairy\'s Fountain');
     }
   }, [playerState?.midiData, playerFunctions]);
 

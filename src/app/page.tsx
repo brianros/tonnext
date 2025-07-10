@@ -10,7 +10,7 @@ import CustomPaletteModal, { Palette } from '@/components/CustomPaletteModal';
 import LoadingLogo from '@/components/LoadingLogo';
 import Tour from '@/components/Tour';
 import InstrumentSelector, { Instrument } from '@/components/InstrumentSelector';
-import { Piano } from 'lucide-react';
+import { Music3, Music4, ListMusic, Settings as SettingsIcon, Piano } from 'lucide-react';
 import React from 'react';
 
 // Palette presets must match those in Settings
@@ -235,6 +235,7 @@ function HomeContent() {
     const [open, setOpen] = useState(false);
     const btnRef = useRef<HTMLButtonElement | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
+    const closeTimeout = useRef<NodeJS.Timeout | null>(null);
 
     // Close on outside click
     useEffect(() => {
@@ -268,12 +269,18 @@ function HomeContent() {
     }
 
     return (
-      <div className="dropdown-container" style={{ position: 'relative' }}>
+      <div className="dropdown-container" style={{ position: 'relative' }}
+        onMouseLeave={() => { closeTimeout.current = setTimeout(() => setOpen(false), 120); }}
+        onMouseEnter={() => { if (closeTimeout.current) clearTimeout(closeTimeout.current); }}
+        onBlur={e => { if (!menuRef.current?.contains(e.relatedTarget) && !btnRef.current?.contains(e.relatedTarget)) setOpen(false); }}
+        tabIndex={-1}
+      >
         <button
           ref={btnRef}
           className="dropdown-button blend-btn"
           style={{
-            width: '200px',
+            width: '320px',
+            minWidth: '320px',
             height: '64px',
             fontSize: 'clamp(1rem, 2vw, 1.6rem)',
             textTransform: 'uppercase',
@@ -293,8 +300,7 @@ function HomeContent() {
           tabIndex={0}
           onMouseEnter={() => setOpen(true)}
           onFocus={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-          onBlur={() => setOpen(false)}
+          // Removed onMouseLeave and onBlur from button
         >
           <span style={{ flex: 1, textAlign: 'left' }}>{selectedLabel || 'Select Chord'}</span>
           <span style={{ fontSize: '1.2rem', lineHeight: 1, transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▲</span>
@@ -532,9 +538,7 @@ function HomeContent() {
                 aria-label="Settings"
                 onClick={() => setIsSettingsOpen(true)}
               >
-                <svg className="options-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M19.14,12.94a7.07,7.07,0,0,0,0-1.88l2.11-1.65a.5.5,0,0,0,.12-.64l-2-3.46a.5.5,0,0,0-.61-.22l-2.49,1a7,7,0,0,0-1.62-.94l-.38-2.65A.5.5,0,0,0,13,2.5H11a.5.5,0,0,0-.5.42l-.38,2.65a7,7,0,0,0-1.62.94l-2.49-1a.5.5,0,0,0-.61.22l-2,3.46a.5.5,0,0,0,.12.64l2.11,1.65a7.07,7.07,0,0,0,0,1.88L2.12,14.59a.5.5,0,0,0-.12.64l2,3.46a.5.5,0,0,0,.61.22l2.49-1a7,7,0,0,0,1.62.94l.38,2.65A.5.5,0,0,0,11,21.5h2a.5.5,0,0,0,.5-.42l.38-2.65a7,7,0,0,0,1.62-.94l2.49,1a.5.5,0,0,0,.61-.22l2-3.46a.5.5,0,0,0-.12-.64ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
-                </svg>
+                <SettingsIcon className="playback-icon" />
               </button>
             </div>
           </div>
@@ -562,9 +566,9 @@ function HomeContent() {
               onInstrumentChange={handleInstrumentChange} 
               aria-label="Instrument Selector"
             />
-            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')} aria-label="Note Mode">Note</button>
-            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')} aria-label="Chord Mode">Chord</button>
-            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')} aria-label="Arpeggio Mode">Arpeggio</button>
+            <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')} aria-label="Note Mode"><Music3 className="playback-icon" /></button>
+            <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')} aria-label="Chord Mode"><Music4 className="playback-icon" /></button>
+            <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')} aria-label="Arpeggio Mode"><ListMusic className="playback-icon" /></button>
             <ChordDropdown value={chordType} onChange={setChordType} aria-label="Chord Type Selector" />
           </div>
         </footer>

@@ -45,6 +45,7 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -111,10 +112,13 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
   };
 
   return (
-    <div 
-      className="dropdown-container" 
+    <div
+      className="dropdown-container"
       ref={dropdownRef}
       style={{ position: 'relative' }}
+      onMouseLeave={() => { closeTimeout.current = setTimeout(() => setIsOpen(false), 250); }}
+      onMouseEnter={() => { if (closeTimeout.current) clearTimeout(closeTimeout.current); }}
+      tabIndex={-1}
     >
       <button
         ref={buttonRef}
@@ -137,11 +141,10 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
         }}
         onMouseEnter={() => setIsOpen(true)}
         onFocus={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-        onBlur={() => setIsOpen(false)}
+        // Removed onMouseLeave and onBlur from button
       >
         <span className="instrument-selector__icon-wrapper">
-          <selectedInstrument.icon size={18} />
+          <selectedInstrument.icon className="playback-icon" />
         </span>
         <span style={{ fontSize: '1.2rem', lineHeight: 1, transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▲</span>
       </button>

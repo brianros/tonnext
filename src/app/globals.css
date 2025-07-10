@@ -1,5 +1,3 @@
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 :root {
@@ -2684,6 +2682,98 @@ header .tour-btn svg,
 /* Instrument selector icon styling */
 .instrument-selector__icon.selected {
   color: var(--color-main);
+}
+
+footer .blend-btn {
+  font-size: 1rem !important;
+  width: var(--header-footer-height) !important;
+  height: var(--header-footer-height) !important;
+  min-width: var(--header-footer-height) !important;
+  min-height: var(--header-footer-height) !important;
+  max-width: var(--header-footer-height) !important;
+  max-height: var(--header-footer-height) !important;
+  aspect-ratio: 1/1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  flex: 0 0 var(--header-footer-height) !important;
+}
+
+/* Remove aspect-ratio for dropdown-button and chord-select */
+.dropdown-button, .chord-select {
+  aspect-ratio: unset !important;
+  min-width: unset !important;
+  max-width: unset !important;
+  width: unset !important;
+  height: unset !important;
+}
+
+footer .dropdown-button, footer .chord-select {
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: 420px !important;
+  height: 56px !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: unset !important;
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Only apply dynamic width to chord select, not instrument selector */
+footer .chord-select {
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: 420px !important;
+  height: 56px !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: unset !important;
+  flex: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Restore instrument selector button style */
+.instrument-selector__button {
+  width: 180px;
+  min-width: 120px;
+  max-width: 260px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+}
+
+.playback-icon {
+  width: 1.7em !important;
+  height: 1.7em !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto !important;
 }
 
 

@@ -133,6 +133,9 @@ function HomeContent() {
   // Add state for dropdown
   const [tonnextDropdownOpen, setTonnextDropdownOpen] = useState(false);
 
+  // Add loading state for debugging
+  const [isAppLoaded, setIsAppLoaded] = useState(false);
+
   const handleLoadingLogoFinish = () => {
     setShowLoadingLogo(false);
   };
@@ -142,6 +145,15 @@ function HomeContent() {
   
   // Get MIDI context for instrument updates
   const { setSelectedInstrument: setContextInstrument, getMidiPlayerFunctions } = useMidiContext();
+
+  // Set app as loaded after a short delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAppLoaded(true);
+      console.log('App loaded successfully');
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -224,11 +236,43 @@ function HomeContent() {
   useEffect(() => {
     // Set --vh for mobile viewport height fix
     function setVh() {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      console.log('Mobile viewport height set to:', vh, 'px (window height:', window.innerHeight, ')');
+      
+      // Also set a fallback for devices that don't support CSS custom properties well
+      if (window.innerWidth <= 768) {
+        document.body.style.height = `${window.innerHeight}px`;
+        document.documentElement.style.height = `${window.innerHeight}px`;
+      }
     }
     setVh();
     window.addEventListener('resize', setVh);
     return () => window.removeEventListener('resize', setVh);
+  }, []);
+
+  // Add mobile detection and debugging
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    console.log('Device detected as:', isMobile ? 'mobile' : 'desktop', 'width:', window.innerWidth);
+    
+    // Check for mobile-specific issues
+    if (isMobile) {
+      console.log('Mobile device detected, checking for potential issues...');
+      
+      // Check if touch events are supported
+      const touchSupported = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      console.log('Touch events supported:', touchSupported);
+      
+      // Check if audio context is supported
+      const audioContextSupported = 'AudioContext' in window || 'webkitAudioContext' in window;
+      console.log('Audio context supported:', audioContextSupported);
+      
+      // Check if canvas is supported
+      const canvas = document.createElement('canvas');
+      const canvasSupported = !!canvas.getContext;
+      console.log('Canvas supported:', canvasSupported);
+    }
   }, []);
 
   function ChordDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -387,7 +431,33 @@ function HomeContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-screen flex flex-col" style={{ 
+      height: 'calc(var(--vh, 1vh) * 100)', 
+      position: 'relative', 
+      display: 'flex', 
+      flexDirection: 'column' 
+    }}>
+      {/* Simple loading indicator for debugging */}
+      {!isAppLoaded && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'var(--color-main)',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          fontSize: '1.2rem',
+          fontWeight: 'bold'
+        }}>
+          Loading Tonnext...
+        </div>
+      )}
+      
       {showLoadingLogo && (
         <LoadingLogo onFinish={handleLoadingLogoFinish} />
       )}

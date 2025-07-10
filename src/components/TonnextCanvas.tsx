@@ -83,8 +83,6 @@ export default function TonnextCanvas({
     return () => window.removeEventListener('tour-demo-chord', handler);
   }, [handleMidiChordStart, handleMidiChordEnd]);
 
-
-
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
     
@@ -109,6 +107,40 @@ export default function TonnextCanvas({
     handleMouseMove(x, y);
   };
 
+  // Touch event handlers for mobile
+  const handleTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    if (!canvasRef.current) return;
+    
+    // Check if MIDI is playing and disable touches if it is
+    const midiState = getMidiPlayerState();
+    if (midiState?.isPlaying) {
+      return; // Disable touches while MIDI is playing
+    }
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = event.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    handleCanvasClick(x, y);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    if (!canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = event.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    handleMouseMove(x, y);
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    handleMouseLeave();
+  };
+
   return (
     <div className="relative w-full h-full">
       <canvas
@@ -117,6 +149,9 @@ export default function TonnextCanvas({
         onClick={handleClick}
         onMouseMove={handleMove}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         tabIndex={0}
         style={{ touchAction: 'none', pointerEvents: 'auto' }}
       />

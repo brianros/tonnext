@@ -422,91 +422,116 @@ export function useTonnext(options: UseTonnextOptions) {
 
   // 6. initTonnext
   const initTonnext = useCallback(async (canvas: HTMLCanvasElement) => {
-    canvasRef.current = canvas;
-    ctxRef.current = canvas.getContext('2d');
-    
-    if (!ctxRef.current) return;
+    try {
+      console.log('Initializing Tonnext canvas...');
+      canvasRef.current = canvas;
+      ctxRef.current = canvas.getContext('2d');
+      
+      if (!ctxRef.current) {
+        console.error('Failed to get canvas context');
+        return;
+      }
 
-    // Initialize audio
-    synthRef.current = new Tone.Synth().toDestination();
-    polySynthRef.current = new Tone.PolySynth().toDestination();
-    
-    // Apply initial instrument settings
-    const selectedInstrument = getSelectedInstrument();
-    if (selectedInstrument) {
-      await updateSynthsWithInstrument(selectedInstrument);
-    } else {
-      // Default piano settings
-      const defaultInstrument: Instrument = {
-        id: 'piano',
-        name: 'Piano',
-        category: 'Keys',
-        icon: Piano,
-        toneType: 'synth',
-        toneOptions: {
-          oscillator: { type: 'triangle' },
-          envelope: {
-            attack: 0.02,
-            decay: 0.1,
-            sustain: 0.3,
-            release: 1
-          }
+      // Initialize audio
+      try {
+        console.log('Initializing audio synths...');
+        synthRef.current = new Tone.Synth().toDestination();
+        polySynthRef.current = new Tone.PolySynth().toDestination();
+        
+        // Apply initial instrument settings
+        const selectedInstrument = getSelectedInstrument();
+        if (selectedInstrument) {
+          await updateSynthsWithInstrument(selectedInstrument);
+        } else {
+          // Default piano settings
+          const defaultInstrument: Instrument = {
+            id: 'piano',
+            name: 'Piano',
+            category: 'Keys',
+            icon: Piano,
+            toneType: 'synth',
+            toneOptions: {
+              oscillator: { type: 'triangle' },
+              envelope: {
+                attack: 0.02,
+                decay: 0.1,
+                sustain: 0.3,
+                release: 1
+              }
+            }
+          };
+          await updateSynthsWithInstrument(defaultInstrument);
         }
-      };
-      await updateSynthsWithInstrument(defaultInstrument);
+        console.log('Audio synths initialized successfully');
+      } catch (audioError) {
+        console.error('Failed to initialize audio synths:', audioError);
+        // Continue without audio - the app should still work
+      }
+      
+      // Initialize tones
+      tonesRef.current = Array.from({ length: 12 }, (_, i) => ({
+        pitch: i,
+        name: TONE_NAMES[i],
+        state: STATE_OFF,
+        byChannel: {},
+        channelsSust: {},
+        released: null,
+        cache: {}
+      }));
+
+      // Initialize channels
+      channelsRef.current = Array.from({ length: 17 }, (_, i) => ({
+        number: i,
+        pitches: {},
+        sustTones: {},
+        sustain: false
+      }));
+
+      // Initialize tone grid
+      toneGridRef.current = Array.from({ length: 12 }, () => []);
+
+      // Set canvas size to parent container size
+      const parent = canvas.parentElement;
+      const width = parent ? parent.clientWidth : window.innerWidth;
+      const height = parent ? parent.clientHeight : window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw initial background
+      const ctx = ctxRef.current;
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      setIsInitialized(true);
+      console.log('Tonnext canvas initialized successfully');
+      // Call rebuild directly instead of through the callback to avoid circular dependency
+      const unit = (width + height) / density;
+      
+      setDimensions({ width, height, unit });
+      buildToneGrid(width, height, unit);
+      draw(true);
+    } catch (error) {
+      console.error('Failed to initialize Tonnext canvas:', error);
+      // Try to set initialized anyway so the app doesn't get stuck
+      setIsInitialized(true);
     }
-    
-    // Initialize tones
-    tonesRef.current = Array.from({ length: 12 }, (_, i) => ({
-      pitch: i,
-      name: TONE_NAMES[i],
-      state: STATE_OFF,
-      byChannel: {},
-      channelsSust: {},
-      released: null,
-      cache: {}
-    }));
-
-    // Initialize channels
-    channelsRef.current = Array.from({ length: 17 }, (_, i) => ({
-      number: i,
-      pitches: {},
-      sustTones: {},
-      sustain: false
-    }));
-
-    // Initialize tone grid
-    toneGridRef.current = Array.from({ length: 12 }, () => []);
-
-    // Set canvas size to parent container size
-    const parent = canvas.parentElement;
-    const width = parent ? parent.clientWidth : window.innerWidth;
-    const height = parent ? parent.clientHeight : window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    
-    // Draw initial background
-    const ctx = ctxRef.current;
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    setIsInitialized(true);
-    // Call rebuild directly instead of through the callback to avoid circular dependency
-    const unit = (width + height) / density;
-    
-    setDimensions({ width, height, unit });
-    buildToneGrid(width, height, unit);
-    draw(true);
   }, [density, layout, buildToneGrid, draw]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCanvasClick = useCallback(async (x: number, y: number) => {
     // Resume Tone.js audio context on first interaction
     if (!audioStartedRef.current) {
-      await Tone.start();
-      audioStartedRef.current = true;
-      // Warm up synths to prevent first-note stutter
-      triggerSynthAttackRelease('C4', 0.01, undefined, 0.001);
-      triggerPolySynthAttackRelease(['C4', 'E4', 'G4'], 0.01, undefined, 0.001);
+      try {
+        console.log('Starting Tone.js audio context on first interaction...');
+        await Tone.start();
+        audioStartedRef.current = true;
+        console.log('Tone.js audio context started successfully');
+        // Warm up synths to prevent first-note stutter
+        triggerSynthAttackRelease('C4', 0.01, undefined, 0.001);
+        triggerPolySynthAttackRelease(['C4', 'E4', 'G4'], 0.01, undefined, 0.001);
+      } catch (error) {
+        console.error('Failed to start Tone.js audio context:', error);
+        // Continue anyway - the app should still work without audio
+      }
     }
     if(nodesRef.current.length===0) return;
     const radius = dimensions.unit/5;

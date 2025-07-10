@@ -133,8 +133,8 @@ function HomeContent() {
   // Add state for dropdown
   const [tonnextDropdownOpen, setTonnextDropdownOpen] = useState(false);
 
-  // Add loading state for debugging
-  const [isAppLoaded, setIsAppLoaded] = useState(false);
+  // Add loading state for debugging - set to true by default to disable loading overlay
+  const [isAppLoaded, setIsAppLoaded] = useState(true);
 
   const handleLoadingLogoFinish = () => {
     setShowLoadingLogo(false);
@@ -150,28 +150,13 @@ function HomeContent() {
   useEffect(() => {
     console.log('HomeContent component mounted');
     console.log('isAppLoaded state:', isAppLoaded);
+    console.log('App should be visible now');
   }, []);
 
-  // Set app as loaded after a short delay
+  // Loading effect removed - app loads immediately
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsAppLoaded(true);
-      console.log('App loaded successfully');
-    }, 100);
-    
-    // Also set a fallback timer in case the first one fails
-    const fallbackTimer = setTimeout(() => {
-      if (!isAppLoaded) {
-        console.log('Fallback: Forcing app to loaded state');
-        setIsAppLoaded(true);
-      }
-    }, 2000);
-    
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(fallbackTimer);
-    };
-  }, [isAppLoaded]);
+    console.log('App loaded immediately');
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {

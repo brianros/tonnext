@@ -572,15 +572,20 @@ export function useMidiPlayer() {
   }, []);
 
   const updateInstrument = useCallback(async (instrument: Instrument) => {
-    await Tone.start();
-    
-    if (!synthRef.current) {
-      synthRef.current = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
-    }
-    
-    if (instrument.toneOptions) {
-      console.log('Updating instrument to:', instrument.name, instrument.toneOptions);
-      synthRef.current.set(instrument.toneOptions);
+    try {
+      // Don't await Tone.start() to prevent blocking
+      Tone.start().catch(console.error);
+      
+      if (!synthRef.current) {
+        synthRef.current = new Tone.PolySynth({ maxPolyphony: 64, voice: Tone.Synth }).toDestination();
+      }
+      
+      if (instrument.toneOptions) {
+        console.log('Updating instrument to:', instrument.name, instrument.toneOptions);
+        synthRef.current.set(instrument.toneOptions);
+      }
+    } catch (error) {
+      console.error('Failed to update instrument:', error);
     }
   }, []);
 
@@ -605,12 +610,13 @@ export function useMidiPlayer() {
       const selectedInstrument = getSelectedInstrument();
       if (selectedInstrument && synthRef.current) {
         console.log('Applying initial instrument settings:', selectedInstrument.name);
-        await updateInstrument(selectedInstrument);
+        // Don't await this to prevent blocking
+        updateInstrument(selectedInstrument).catch(console.error);
       }
     };
     
     applyInitialInstrument();
-  }, [getSelectedInstrument, updateInstrument, isPlaying]);
+  }, [getSelectedInstrument, updateInstrument]); // Remove isPlaying from dependencies
 
   return {
     isPlaying,

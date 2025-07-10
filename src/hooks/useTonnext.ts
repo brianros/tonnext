@@ -421,7 +421,7 @@ export function useTonnext(options: UseTonnextOptions) {
   }, [drawNow]);
 
   // 6. initTonnext
-  const initTonnext = useCallback(async (canvas: HTMLCanvasElement) => {
+  const initTonnext = useCallback((canvas: HTMLCanvasElement) => {
     try {
       console.log('Initializing Tonnext canvas...');
       canvasRef.current = canvas;
@@ -432,16 +432,18 @@ export function useTonnext(options: UseTonnextOptions) {
         return;
       }
 
-      // Initialize audio
+      // Initialize audio (non-blocking)
       try {
         console.log('Initializing audio synths...');
+        // Create synths but don't await the initialization
         synthRef.current = new Tone.Synth().toDestination();
         polySynthRef.current = new Tone.PolySynth().toDestination();
         
-        // Apply initial instrument settings
+        // Apply initial instrument settings in background
         const selectedInstrument = getSelectedInstrument();
         if (selectedInstrument) {
-          await updateSynthsWithInstrument(selectedInstrument);
+          // Don't await this - let it happen in background
+          updateSynthsWithInstrument(selectedInstrument).catch(console.error);
         } else {
           // Default piano settings
           const defaultInstrument: Instrument = {
@@ -460,9 +462,10 @@ export function useTonnext(options: UseTonnextOptions) {
               }
             }
           };
-          await updateSynthsWithInstrument(defaultInstrument);
+          // Don't await this - let it happen in background
+          updateSynthsWithInstrument(defaultInstrument).catch(console.error);
         }
-        console.log('Audio synths initialized successfully');
+        console.log('Audio synths initialization started (non-blocking)');
       } catch (audioError) {
         console.error('Failed to initialize audio synths:', audioError);
         // Continue without audio - the app should still work

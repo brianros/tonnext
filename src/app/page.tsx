@@ -145,6 +145,12 @@ function HomeContent() {
   
   // Get MIDI context for instrument updates
   const { setSelectedInstrument: setContextInstrument, getMidiPlayerFunctions } = useMidiContext();
+  
+  // Debug logging for initialization
+  useEffect(() => {
+    console.log('HomeContent component mounted');
+    console.log('isAppLoaded state:', isAppLoaded);
+  }, []);
 
   // Set app as loaded after a short delay
   useEffect(() => {
@@ -152,8 +158,20 @@ function HomeContent() {
       setIsAppLoaded(true);
       console.log('App loaded successfully');
     }, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    
+    // Also set a fallback timer in case the first one fails
+    const fallbackTimer = setTimeout(() => {
+      if (!isAppLoaded) {
+        console.log('Fallback: Forcing app to loaded state');
+        setIsAppLoaded(true);
+      }
+    }, 2000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(fallbackTimer);
+    };
+  }, [isAppLoaded]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -455,6 +473,20 @@ function HomeContent() {
           fontWeight: 'bold'
         }}>
           Loading Tonnext...
+          <button 
+            onClick={() => setIsAppLoaded(true)}
+            style={{
+              marginLeft: '20px',
+              padding: '8px 16px',
+              background: 'rgba(255,255,255,0.2)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '4px',
+              color: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            Skip Loading
+          </button>
         </div>
       )}
       

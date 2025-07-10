@@ -11,7 +11,6 @@ import LoadingLogo from '@/components/LoadingLogo';
 import Tour from '@/components/Tour';
 import InstrumentSelector, { Instrument } from '@/components/InstrumentSelector';
 import { Piano } from 'lucide-react';
-// import Controls from '@/components/Controls'; // No longer used
 import React from 'react';
 
 // Palette presets must match those in Settings
@@ -131,34 +130,8 @@ function HomeContent() {
   // Loading overlay demo state (disabled)
   const [showLoadingLogo, setShowLoadingLogo] = useState(false);
 
-  // const [titleHovered, setTitleHovered] = useState(false);
-
   // Add state for dropdown
   const [tonnextDropdownOpen, setTonnextDropdownOpen] = useState(false);
-
-  // Loading delay disabled
-  // useEffect(() => {
-  //   const timer = setTimeout(() => setLoading(false), 2000); // back to normal
-  //   return () => clearTimeout(timer);
-  // }, []);
-
-  // Spin loading logo effect disabled
-  // useEffect(() => {
-  //   if (!loading) {
-  //     setSpinLoadingLogo(true);
-  //   }
-  // }, [loading]);
-
-  // Launch tour on first load (after logo is gone) - disabled
-  // useEffect(() => {
-  //   if (!showLoadingLogo && !localStorage.getItem('tonnext-visited')) {
-  //     setTimeout(() => {
-  //       setTourStep(0);
-  //       setIsTourOpen(true);
-  //       localStorage.setItem('tonnext-visited', 'true');
-  //     }, 300);
-  //   }
-  // }, [showLoadingLogo]);
 
   const handleLoadingLogoFinish = () => {
     setShowLoadingLogo(false);
@@ -188,7 +161,6 @@ function HomeContent() {
         }
         if (tonnextDropdownOpen) {
           setTonnextDropdownOpen(false);
-          // setTitleHovered(false);
         }
       }
     };
@@ -263,14 +235,6 @@ function HomeContent() {
     const [open, setOpen] = useState(false);
     const btnRef = useRef<HTMLButtonElement | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
-    const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined);
-
-    // Set menu width to match button width when open
-    useEffect(() => {
-      if (open && btnRef.current) {
-        setMenuWidth(btnRef.current.offsetWidth);
-      }
-    }, [open]);
 
     // Close on outside click
     useEffect(() => {
@@ -304,14 +268,10 @@ function HomeContent() {
     }
 
     return (
-      <div
-        style={{ position: 'relative' }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-      >
+      <div className="dropdown-container" style={{ position: 'relative' }}>
         <button
           ref={btnRef}
-          className="blend-btn"
+          className="dropdown-button blend-btn"
           style={{
             width: '200px',
             height: '64px',
@@ -320,83 +280,97 @@ function HomeContent() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: open ? 'var(--color-highlight)' : undefined,
-            color: open ? 'var(--color-main)' : undefined,
-            outline: open ? '2px solid var(--color-highlight)' : undefined,
+            background: open ? 'var(--color-highlight)' : 'var(--color-main)',
+            color: open ? 'var(--color-main)' : '#fff',
+            border: open ? '2px solid var(--color-highlight)' : '2px solid transparent',
             paddingLeft: 16,
             paddingRight: 16,
+            transition: 'all 0.2s cubic-bezier(.4,2,.6,1)',
+            boxShadow: open ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
           }}
           aria-haspopup="listbox"
           aria-expanded={open}
-          onClick={() => setOpen(o => !o)}
           tabIndex={0}
+          onMouseEnter={() => setOpen(true)}
+          onFocus={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onBlur={() => setOpen(false)}
         >
-          <span style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center' }}>{selectedLabel || 'Select Chord'}</span>
-          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>▲</span>
+          <span style={{ flex: 1, textAlign: 'left' }}>{selectedLabel || 'Select Chord'}</span>
+          <span style={{ fontSize: '1.2rem', lineHeight: 1, transition: 'transform 0.2s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▲</span>
         </button>
         {open && (
           <div
             ref={menuRef}
-            className="custom-chord-dropdown"
+            className="dropdown-menu"
             style={{
               position: 'absolute',
-              left: 0,
               bottom: '100%',
+              left: 0,
+              right: 0,
               zIndex: 1000,
               background: 'var(--color-main)',
               color: '#fff',
-              minWidth: menuWidth ? menuWidth : '100%',
-              maxWidth: menuWidth ? menuWidth : '100%',
-              width: menuWidth ? menuWidth : '100%',
-              border: 'none',
-              borderRadius: 0,
-              marginBottom: 0,
-              boxShadow: 'none',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-              maxHeight: 500,
+              border: '2px solid var(--color-highlight)',
+              borderBottom: 'none',
+              borderRadius: '8px 8px 0 0',
+              maxHeight: '300px',
               overflowY: 'auto',
-              padding: 0,
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 0,
-              boxSizing: 'border-box',
+              boxShadow: '0 -4px 12px rgba(0,0,0,0.3)',
             }}
             role="listbox"
           >
             {CHORD_GROUPS.map(group => (
               <React.Fragment key={group.label}>
-                <div className="chord-group-header" style={{ gridColumn: '1 / span 2', padding: '0.3em 1em', fontWeight: 'bold', color: 'var(--color-accent)', background: 'rgba(0,0,0,0.08)', border: 'none', fontSize: '0.95em' }}>{group.label}</div>
+                <div 
+                  className="dropdown-group-header"
+                  style={{ 
+                    padding: '8px 16px', 
+                    fontWeight: 'bold', 
+                    color: 'var(--color-accent)', 
+                    background: 'rgba(0,0,0,0.1)', 
+                    fontSize: '0.9rem',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  {group.label}
+                </div>
                 {group.options.map(opt => (
-                  <div
+                  <button
                     key={opt.value}
                     role="option"
                     aria-selected={value === opt.value}
                     tabIndex={0}
                     onClick={() => { onChange(opt.value); setOpen(false); }}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { onChange(opt.value); setOpen(false); }}}
+                    className="dropdown-option"
                     style={{
-                      padding: '2px 0.7em',
+                      width: '100%',
+                      padding: '8px 16px',
                       cursor: 'pointer',
-                      background: value === opt.value ? 'var(--color-highlight)' : 'var(--color-main)',
+                      background: value === opt.value ? 'var(--color-highlight)' : 'transparent',
                       color: value === opt.value ? 'var(--color-main)' : '#fff',
                       border: 'none',
-                      transition: 'background 0.2s, color 0.2s',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      fontSize: '0.85rem',
-                      minHeight: undefined,
+                      textAlign: 'left',
+                      fontSize: '0.9rem',
+                      fontWeight: value === opt.value ? 'bold' : 'normal',
+                      transition: 'all 0.2s ease',
                     }}
-                    className="blend-btn chord-option"
-                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-highlight)'; e.currentTarget.style.color = 'var(--color-main)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = value === opt.value ? 'var(--color-highlight)' : 'var(--color-main)'; e.currentTarget.style.color = value === opt.value ? 'var(--color-main)' : '#fff'; }}
+                    onMouseEnter={e => { 
+                      if (value !== opt.value) {
+                        e.currentTarget.style.background = 'var(--color-highlight)';
+                        e.currentTarget.style.color = 'var(--color-main)';
+                      }
+                    }}
+                    onMouseLeave={e => { 
+                      if (value !== opt.value) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = '#fff';
+                      }
+                    }}
                   >
                     {opt.label}
-                  </div>
+                  </button>
                 ))}
               </React.Fragment>
             ))}
@@ -456,15 +430,24 @@ function HomeContent() {
                 </button>
                 {appearanceDropdown && (
                   <div
-                    className="absolute left-0 rounded shadow-lg z-50 border border-white"
+                    className="dropdown-menu"
                     style={{
-                      minWidth: 200,
-                      background: 'var(--color-main)',
-                      color: '#fff',
-                      fontSize: '1.6rem',
-                      padding: 0,
+                      position: 'absolute',
                       top: '100%',
                       left: 0,
+                      right: 0,
+                      zIndex: 1000,
+                      background: 'var(--color-main)',
+                      color: '#fff',
+                      border: '2px solid var(--color-highlight)',
+                      borderTop: 'none',
+                      borderRadius: '0 0 8px 8px',
+                      maxHeight: '300px',
+                      overflowY: 'auto',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      minWidth: 200,
+                      fontSize: '1rem',
+                      padding: 0,
                     }}
                   >
                     {PALETTE_PRESETS.map(preset => {
@@ -489,15 +472,19 @@ function HomeContent() {
                       return (
                         <button
                           key={preset.name}
-                          className="blend-btn w-full text-left whitespace-nowrap"
+                          className="dropdown-option"
                           style={{
+                            width: '100%',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
                             background: pal.main,
-                            border: 'none',
                             color: textColor,
+                            border: 'none',
                             textAlign: 'left',
+                            fontSize: '0.9rem',
                             fontWeight: 'bold',
                             textTransform: 'uppercase',
-                            overflow: 'hidden',
+                            transition: 'all 0.2s ease',
                           }}
                           onClick={() => handleApplyPreset(preset.name)}
                         >
@@ -506,12 +493,20 @@ function HomeContent() {
                       );
                     })}
                     <button
-                      className="blend-btn w-full text-left border-t border-white"
+                      className="dropdown-option"
                       style={{
+                        width: '100%',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
                         background: 'linear-gradient(90deg, #6C1CD1 0%, #4361EE 33%, #00FF99 66%, #FF1B1B 100%)',
-                        border: 'none',
                         color: '#fff',
+                        border: 'none',
                         textAlign: 'left',
+                        fontSize: '0.9rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        transition: 'all 0.2s ease',
+                        borderTop: '1px solid rgba(255,255,255,0.2)',
                       }}
                       onClick={() => { setCustomPaletteOpen(true); setAppearanceDropdown(false); }}
                     >

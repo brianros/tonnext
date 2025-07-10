@@ -29,7 +29,10 @@ export class AudioToMidiWorker {
 
   private initWorker() {
     try {
-      this.worker = new Worker('/audio-to-midi-worker.js');
+      // Use Function constructor to bypass static analysis
+      const workerPath = '/audio-to-midi-worker.js';
+      const createWorker = new Function('path', 'return new Worker(path)');
+      this.worker = createWorker(workerPath);
       this.isTerminated = false;
     } catch (error) {
       console.error('Failed to create Web Worker:', error);

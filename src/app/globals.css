@@ -1442,115 +1442,7 @@ input[type="range"].midi-progress-bar::-ms-thumb,
 /* The parent div is the clickable area for the logo/title */
 /* Removed hover effect on tonnext logo */
 
-/* Custom chord dropdown styles */
-.custom-chord-dropdown {
-  box-shadow: none !important;
-  /* Scrollbar styling */
-}
-.custom-chord-dropdown::-webkit-scrollbar {
-  width: 8px;
-  background: var(--color-main);
-}
-.custom-chord-dropdown::-webkit-scrollbar-thumb {
-  background: var(--color-highlight);
-  border-radius: 0;
-}
-.custom-chord-dropdown::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent);
-}
-.custom-chord-dropdown {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-highlight) var(--color-main);
-}
-.custom-chord-dropdown .blend-btn.chord-option {
-  border: none !important;
-  border-radius: 0;
-  box-shadow: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  background: var(--color-main);
-  color: #fff;
-  transition: background 0.2s, color 0.2s;
-  height: auto !important;
-  padding: 0.15em 0.7em !important;
-  min-height: 0 !important;
-  line-height: 1.2;
-  border-bottom: none !important;
-}
-.custom-chord-dropdown .blend-btn.chord-option[aria-selected="true"],
-.custom-chord-dropdown .blend-btn.chord-option:hover,
-.custom-chord-dropdown .blend-btn.chord-option:active {
-  background: var(--color-highlight) !important;
-  color: var(--color-main) !important;
-}
-.custom-chord-dropdown .chord-group-header {
-  border-bottom: none !important;
-}
 
-/* Instrument selector dropdown styles */
-.instrument-selector-dropdown {
-  box-shadow: none !important;
-  /* Scrollbar styling */
-}
-.instrument-selector-dropdown::-webkit-scrollbar {
-  width: 8px;
-  background: var(--color-main);
-}
-.instrument-selector-dropdown::-webkit-scrollbar-thumb {
-  background: var(--color-highlight);
-  border-radius: 0;
-}
-.instrument-selector-dropdown::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent);
-}
-.instrument-selector-dropdown {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-highlight) var(--color-main);
-}
-.instrument-selector-dropdown button {
-  border: none !important;
-  border-radius: 0;
-  box-shadow: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  background: var(--color-main);
-  color: #fff;
-  transition: background 0.2s, color 0.2s;
-  height: 100% !important;
-  width: 100% !important;
-  min-height: 0 !important;
-  min-width: 0 !important;
-  line-height: 1.2;
-  border-bottom: none !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-}
-
-/* Instrument selector icons should be 100% of the button (grid cell) */
-
-.instrument-selector-dropdown button[aria-selected="true"],
-.instrument-selector-dropdown button:hover,
-.instrument-selector-dropdown button:active,
-.instrument-selector-dropdown button.selected {
-  background: var(--color-highlight) !important;
-  color: var(--color-main) !important;
-}
-.instrument-selector-dropdown .blend-btn.selected {
-  background: var(--color-highlight) !important;
-  color: var(--color-main) !important;
-}
-.instrument-selector-dropdown .blend-btn.selected .instrument-icon {
-  color: var(--color-main) !important;
-}
-.instrument-selector-dropdown .blend-btn.selected:hover,
-.instrument-selector-dropdown .blend-btn.selected:active {
-  background: var(--color-highlight) !important;
-  color: var(--color-main) !important;
-}
 
 .midi-controller-container {
   display: flex;
@@ -2643,66 +2535,6 @@ svg {
   font-size: 1.2rem;
   line-height: 1;
 }
-.instrument-selector__dropdown {
-  position: absolute;
-  left: 0;
-  bottom: 100%;
-  z-index: 1000;
-  background: var(--color-main);
-  color: #fff;
-  min-width: 100%;
-  max-width: 100%;
-  width: 100%;
-  border: none;
-  border-radius: 0;
-  margin-bottom: 0;
-  box-shadow: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  max-height: none;
-  overflow-y: visible;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  box-sizing: border-box;
-  aspect-ratio: 1/1;
-}
-.instrument-selector__option {
-  aspect-ratio: 1/1;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  background: var(--color-main);
-  color: #fff;
-  border: none;
-  transition: background 0.2s, color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  font-size: 0.85rem;
-  min-height: 0;
-  min-width: 0;
-  padding: 0;
-}
-.instrument-selector__option.selected {
-  background: var(--color-highlight);
-  color: var(--color-main);
-}
-.instrument-selector__option:hover,
-.instrument-selector__option:focus {
-  background: var(--color-highlight);
-  color: var(--color-main);
-}
-.instrument-selector__icon {
-  width: 56px;
-  height: 56px;
-}
-.instrument-selector__icon.selected {
-  color: var(--color-main);
-}
 
 /* Loading Logo (BEM-like) */
 .loading-logo__overlay {
@@ -2789,6 +2621,69 @@ header .tour-btn svg,
   align-items: center !important;
   justify-content: center !important;
   margin: auto;
+}
+
+/* Standard Dropdown Styles */
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-button {
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown-menu {
+  position: absolute;
+  z-index: 1000;
+  background: var(--color-main);
+  color: #fff;
+  border: 2px solid var(--color-highlight);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  max-height: 300px;
+  overflow-y: auto;
+  min-width: 100%;
+}
+
+.dropdown-option {
+  width: 100%;
+  padding: 8px 16px;
+  cursor: pointer;
+  background: transparent;
+  color: #fff;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: normal;
+  transition: all 0.2s ease;
+}
+
+.dropdown-option:hover {
+  background: var(--color-highlight);
+  color: var(--color-main);
+}
+
+.dropdown-option[aria-selected="true"] {
+  background: var(--color-highlight);
+  color: var(--color-main);
+  font-weight: bold;
+}
+
+.dropdown-group-header {
+  padding: 8px 16px;
+  font-weight: bold;
+  color: var(--color-accent);
+  background: rgba(0,0,0,0.1);
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Instrument selector icon styling */
+.instrument-selector__icon.selected {
+  color: var(--color-main);
 }
 
 

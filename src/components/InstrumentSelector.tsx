@@ -43,7 +43,14 @@ interface InstrumentSelectorProps {
 export default function InstrumentSelector({ selectedInstrument, onInstrumentChange }: InstrumentSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [dropdownWidth, setDropdownWidth] = useState<number | undefined>(undefined);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      setDropdownWidth(buttonRef.current.offsetWidth);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,19 +64,6 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 150); // Small delay to prevent accidental closing
-  };
 
   const handleInstrumentSelect = (instrument: Instrument) => {
     console.log('Instrument selected:', instrument.name);
@@ -118,25 +112,66 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
 
   return (
     <div 
-      className="relative" 
+      className="dropdown-container" 
       ref={dropdownRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      style={{ position: 'relative' }}
     >
       <button
-        className="blend-btn instrument-selector__button"
+        ref={buttonRef}
+        className="dropdown-button blend-btn instrument-selector__button"
         title={selectedInstrument.name}
+        style={{
+          paddingLeft: 16,
+          paddingRight: 16,
+          height: 64,
+          fontSize: 'clamp(1rem, 2vw, 1.6rem)',
+          textTransform: 'uppercase',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: isOpen ? 'var(--color-highlight)' : 'var(--color-main)',
+          color: isOpen ? 'var(--color-main)' : '#fff',
+          border: isOpen ? '2px solid var(--color-highlight)' : '2px solid transparent',
+          transition: 'all 0.2s cubic-bezier(.4,2,.6,1)',
+          boxShadow: isOpen ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
+        }}
+        onMouseEnter={() => setIsOpen(true)}
+        onFocus={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+        onBlur={() => setIsOpen(false)}
       >
         <span className="instrument-selector__icon-wrapper">
           <selectedInstrument.icon size={18} />
         </span>
-        <span className="instrument-selector__arrow">▲</span>
+        <span style={{ fontSize: '1.2rem', lineHeight: 1, transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▲</span>
       </button>
       
       {isOpen && (
         <div
-          className="instrument-selector__dropdown"
+          className="dropdown-menu"
           role="listbox"
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            background: 'var(--color-main)',
+            color: '#fff',
+            border: '2px solid var(--color-highlight)',
+            borderBottom: 'none',
+            borderRadius: '8px 8px 0 0',
+            maxHeight: '300px',
+            overflowY: 'auto',
+            boxShadow: '0 -4px 12px rgba(0,0,0,0.3)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '4px',
+            padding: '8px',
+            width: dropdownWidth ? dropdownWidth : undefined,
+            minWidth: dropdownWidth ? dropdownWidth : undefined,
+            maxWidth: dropdownWidth ? dropdownWidth : undefined,
+          }}
         >
           {INSTRUMENTS.map(instrument => (
             <button
@@ -146,16 +181,40 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
               tabIndex={0}
               onClick={() => handleInstrumentSelect(instrument)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { handleInstrumentSelect(instrument); }}}
-              className={`instrument-selector__option blend-btn chord-option${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
-              style={{ aspectRatio: '1/1' }}
-              onMouseEnter={e => { e.currentTarget.classList.add('selected'); }}
-              onMouseLeave={e => { if (selectedInstrument.id !== instrument.id) e.currentTarget.classList.remove('selected'); }}
+              className="dropdown-option"
+              style={{
+                aspectRatio: '1/1',
+                cursor: 'pointer',
+                background: selectedInstrument.id === instrument.id ? 'var(--color-highlight)' : 'transparent',
+                color: selectedInstrument.id === instrument.id ? 'var(--color-main)' : '#fff',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                borderRadius: '4px',
+                padding: 0,
+              }}
+              onMouseEnter={e => { 
+                if (selectedInstrument.id !== instrument.id) {
+                  e.currentTarget.style.background = 'var(--color-highlight)';
+                  e.currentTarget.style.color = 'var(--color-main)';
+                }
+              }}
+              onMouseLeave={e => { 
+                if (selectedInstrument.id !== instrument.id) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#fff';
+                }
+              }}
               title={instrument.name}
             >
-              <instrument.icon
-                size={56}
-                className={`instrument-selector__icon${selectedInstrument.id === instrument.id ? ' selected' : ''}`}
-              />
+              <span style={{ width: '80%', height: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <instrument.icon
+                  size={64}
+                  className={selectedInstrument.id === instrument.id ? 'selected' : ''}
+                />
+              </span>
             </button>
           ))}
         </div>

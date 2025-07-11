@@ -1286,8 +1286,9 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   margin: 0 auto;
   border: 1px solid var(--color-accent);
   border-radius: 4px;
-  max-width: 90%;
-  max-height: 90%;
+  /* Temporarily remove max-width and max-height to debug */
+  /* max-width: 90%; */
+  /* max-height: 90%; */
 }
 
 .export-modal__controls-section {

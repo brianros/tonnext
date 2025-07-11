@@ -60,6 +60,14 @@ export class VirtualTonnetz {
       unit: (canvas.width + canvas.height) / this.density
     };
     
+    console.log('VirtualTonnetz constructor:', {
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      density: this.density,
+      unit: this.dimensions.unit,
+      dimensions: this.dimensions
+    });
+    
     // Initialize getNoteName function
     this.getNoteName = options.getNoteName || ((tone: number) => {
       const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -83,10 +91,14 @@ export class VirtualTonnetz {
     this.nodes = [];
     const { width, height, unit } = this.dimensions;
     
+    console.log('Building tone grid:', { width, height, unit });
+    
     if (this.layout === LAYOUT_RIEMANN) {
       const yUnit = unit * SQRT_3;
       const uW = Math.ceil(width / unit);
       const uH = Math.ceil(height / yUnit);
+      
+      console.log('Riemann layout:', { yUnit, uW, uH });
       
       for (let j = -Math.floor(uW / 2 + 1); j <= Math.floor(uW / 2 + 1); j++) {
         for (let i = -Math.floor(uH / 2 + 1); i <= Math.floor(uH / 2 + 1); i++) {
@@ -99,6 +111,8 @@ export class VirtualTonnetz {
       const uW = Math.ceil(width / xUnit);
       const uH = Math.ceil(height / unit);
 
+      console.log('Sonome layout:', { xUnit, uW, uH });
+
       for (let j = -Math.floor(uH / 2 + 1); j <= Math.floor(uH / 2 + 1); j++) {
         for (let i = -Math.floor(uW / 2 + 1); i <= Math.floor(uW / 2 + 1); i++) {
           this.addNode(((i - 7 * j) % 12 + 12) % 12, width / 2 + i * xUnit, height / 2 + j * unit);
@@ -106,6 +120,8 @@ export class VirtualTonnetz {
         }
       }
     }
+    
+    console.log('Built nodes:', this.nodes.length);
   }
 
   private addNode(tone: number, x: number, y: number) {
@@ -119,6 +135,8 @@ export class VirtualTonnetz {
     const { width, height, unit } = this.dimensions;
     if (unit === 0) return;
     
+    console.log('Drawing grid:', { width, height, unit, nodesCount: this.nodes.length });
+    
     ctx.clearRect(0, 0, width, height);
     
     // Use palette from CSS variables - exact same as main canvas
@@ -126,6 +144,8 @@ export class VirtualTonnetz {
     const colorHighlight = getCssVar('--color-highlight', '#D4D7CB').trim() || '#D4D7CB';
     const colorAccent = getCssVar('--color-accent', '#D7A798').trim() || '#D7A798';
     const colorEdge = getCssVar('--color-hover', '#DD4A2F').trim() || '#DD4A2F';
+    
+    console.log('Colors:', { colorMain, colorHighlight, colorAccent, colorEdge });
     
     // Use highlight as background if main is used for header/footer, else use main
     // Always ensure canvas background is different from header/footer
@@ -141,6 +161,7 @@ export class VirtualTonnetz {
     const nodeNormal = colorAccent;
 
     const radius = unit / 5;
+    console.log('Node radius:', radius);
 
     // draw edges - exact same logic as main canvas
     ctx.strokeStyle = colorEdge;
@@ -168,6 +189,8 @@ export class VirtualTonnetz {
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
     });
+    
+    console.log('Drew nodes, active notes:', this.activeNotes.filter(n => n).length);
 
     // Highlight lines and triangles between active notes - exact same logic as main canvas
     const activeNodes = this.nodes.filter(n => this.activeNotes[n.tone]);
@@ -304,6 +327,14 @@ export class VirtualTonnetz {
   public updateDensity(newDensity: number) {
     this.density = newDensity;
     this.dimensions.unit = (this.dimensions.width + this.dimensions.height) / this.density;
+    this.buildToneGrid();
+    this.drawGrid();
+  }
+
+  public updateDimensions(width: number, height: number) {
+    this.dimensions.width = width;
+    this.dimensions.height = height;
+    this.dimensions.unit = (width + height) / this.density;
     this.buildToneGrid();
     this.drawGrid();
   }

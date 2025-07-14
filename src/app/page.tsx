@@ -243,7 +243,7 @@ function HomeContent() {
     console.log('HomeContent component mounted');
     console.log('isAppLoaded state:', isAppLoaded);
     console.log('App should be visible now');
-  }, []);
+  }, [isAppLoaded]);
 
   // Loading effect removed - app loads immediately
   useEffect(() => {

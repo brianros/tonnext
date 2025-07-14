@@ -18,7 +18,6 @@ interface ExportVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onExport: (settings: ExportSettings) => void;
-  originalCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   midiData?: MidiData | null;
   mode: 'note' | 'chord' | 'arpeggio';
   chordType: string;
@@ -317,7 +316,6 @@ export default function ExportVideoModal({
   isOpen,
   onClose,
   onExport,
-  originalCanvasRef,
   midiData,
   mode,
   chordType,

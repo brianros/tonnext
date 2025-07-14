@@ -920,7 +920,6 @@ export default function MidiPlayerCompact({
           setIsModalOpen(false);
           triggerVirtualExport(settings);
         }}
-        originalCanvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
         midiData={playerState?.midiData ?? undefined}
         mode={mode}
         chordType={chordType}

@@ -278,7 +278,7 @@ function HomeContent() {
     }
   }, []);
 
-  function ChordDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  function ChordDropdown({ value, onChange, buttonClassName, buttonStyle }: { value: string; onChange: (v: string) => void; buttonClassName?: string; buttonStyle?: React.CSSProperties }) {
     const [open, setOpen] = useState(false);
     const btnRef = useRef<HTMLButtonElement | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -324,8 +324,8 @@ function HomeContent() {
       >
         <button
           ref={btnRef}
-          className="dropdown-button blend-btn"
-          style={{
+          className={buttonClassName ? buttonClassName : "dropdown-button blend-btn"}
+          style={buttonStyle ? buttonStyle : {
             width: '320px',
             minWidth: '320px',
             height: '64px',
@@ -491,8 +491,8 @@ function HomeContent() {
           <div className="header-container">
             {/* Tonnext title - minimal markup */}
             <h1 className="blend-btn tonnext-title" aria-label="Tonnext Home">Tonnext</h1>
-            {/* MIDI player container as sibling */}
-            <div className="midi-controller-container flex-shrink-0" data-tour="midi-player" aria-label="MIDI Player Controls">
+            {/* MIDI player container - hidden on mobile, will be in second row */}
+            <div className="midi-controller-container flex-shrink-0 hide-on-mobile" data-tour="midi-player" aria-label="MIDI Player Controls">
               <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
             </div>
             {/* Other header buttons */}
@@ -631,6 +631,174 @@ function HomeContent() {
           </div>
         </header>
 
+        {/* Mobile Header Container - only visible on mobile */}
+        <div className="mobile-header-container show-on-mobile" style={{ 
+          background: 'var(--color-main)', 
+          height: 'calc(var(--header-footer-height) * 2)', 
+          minHeight: 'calc(var(--header-footer-height) * 2)',
+          display: 'none'
+        }}>
+          {/* Mobile Row 1: Title and Buttons */}
+          <div className="mobile-header-row" style={{ 
+            height: 'var(--header-footer-height)', 
+            minHeight: 'var(--header-footer-height)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingLeft: '0.5rem',
+            paddingRight: '0.5rem'
+          }}>
+            <h1 className="blend-btn tonnext-title" aria-label="Tonnext Home">Tonnext</h1>
+            <div className="header-buttons flex items-center flex-shrink-0">
+              <div
+                className="relative"
+                onMouseEnter={() => {
+                  if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+                  setAppearanceDropdown(true);
+                }}
+                onMouseLeave={() => {
+                  if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+                  dropdownTimeout.current = setTimeout(() => setAppearanceDropdown(false), 200);
+                }}
+              >
+                <button
+                  ref={appearanceBtnRef}
+                  className="blend-btn header-btn theme-btn"
+                  aria-haspopup="true"
+                  aria-expanded={appearanceDropdown}
+                  data-tour="appearance"
+                  title="Theme Settings"
+                  aria-label="Theme Settings"
+                >
+                  <svg className="theme-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                  </svg>
+                </button>
+                {appearanceDropdown && (
+                  <div
+                    className="dropdown-menu"
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 1000,
+                      background: 'var(--color-main)',
+                      color: '#fff',
+                      border: '2px solid var(--color-highlight)',
+                      borderTop: 'none',
+                      borderRadius: '0 0 8px 8px',
+                      maxHeight: '300px',
+                      overflowY: 'auto',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      minWidth: 200,
+                      fontSize: '1rem',
+                      padding: 0,
+                    }}
+                  >
+                    {PALETTE_PRESETS.map(preset => {
+                      const pal = PALETTE_PREVIEW[preset.name as keyof typeof PALETTE_PREVIEW];
+                      // Contrast: if main is dark, use highlight for text; if highlight is dark, use main for text; else fallback to white/black
+                      const getLuminance = (hex: string) => {
+                        const c = hex.replace('#', '');
+                        if (c.length !== 6) return 1;
+                        const r = parseInt(c.slice(0, 2), 16) / 255;
+                        const g = parseInt(c.slice(2, 4), 16) / 255;
+                        const b = parseInt(c.slice(4, 6), 16) / 255;
+                        return 0.299 * r + 0.587 * g + 0.114 * b;
+                      };
+                      const mainLum = getLuminance(pal.main);
+                      const highlightLum = getLuminance(pal.highlight);
+                      let textColor = '#fff';
+                      if (preset.name === 'Cinnabar') textColor = '#fff';
+                      else if (mainLum < 0.5 && highlightLum > 0.5) textColor = pal.highlight;
+                      else if (mainLum > 0.5 && highlightLum < 0.5) textColor = pal.main;
+                      else if (mainLum > 0.7) textColor = '#222';
+                      else if (mainLum < 0.3) textColor = '#fff';
+                      return (
+                        <button
+                          key={preset.name}
+                          className="dropdown-option"
+                          style={{
+                            width: '100%',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            background: pal.main,
+                            color: textColor,
+                            border: 'none',
+                            textAlign: 'left',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onClick={() => handleApplyPreset(preset.name)}
+                        >
+                          {preset.name}
+                        </button>
+                      );
+                    })}
+                    <button
+                      className="dropdown-option"
+                      style={{
+                        width: '100%',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        background: 'linear-gradient(90deg, #6C1CD1 0%, #4361EE 33%, #00FF99 66%, #FF1B1B 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        textAlign: 'left',
+                        fontSize: '0.9rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        transition: 'all 0.2s ease',
+                        borderTop: '1px solid rgba(255,255,255,0.2)',
+                      }}
+                      onClick={() => { setCustomPaletteOpen(true); setAppearanceDropdown(false); }}
+                    >
+                      Custom…
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button 
+                onClick={() => { setTourStep(0); setIsTourOpen(true); localStorage.setItem('tonnext-visited', 'true'); }}
+                className="blend-btn header-btn tour-btn"
+                title="Start guided tour (Ctrl+T)"
+                aria-label="Start guided tour"
+              >
+                <svg className="tour-icon" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+                </svg>
+              </button>
+              <button
+                className="blend-btn header-btn options-btn"
+                title="Settings"
+                aria-label="Settings"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <SettingsIcon className="playback-icon" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Mobile Row 2: MIDI Player */}
+          <div className="mobile-header-row" style={{ 
+            height: 'var(--header-footer-height)', 
+            minHeight: 'var(--header-footer-height)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingLeft: '0.5rem',
+            paddingRight: '0.5rem'
+          }}>
+            <div className="midi-controller-container flex-shrink-0" data-tour="midi-player" aria-label="MIDI Player Controls">
+              <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
+            </div>
+          </div>
+        </div>
+
         {/* Main Canvas - fill all available space */}
         <div
           className="flex-1 relative min-h-0"
@@ -646,7 +814,7 @@ function HomeContent() {
         </div>
 
         {/* Sleek Footer with Controls */}
-        <footer style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls" aria-label="Playback Mode Controls">
+        <footer className="hide-on-mobile" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }} data-tour="mode-controls" aria-label="Playback Mode Controls">
           <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full px-4">
             <InstrumentSelector 
               selectedInstrument={selectedInstrument} 
@@ -659,6 +827,57 @@ function HomeContent() {
             <ChordDropdown value={chordType} onChange={setChordType} aria-label="Chord Type Selector" />
           </div>
         </footer>
+
+        {/* Mobile Footer Container - only visible on mobile */}
+        <div className="mobile-footer-container show-on-mobile" style={{ 
+          background: 'var(--color-main)', 
+          height: 'calc(var(--header-footer-height) * 2)', 
+          minHeight: 'calc(var(--header-footer-height) * 2)',
+          display: 'none'
+        }}>
+          {/* Mobile Row 1: Instrument Selector and Mode Buttons */}
+          <div className="mobile-footer-row" style={{ 
+            height: 'var(--header-footer-height)', 
+            minHeight: 'var(--header-footer-height)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingLeft: '0.5rem',
+            paddingRight: '0.5rem'
+          }}>
+            <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full px-4">
+              <InstrumentSelector 
+                selectedInstrument={selectedInstrument} 
+                onInstrumentChange={handleInstrumentChange} 
+                aria-label="Instrument Selector"
+              />
+              <button className={`blend-btn${mode === 'note' ? ' active' : ''}`} onClick={() => setMode('note')} aria-label="Note Mode"><Music3 className="playback-icon" /></button>
+              <button className={`blend-btn${mode === 'chord' ? ' active' : ''}`} onClick={() => setMode('chord')} aria-label="Chord Mode"><Music4 className="playback-icon" /></button>
+              <button className={`blend-btn${mode === 'arpeggio' ? ' active' : ''}`} onClick={() => setMode('arpeggio')} aria-label="Arpeggio Mode"><ListMusic className="playback-icon" /></button>
+            </div>
+          </div>
+          
+          {/* Mobile Row 2: Chord Selector */}
+          <div className="mobile-footer-row" style={{ 
+            height: 'var(--header-footer-height)', 
+            minHeight: 'var(--header-footer-height)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingLeft: '0.5rem',
+            paddingRight: '0.5rem'
+          }}>
+            <div className="max-w-7xl mx-auto flex flex-row flex-wrap items-center justify-center gap-2 h-full px-4">
+              <ChordDropdown 
+                value={chordType} 
+                onChange={setChordType} 
+                aria-label="Chord Type Selector"
+                buttonClassName="blend-btn"
+                buttonStyle={{ height: '100%', minHeight: '100%', maxHeight: '100%', padding: '0 1.5em', fontSize: 'clamp(0.8rem, 1.4vw, 1rem)' }}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Settings Modal */}
         {isSettingsOpen && (

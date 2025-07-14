@@ -7,6 +7,13 @@ import { Monitor, Smartphone, Tv, Square, RectangleHorizontal } from 'lucide-rea
 // import { useMidiContext } from '@/contexts/MidiContext';
 import { useNotation } from '@/contexts/NotationContext';
 
+// Helper function to format time as MM:SS
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
 interface ExportVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -92,6 +99,7 @@ function DualRangeSlider({
   const [startThumb, setStartThumb] = useState(startValue);
   const [endThumb, setEndThumb] = useState(endValue);
   const [isDragging, setIsDragging] = useState<'start' | 'end' | null>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setStartThumb(startValue);
@@ -104,9 +112,9 @@ function DualRangeSlider({
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || !sliderRef.current) return;
 
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const rect = sliderRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     const value = min + (max - min) * percentage;
@@ -142,7 +150,7 @@ function DualRangeSlider({
   const endPercentage = ((endThumb - min) / (max - min)) * 100;
 
   return (
-    <div className="dual-range-slider" style={style}>
+    <div ref={sliderRef} className="dual-range-slider" style={style}>
       <div className="dual-range-slider__track" />
       <div
         className="dual-range-slider__selected"
@@ -165,90 +173,29 @@ function DualRangeSlider({
   );
 }
 
-// New placeholder preview component
-function ExportPreviewPlaceholder({ aspectRatio }: { aspectRatio: string }) {
-  // Map aspect ratio to numeric value
-  let aspect = 16 / 9;
-  let label = '16:9';
-  switch (aspectRatio) {
-    case '16:9': aspect = 16 / 9; label = '16:9'; break;
-    case '9:16': aspect = 9 / 16; label = '9:16'; break;
-    case '4:3': aspect = 4 / 3; label = '4:3'; break;
-    case '1:1': aspect = 1; label = '1:1'; break;
-    case '4:5': aspect = 4 / 5; label = '4:5'; break;
-    default: aspect = 16 / 9; label = aspectRatio;
-  }
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '280px', // match .export-modal-preview-area
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          maxWidth: aspect >= 1 ? '100%' : `${280 * aspect}px`,
-          maxHeight: aspect < 1 ? '100%' : `${280 / aspect}px`,
-          aspectRatio: `${aspect}`,
-          background: '#D4D7CB',
-          border: '2px dashed #D7A798',
-          borderRadius: 12,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#DB4A2F',
-          fontWeight: 'bold',
-          fontSize: 18,
-          transition: 'aspect-ratio 0.3s',
-        }}
-      >
-        {label} Preview
-      </div>
-    </div>
-  );
-}
-
-export default function ExportVideoModal({
-  isOpen,
-  onClose,
-  onExport,
-  originalCanvasRef,
-  midiData,
-  mode,
-  chordType,
-  fileName
-}: ExportVideoModalProps) {
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+// New preview component that shows actual animation frame
+function ExportPreviewCanvas({ 
+  aspectRatio, 
+  zoom, 
+  mode, 
+  chordType, 
+  midiData, 
+  getNoteName 
+}: { 
+  aspectRatio: string; 
+  zoom: number; 
+  mode: 'note' | 'chord' | 'arpeggio'; 
+  chordType: string; 
+  midiData?: MidiData | null; 
+  getNoteName: (tone: number) => string; 
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const virtualTonnetzRef = useRef<VirtualTonnetz | null>(null);
-  // const { getMidiPlayerState } = useMidiContext();
-  const { getNoteName } = useNotation();
-  // const playerState = getMidiPlayerState();
-
-  const [settings, setSettings] = useState<ExportSettings>({
-    duration: midiData?.duration || 30,
-    startTime: 0,
-    endTime: midiData?.duration || 30,
-    speedMultiplier: 1,
-    targetFrameRate: 30,
-    includeAudio: true,
-    aspectRatio: '16:9',
-    targetWidth: 1920,
-    zoom: 1.0,
-    exportFileName: fileName || 'virtual-recording'
-  });
-
-  const [quality, setQuality] = useState('High');
 
   // Calculate preview dimensions based on aspect ratio
   const calculatePreviewDimensions = useCallback((aspectRatio: string) => {
-    const maxPreviewWidth = 450;
-    const maxPreviewHeight = 350;
+    const maxPreviewWidth = 280;
+    const maxPreviewHeight = 280;
 
     let width: number;
     let height: number;
@@ -280,69 +227,44 @@ export default function ExportVideoModal({
         break;
     }
 
-    // Don't apply zoom to dimensions - zoom affects density instead
-    return {
-      width,
-      height
-    };
+    return { width, height };
   }, []);
 
   // Update preview when settings change
   const updatePreview = useCallback(() => {
-    if (!previewCanvasRef.current || !originalCanvasRef.current) return;
+    if (!canvasRef.current) return;
 
-    const previewCanvas = previewCanvasRef.current;
-    const originalCanvas = originalCanvasRef.current;
-    const ctx = previewCanvas.getContext('2d');
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const dimensions = calculatePreviewDimensions(settings.aspectRatio);
-    console.log('Preview dimensions:', dimensions);
-    console.log('Aspect ratio:', settings.aspectRatio);
+    const dimensions = calculatePreviewDimensions(aspectRatio);
     
     // Check if dimensions are valid
     if (dimensions.width <= 0 || dimensions.height <= 0) {
-      console.error('Invalid dimensions:', dimensions);
+      console.error('Invalid preview dimensions:', dimensions);
       return;
     }
     
-    previewCanvas.width = dimensions.width;
-    previewCanvas.height = dimensions.height;
-
-    console.log('Canvas dimensions after setting:', previewCanvas.width, previewCanvas.height);
-
-    // Clear canvas
-    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-
-    // Draw background
-    ctx.fillStyle = '#D4D7CB';
-    ctx.fillRect(0, 0, dimensions.width, dimensions.height);
-
-    // Test: Draw a simple colored rectangle to verify canvas is working
-    ctx.fillStyle = '#FF0000';
-    ctx.fillRect(10, 10, 50, 50);
-    console.log('Drew test rectangle');
+    canvas.width = dimensions.width;
+    canvas.height = dimensions.height;
 
     // Create virtual tonnetz for preview or update existing one
     if (!virtualTonnetzRef.current) {
-      console.log('Creating new VirtualTonnetz');
       try {
-        virtualTonnetzRef.current = new VirtualTonnetz(previewCanvas, ctx, {
+        virtualTonnetzRef.current = new VirtualTonnetz(canvas, ctx, {
           mode,
           chordType,
           getNoteName
         });
-        console.log('VirtualTonnetz created successfully');
       } catch (error) {
-        console.error('Error creating VirtualTonnetz:', error);
+        console.error('Error creating VirtualTonnetz for preview:', error);
         return;
       }
     } else {
-      console.log('Updating existing VirtualTonnetz dimensions');
       try {
         // Update dimensions of existing VirtualTonnetz
         virtualTonnetzRef.current.updateDimensions(dimensions.width, dimensions.height);
-        console.log('VirtualTonnetz dimensions updated successfully');
       } catch (error) {
         console.error('Error updating VirtualTonnetz dimensions:', error);
         return;
@@ -352,43 +274,71 @@ export default function ExportVideoModal({
     // Update the virtual tonnetz with current settings
     const virtualTonnetz = virtualTonnetzRef.current;
     try {
-      virtualTonnetz.updateDensity(Math.round(20 / settings.zoom));
+      virtualTonnetz.updateDensity(Math.round(20 / zoom));
       
-      // Set some sample active notes for preview
-      const sampleNotes = [0, 4, 7]; // C major chord
-      virtualTonnetz.setActiveNotes(sampleNotes);
-      
-      // Update and render
-      virtualTonnetz.update(0);
-      console.log('VirtualTonnetz methods executed successfully');
+      // Simulate a frame at 25% through the animation
+      const previewTime = midiData ? (midiData.duration * 0.25) : 2.0;
+      virtualTonnetz.update(previewTime, midiData);
     } catch (error) {
-      console.error('Error executing VirtualTonnetz methods:', error);
+      console.error('Error updating VirtualTonnetz preview:', error);
       return;
     }
-    console.log('Preview update complete');
-  }, [settings.aspectRatio, settings.zoom, mode, chordType, calculatePreviewDimensions, getNoteName]);
+  }, [aspectRatio, zoom, mode, chordType, midiData, calculatePreviewDimensions, getNoteName]);
 
   // Update preview when settings change
   useEffect(() => {
-    if (isOpen) {
-      updatePreview();
-    }
-  }, [isOpen, updatePreview]);
+    updatePreview();
+  }, [updatePreview]);
 
   // Recreate VirtualTonnetz when mode or chordType changes
   useEffect(() => {
-    if (isOpen && virtualTonnetzRef.current) {
+    if (virtualTonnetzRef.current) {
       virtualTonnetzRef.current = null; // Force recreation
       updatePreview();
     }
-  }, [mode, chordType, isOpen, updatePreview]);
+  }, [mode, chordType, updatePreview]);
 
-  // Update preview when zoom or aspect ratio changes
-  useEffect(() => {
-    if (isOpen && virtualTonnetzRef.current) {
-      updatePreview();
-    }
-  }, [settings.zoom, settings.aspectRatio, isOpen, updatePreview]);
+  return (
+    <canvas
+      ref={canvasRef}
+      className="export-modal-preview-canvas"
+      style={{
+        width: '100%',
+        height: '100%',
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain'
+      }}
+    />
+  );
+}
+
+export default function ExportVideoModal({
+  isOpen,
+  onClose,
+  onExport,
+  originalCanvasRef,
+  midiData,
+  mode,
+  chordType,
+  fileName
+}: ExportVideoModalProps) {
+  const { getNoteName } = useNotation();
+
+  const [settings, setSettings] = useState<ExportSettings>({
+    duration: midiData?.duration || 30,
+    startTime: 0,
+    endTime: midiData?.duration || 30,
+    speedMultiplier: 1,
+    targetFrameRate: 30,
+    includeAudio: true,
+    aspectRatio: '16:9',
+    targetWidth: 1920,
+    zoom: 1.0,
+    exportFileName: fileName || 'virtual-recording'
+  });
+
+  const [quality, setQuality] = useState('High');
 
   // Ensure aspect ratio is always a valid key for QUALITY_PRESETS
   const validAspectRatios = Object.keys(QUALITY_PRESETS);
@@ -430,7 +380,14 @@ export default function ExportVideoModal({
             <div className="export-modal__preview-container">
               <div className="export-modal-preview-area">
                 {/* Replace canvas with placeholder */}
-                <ExportPreviewPlaceholder aspectRatio={settings.aspectRatio} />
+                <ExportPreviewCanvas 
+                  aspectRatio={settings.aspectRatio} 
+                  zoom={settings.zoom} 
+                  mode={mode} 
+                  chordType={chordType} 
+                  midiData={midiData} 
+                  getNoteName={getNoteName} 
+                />
               </div>
               
               {/* Sliders Section */}
@@ -472,8 +429,8 @@ export default function ExportVideoModal({
                     aria-label="Time Range Slider"
                   />
                   <div className="export-modal__time-range-info">
-                    <span>Start: {settings.startTime.toFixed(1)}s</span>
-                    <span>End: {settings.endTime.toFixed(1)}s</span>
+                    <span>Start: {formatTime(settings.startTime)}</span>
+                    <span>End: {formatTime(settings.endTime)}</span>
                   </div>
                 </div>
               </div>
@@ -524,7 +481,14 @@ export default function ExportVideoModal({
             <div className="export-modal__preview-container">
               <div className="export-modal-preview-area">
                 {/* Replace canvas with placeholder */}
-                <ExportPreviewPlaceholder aspectRatio={settings.aspectRatio} />
+                <ExportPreviewCanvas 
+                  aspectRatio={settings.aspectRatio} 
+                  zoom={settings.zoom} 
+                  mode={mode} 
+                  chordType={chordType} 
+                  midiData={midiData} 
+                  getNoteName={getNoteName} 
+                />
               </div>
               
               {/* Sliders Section */}
@@ -566,8 +530,8 @@ export default function ExportVideoModal({
                     aria-label="Time Range Slider"
                   />
                   <div className="export-modal__time-range-info">
-                    <span>Start: {settings.startTime.toFixed(1)}s</span>
-                    <span>End: {settings.endTime.toFixed(1)}s</span>
+                    <span>Start: {formatTime(settings.startTime)}</span>
+                    <span>End: {formatTime(settings.endTime)}</span>
                   </div>
                 </div>
               </div>

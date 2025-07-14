@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import Settings from '@/components/Settings';
 import TonnextCanvas from '@/components/TonnextCanvas';
@@ -11,7 +12,88 @@ import LoadingLogo from '@/components/LoadingLogo';
 import Tour from '@/components/Tour';
 import InstrumentSelector, { Instrument } from '@/components/InstrumentSelector';
 import { Music3, Music4, ListMusic, Settings as SettingsIcon, Piano } from 'lucide-react';
-import React from 'react';
+
+// Tooltip component for acknowledgments
+function AcknowledgmentsTooltip({ isVisible, anchorRect, onMouseEnter, onMouseLeave }: { isVisible: boolean; anchorRect: DOMRect | null; onMouseEnter: () => void; onMouseLeave: () => void }) {
+
+  if (!isVisible || !anchorRect) return null;
+
+  // Ensure the tooltip doesn't go off-screen
+  const maxWidth = Math.min(500, window.innerWidth - 20);
+  const left = Math.max(10, Math.min(anchorRect.left, window.innerWidth - maxWidth - 10));
+  const top = anchorRect.bottom + 2; // Reduced gap from 4 to 2
+
+  const style: React.CSSProperties = {
+    position: 'fixed',
+    top: top,
+    left: left,
+    background: 'var(--color-main)',
+    color: '#fff',
+    padding: '24px',
+    borderRadius: '12px',
+    border: '2px solid var(--color-highlight)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    zIndex: 10000,
+    maxWidth: maxWidth,
+    width: 'auto',
+    fontSize: '0.9rem',
+    lineHeight: '1.5',
+    animation: 'fadeIn 0.2s ease-out',
+  };
+
+  return (
+    <div 
+      className="acknowledgments-tooltip"
+      style={style}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+              <div style={{ marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>About Tonnext</h3>
+        </div>
+      <p style={{ marginBottom: '16px' }}>
+        Tonnext is an interactive Tonnetz visualization tool that explores musical relationships through geometric patterns. 
+        Click on nodes to play notes, chords, or arpeggios, and load MIDI files to see the music visualized in real-time.
+      </p>
+      <div style={{ marginBottom: '16px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: 'bold' }}>Acknowledgments</h4>
+        <ul style={{ margin: 0, paddingLeft: '20px' }}>
+          <li style={{ marginBottom: '4px' }}>
+            <strong>Tonnetz Visualization:</strong> Inspired by{' '}
+            <a href="https://github.com/cifkao/tonnetz-viz" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
+              cifkao/tonnetz-viz
+            </a>
+          </li>
+          <li style={{ marginBottom: '4px' }}>
+            <strong>Audio-to-MIDI Conversion:</strong> Powered by{' '}
+            <a href="https://github.com/spotify/basic-pitch" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
+              Spotify Basic Pitch
+            </a>
+          </li>
+          <li style={{ marginBottom: '4px' }}>
+            <strong>Tonnetz Theory:</strong> Based on the{' '}
+            <a href="https://en.wikipedia.org/wiki/Tonnetz" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
+              Tonnetz
+            </a>
+            {' '}mathematical model
+          </li>
+          <li style={{ marginBottom: '4px' }}>
+            <strong>Development:</strong> Created by{' '}
+            <a href="https://github.com/brianros" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
+              Brian Rosenfeld
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div style={{ textAlign: 'center', fontSize: '0.8rem', opacity: 0.8 }}>
+        <a href="https://mirari.ar" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}>
+          mīrārī
+        </a>
+        {' '}2025
+      </div>
+    </div>
+  );
+}
 
 // Palette presets must match those in Settings
 const PALETTE_PRESETS = [
@@ -135,6 +217,16 @@ function HomeContent() {
 
   // Add loading state for debugging - set to true by default to disable loading overlay
   const [isAppLoaded, setIsAppLoaded] = useState(true);
+  
+  // Acknowledgments tooltip state
+  const [showAcknowledgments, setShowAcknowledgments] = useState(false);
+  const [hoveredTitle, setHoveredTitle] = useState<'desktop' | 'mobile' | null>(null);
+  const [isTooltipHovered, setIsTooltipHovered] = useState(false);
+  const [desktopTitleRect, setDesktopTitleRect] = useState<DOMRect | null>(null);
+  const [mobileTitleRect, setMobileTitleRect] = useState<DOMRect | null>(null);
+  const desktopTitleRef = useRef<HTMLHeadingElement>(null);
+  const mobileTitleRef = useRef<HTMLHeadingElement>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLoadingLogoFinish = () => {
     setShowLoadingLogo(false);
@@ -433,6 +525,28 @@ function HomeContent() {
     );
   }
 
+  // Show/hide logic with delay
+  useEffect(() => {
+    if (hoveredTitle || isTooltipHovered) {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setShowAcknowledgments(true);
+    } else {
+      // Add delay before hiding
+      hideTimeoutRef.current = setTimeout(() => {
+        setShowAcknowledgments(false);
+      }, 300);
+    }
+
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, [hoveredTitle, isTooltipHovered]);
+
   return (
     <div className="h-screen flex flex-col" style={{ 
       height: 'calc(var(--vh, 1vh) * 100)', 
@@ -478,6 +592,15 @@ function HomeContent() {
       {showLoadingLogo && (
         <LoadingLogo onFinish={handleLoadingLogoFinish} />
       )}
+      
+      {/* Acknowledgments Tooltip */}
+      <AcknowledgmentsTooltip 
+        isVisible={showAcknowledgments} 
+        anchorRect={hoveredTitle === 'desktop' ? desktopTitleRect : hoveredTitle === 'mobile' ? mobileTitleRect : (isTooltipHovered ? (desktopTitleRect || mobileTitleRect) : null)}
+        onMouseEnter={() => setIsTooltipHovered(true)}
+        onMouseLeave={() => setIsTooltipHovered(false)}
+      />
+      
       <div className="main-content" style={{
         filter: showLoadingLogo ? 'blur(6px) brightness(0.7)' : 'none',
         transition: 'filter 0.3s',
@@ -490,7 +613,22 @@ function HomeContent() {
         <header className="responsive-header" style={{ background: 'var(--color-main)', height: 'var(--header-footer-height)', minHeight: 'var(--header-footer-height)' }}>
           <div className="header-container">
             {/* Tonnext title - minimal markup */}
-            <h1 className="blend-btn tonnext-title" aria-label="Tonnext Home">Tonnext</h1>
+            <h1 
+              ref={desktopTitleRef}
+              className="blend-btn tonnext-title" 
+              aria-label="Tonnext Home"
+              onMouseEnter={() => {
+                setHoveredTitle('desktop');
+                if (desktopTitleRef.current) setDesktopTitleRect(desktopTitleRef.current.getBoundingClientRect());
+              }}
+              onMouseLeave={() => {
+                setHoveredTitle(null);
+              }}
+              style={{ cursor: 'pointer' }}
+              title="Hover for acknowledgments"
+            >
+              Tonnext
+            </h1>
             {/* MIDI player container - hidden on mobile, will be in second row */}
             <div className="midi-controller-container flex-shrink-0 hide-on-mobile" data-tour="midi-player" aria-label="MIDI Player Controls">
               <MidiPlayerCompact canvasRef={canvasRef} mode={mode} chordType={chordType} />
@@ -648,7 +786,22 @@ function HomeContent() {
             paddingLeft: '0.5rem',
             paddingRight: '0.5rem'
           }}>
-            <h1 className="blend-btn tonnext-title" aria-label="Tonnext Home">Tonnext</h1>
+            <h1 
+              ref={mobileTitleRef}
+              className="blend-btn tonnext-title" 
+              aria-label="Tonnext Home"
+              onMouseEnter={() => {
+                setHoveredTitle('mobile');
+                if (mobileTitleRef.current) setMobileTitleRect(mobileTitleRef.current.getBoundingClientRect());
+              }}
+              onMouseLeave={() => {
+                setHoveredTitle(null);
+              }}
+              style={{ cursor: 'pointer' }}
+              title="Hover for acknowledgments"
+            >
+              Tonnext
+            </h1>
             <div className="header-buttons flex items-center flex-shrink-0">
               <div
                 className="relative"

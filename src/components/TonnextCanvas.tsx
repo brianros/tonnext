@@ -46,6 +46,19 @@ export default function TonnextCanvas({
     }
   }, [initTonnext, isInitialized, handleWheel, canvasRef]);
 
+  useEffect(() => {
+    function resizeCanvas() {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        canvasRef.current.width = rect.width;
+        canvasRef.current.height = rect.height;
+      }
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    return () => window.removeEventListener('resize', resizeCanvas);
+  }, [canvasRef]);
+
   // Register canvas callbacks with the context
   useEffect(() => {
     setCanvasCallbacks({

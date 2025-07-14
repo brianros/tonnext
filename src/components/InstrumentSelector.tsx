@@ -122,31 +122,14 @@ export default function InstrumentSelector({ selectedInstrument, onInstrumentCha
     >
       <button
         ref={buttonRef}
-        className="dropdown-button blend-btn instrument-selector__button"
+        className={`dropdown-button blend-btn instrument-selector__button${isOpen ? ' open' : ''}`}
         title={selectedInstrument.name}
-        style={{
-          paddingLeft: 16,
-          paddingRight: 16,
-          height: 64,
-          fontSize: 'clamp(1rem, 2vw, 1.6rem)',
-          textTransform: 'uppercase',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: isOpen ? 'var(--color-highlight)' : 'var(--color-main)',
-          color: isOpen ? 'var(--color-main)' : '#fff',
-          border: isOpen ? '2px solid var(--color-highlight)' : '2px solid transparent',
-          transition: 'all 0.2s cubic-bezier(.4,2,.6,1)',
-          boxShadow: isOpen ? '0 2px 12px rgba(0,0,0,0.10)' : 'none',
-        }}
-        onMouseEnter={() => setIsOpen(true)}
-        onFocus={() => setIsOpen(true)}
-        // Removed onMouseLeave and onBlur from button
+        onClick={() => setIsOpen(open => !open)}
       >
         <span className="instrument-selector__icon-wrapper">
           <selectedInstrument.icon className="playback-icon" />
         </span>
-        <span style={{ fontSize: '1.2rem', lineHeight: 1, transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▲</span>
+        <span className={`instrument-selector__arrow${isOpen ? ' open' : ''}`}>▲</span>
       </button>
       
       {isOpen && (

@@ -110,7 +110,7 @@ const PALETTE_PREVIEW = {
     main: '#DA4C2B', highlight: '#D4D7CB', accent: '#D7A798', hover: '#DD4A2F', hover2: '#DB4A2F',
   },
   'Aurora': {
-    main: '#1A535C', highlight: '#F7FFF7', accent: '#FF6B6B', hover: '#4ECDC4', hover2: '#FFE66D',
+    main: '#2E8BC0', highlight: '#B1D4E0', accent: '#145DA0', hover: '#0C2D48', hover2: '#F7F7FF',
   },
   'Retro Pop': {
     main: '#22223B', highlight: '#F2E9E4', accent: '#9A8C98', hover: '#C9ADA7', hover2: '#4A4E69',
@@ -119,7 +119,7 @@ const PALETTE_PREVIEW = {
     main: '#386641', highlight: '#F2E8CF', accent: '#A7C957', hover: '#6A994E', hover2: '#BC4749',
   },
   'Neon Night': {
-    main: '#6C1CD1', highlight: '#F7F7FF', accent: '#9D4EDD', hover: '#F72585', hover2: '#4361EE',
+    main: '#FF2A6D', highlight: '#00F0FF', accent: '#2D00F7', hover: '#F6F930', hover2: '#FF6F61',
   },
 };
 
@@ -284,7 +284,7 @@ function HomeContent() {
         main: '#DA4C2B', highlight: '#D4D7CB', accent: '#D7A798', hover: '#DD4A2F', hover2: '#DB4A2F',
       },
       'Aurora': {
-        main: '#1A535C', highlight: '#F7FFF7', accent: '#FF6B6B', hover: '#4ECDC4', hover2: '#FFE66D',
+        main: '#2E8BC0', highlight: '#B1D4E0', accent: '#145DA0', hover: '#0C2D48', hover2: '#F7F7FF',
       },
       'Retro Pop': {
         main: '#22223B', highlight: '#F2E9E4', accent: '#9A8C98', hover: '#C9ADA7', hover2: '#4A4E69',
@@ -293,7 +293,7 @@ function HomeContent() {
         main: '#386641', highlight: '#F2E8CF', accent: '#A7C957', hover: '#6A994E', hover2: '#BC4749',
       },
       'Neon Night': {
-        main: '#6C1CD1', highlight: '#F7F7FF', accent: '#9D4EDD', hover: '#F72585', hover2: '#4361EE',
+        main: '#FF2A6D', highlight: '#00F0FF', accent: '#2D00F7', hover: '#F6F930', hover2: '#FF6F61',
       },
     }[name];
     if (preset) {

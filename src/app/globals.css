@@ -1299,7 +1299,7 @@ input[type="range"].midi-progress-bar::-ms-thumb,
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.5);
-  z-index: 50;
+  z-index: 2147483647 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2423,7 +2423,7 @@ svg {
 
 /* Conversion overlay */
 .load-modal__conversion-overlay {
-  z-index: 1000;
+  z-index: 10000;
 }
 .load-modal__conversion-outer {
   display: flex;
@@ -2656,7 +2656,7 @@ svg {
   overflow: hidden;
 }
 .midi-player-compact__conversion-overlay {
-  z-index: 1000;
+  z-index: 2147483647 !important;
 }
 .midi-player-compact__conversion-outer {
   display: flex;

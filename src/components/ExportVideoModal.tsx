@@ -342,6 +342,19 @@ export default function ExportVideoModal({
   const validAspectRatios = Object.keys(QUALITY_PRESETS);
   const aspectKey = validAspectRatios.includes(settings.aspectRatio) ? settings.aspectRatio : '16:9';
 
+  // Update duration and endTime if midiData.duration changes
+  useEffect(() => {
+    if (midiData?.duration && midiData.duration !== settings.duration) {
+      setSettings(prev => ({
+        ...prev,
+        duration: midiData.duration,
+        // Clamp startTime and endTime to new duration
+        startTime: Math.min(prev.startTime, midiData.duration - 1),
+        endTime: midiData.duration
+      }));
+    }
+  }, [midiData?.duration]);
+
   // Update targetWidth and aspect ratio height when quality or aspect ratio changes
   useEffect(() => {
     const preset = QUALITY_PRESETS[aspectKey]?.find(q => q.label === quality) || QUALITY_PRESETS['16:9'][2];
